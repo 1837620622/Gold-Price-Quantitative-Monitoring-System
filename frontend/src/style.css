@@ -440,6 +440,71 @@ body {
   max-width: 100%;
 }
 
+/* K线图区域样式 */
+.chart-section {
+  background: linear-gradient(135deg, #1a1a24 0%, #14141c 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  border: 1px solid rgba(251, 191, 36, 0.1);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chart-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fbbf24;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.period-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.period-selector button {
+  padding: 8px 16px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  color: #fbbf24;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.period-selector button:hover {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.period-selector button.active {
+  background: #fbbf24;
+  color: #000;
+  border-color: #fbbf24;
+}
+
+.chart-container {
+  background: #0a0a0f;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(251, 191, 36, 0.1);
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 400px;
+}
+
 
 .chart-iframe {
   width: 100%;

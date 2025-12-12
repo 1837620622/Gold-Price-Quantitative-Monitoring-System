@@ -122,6 +122,31 @@
         </div>
       </section>
 
+      <!-- K线图区域 -->
+      <section class="chart-section">
+        <div class="chart-header">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+            </svg>
+            黄金价格K线图
+          </h3>
+          <div class="period-selector">
+            <button 
+              v-for="period in periods" 
+              :key="period.value"
+              :class="{ active: currentPeriod === period.value }"
+              @click="changePeriod(period.value)"
+            >
+              {{ period.label }}
+            </button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <div ref="klineChart" class="chart-canvas"></div>
+        </div>
+      </section>
+
       <!-- AI分析结果区域 -->
       <section class="analysis-section" v-if="analysisResult || analyzing">
         <div class="analysis-header">
@@ -274,6 +299,11 @@ function refreshAllData() {
   fetchPriceData();
   fetchKlineData(currentPeriod.value);
   updateIntlChart();
+}
+
+function changePeriod(days) {
+  currentPeriod.value = days;
+  fetchKlineData(days);
 }
 
 // ============================================================
@@ -538,13 +568,6 @@ function updateChart() {
   chartInstance.value.setOption(option);
 }
 
-// ============================================================
-// 切换K线周期
-// ============================================================
-function changePeriod(days) {
-  currentPeriod.value = days;
-  fetchKlineData(days);
-}
 
 // ============================================================
 // 运行AI量化分析
