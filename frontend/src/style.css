@@ -444,8 +444,8 @@ body {
 .chart-section {
   background: linear-gradient(135deg, #1a1a24 0%, #14141c 100%);
   border-radius: 16px;
-  padding: 24px;
-  margin: 24px 0;
+  padding: 20px;
+  margin: 20px 0;
   border: 1px solid rgba(251, 191, 36, 0.1);
 }
 
@@ -453,7 +453,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .chart-header h3 {
@@ -461,23 +463,23 @@ body {
   align-items: center;
   gap: 8px;
   color: #fbbf24;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   margin: 0;
 }
 
 .period-selector {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .period-selector button {
-  padding: 8px 16px;
+  padding: 6px 12px;
   background: rgba(251, 191, 36, 0.1);
   border: 1px solid rgba(251, 191, 36, 0.2);
-  border-radius: 8px;
+  border-radius: 6px;
   color: #fbbf24;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -495,14 +497,63 @@ body {
 
 .chart-container {
   background: #0a0a0f;
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 12px;
   border: 1px solid rgba(251, 191, 36, 0.1);
+  overflow: hidden;
 }
 
 .chart-canvas {
   width: 100%;
-  height: 400px;
+  height: 450px;
+  min-height: 300px;
+}
+
+/* 手机端K线图适配 */
+@media (max-width: 768px) {
+  .chart-section {
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 12px;
+  }
+  
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .chart-header h3 {
+    font-size: 14px;
+  }
+  
+  .period-selector {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .period-selector button {
+    padding: 6px 10px;
+    font-size: 12px;
+    flex: 1;
+    text-align: center;
+  }
+  
+  .chart-container {
+    padding: 8px;
+  }
+  
+  .chart-canvas {
+    height: 280px;
+    min-height: 250px;
+  }
+}
+
+/* 平板端适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .chart-canvas {
+    height: 380px;
+  }
 }
 
 

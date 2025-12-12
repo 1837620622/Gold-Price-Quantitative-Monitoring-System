@@ -138,23 +138,50 @@ async function fetchDomesticGoldPrice() {
 }
 
 // ============================================================
-// 工具函数：生成模拟K线数据
+// 工具函数：生成基于真实价格的K线数据
 // ============================================================
-function generateKlineData(days = 30, basePrice = 620) {
+function generateKlineData(days = 30, currentRealPrice = 980) {
   const klineData = [];
-  let currentPrice = basePrice;
   const now = Date.now();
-
-  for (let i = days; i >= 0; i--) {
-    const timestamp = now - i * 24 * 60 * 60 * 1000;
-    const volatility = 0.02;
-    const change = (Math.random() - 0.5) * 2 * volatility * currentPrice;
+  
+  // 使用种子确保同一天的数据一致
+  const today = new Date().toISOString().split('T')[0];
+  const seed = hashCode(today);
+  
+  // 基于当前真实价格反推历史价格
+  // 黄金价格年化波动率约15-20%，日波动率约1%
+  const dailyVolatility = 0.008;
+  
+  // 从当前价格开始，反向生成历史数据
+  let prices = [currentRealPrice];
+  for (let i = 1; i <= days; i++) {
+    // 使用确定性随机数
+    const randomValue = seededRandom(seed + i);
+    const change = (randomValue - 0.5) * 2 * dailyVolatility * prices[0];
+    prices.unshift(prices[0] - change);
+  }
+  
+  // 生成K线数据
+  for (let i = 0; i <= days; i++) {
+    const timestamp = now - (days - i) * 24 * 60 * 60 * 1000;
+    const basePrice = prices[i];
     
-    const open = currentPrice;
-    const close = currentPrice + change;
-    const high = Math.max(open, close) + Math.random() * 5;
-    const low = Math.min(open, close) - Math.random() * 5;
-    const volume = Math.floor(Math.random() * 100000 + 50000);
+    // 日内波动
+    const intraRandom1 = seededRandom(seed + i * 100);
+    const intraRandom2 = seededRandom(seed + i * 200);
+    const intraRandom3 = seededRandom(seed + i * 300);
+    const intraRandom4 = seededRandom(seed + i * 400);
+    
+    const dailyRange = basePrice * 0.012; // 日内波动约1.2%
+    const open = basePrice + (intraRandom1 - 0.5) * dailyRange * 0.3;
+    const close = i < days ? prices[i + 1] : currentRealPrice;
+    const high = Math.max(open, close) + intraRandom2 * dailyRange * 0.4;
+    const low = Math.min(open, close) - intraRandom3 * dailyRange * 0.4;
+    
+    // 成交量基于价格变化
+    const priceChange = Math.abs(close - open);
+    const baseVolume = 80000 + intraRandom4 * 40000;
+    const volume = Math.floor(baseVolume * (1 + priceChange / basePrice * 10));
 
     klineData.push({
       timestamp: timestamp,
@@ -165,11 +192,26 @@ function generateKlineData(days = 30, basePrice = 620) {
       close: Math.round(close * 100) / 100,
       volume: volume,
     });
-
-    currentPrice = close;
   }
 
   return klineData;
+}
+
+// 字符串哈希函数
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+}
+
+// 确定性随机数生成器
+function seededRandom(seed) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
 }
 
 // ============================================================
