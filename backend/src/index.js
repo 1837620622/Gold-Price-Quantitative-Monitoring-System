@@ -409,6 +409,165 @@ app.get('/api/kline', async (c) => {
 });
 
 // ============================================================
+// API 路由：K线图配置数据
+// ============================================================
+app.get('/api/chart/kline', async (c) => {
+  const days = parseInt(c.req.query('days')) || 30;
+  const domestic = await fetchDomesticGoldPrice();
+  const klineData = generateKlineData(days, domestic.price);
+  
+  // 转换为ECharts格式
+  const chartData = klineData.map(item => [
+    item.timestamp,
+    item.open,
+    item.close,
+    item.low,
+    item.high,
+    item.volume
+  ]);
+  
+  // ECharts K线图配置
+  const chartOption = {
+    title: {
+      text: '黄金价格K线图',
+      left: 'center',
+      textStyle: {
+        color: '#fff',
+        fontSize: 16
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross'
+      },
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      borderColor: '#fbbf24',
+      textStyle: {
+        color: '#fff'
+      }
+    },
+    legend: {
+      data: ['K线', '成交量'],
+      textStyle: {
+        color: '#fff'
+      }
+    },
+    grid: [
+      {
+        left: '10%',
+        right: '8%',
+        height: '60%'
+      },
+      {
+        left: '10%',
+        right: '8%',
+        top: '75%',
+        height: '16%'
+      }
+    ],
+    xAxis: [
+      {
+        type: 'category',
+        data: klineData.map(item => new Date(item.timestamp).toLocaleDateString()),
+        scale: true,
+        boundaryGap: false,
+        axisLine: { onZero: false },
+        splitLine: { show: false },
+        min: 'dataMin',
+        max: 'dataMax',
+        axisLabel: {
+          color: '#fff'
+        }
+      },
+      {
+        type: 'category',
+        gridIndex: 1,
+        data: klineData.map(item => new Date(item.timestamp).toLocaleDateString()),
+        scale: true,
+        boundaryGap: false,
+        axisLine: { onZero: false },
+        axisTick: { show: false },
+        splitLine: { show: false },
+        axisLabel: { show: false },
+        min: 'dataMin',
+        max: 'dataMax'
+      }
+    ],
+    yAxis: [
+      {
+        scale: true,
+        splitArea: {
+          show: true
+        },
+        axisLabel: {
+          color: '#fff'
+        }
+      },
+      {
+        scale: true,
+        gridIndex: 1,
+        splitNumber: 2,
+        axisLabel: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false }
+      }
+    ],
+    dataZoom: [
+      {
+        type: 'inside',
+        xAxisIndex: [0, 1],
+        start: 50,
+        end: 100
+      },
+      {
+        show: true,
+        xAxisIndex: [0, 1],
+        type: 'slider',
+        top: '85%',
+        start: 50,
+        end: 100,
+        textStyle: {
+          color: '#fff'
+        }
+      }
+    ],
+    series: [
+      {
+        name: 'K线',
+        type: 'candlestick',
+        data: chartData.map(item => [item[1], item[2], item[3], item[4]]),
+        itemStyle: {
+          color: '#ef4444',
+          color0: '#22c55e',
+          borderColor: '#ef4444',
+          borderColor0: '#22c55e'
+        }
+      },
+      {
+        name: '成交量',
+        type: 'bar',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: chartData.map(item => item[5]),
+        itemStyle: {
+          color: '#fbbf24'
+        }
+      }
+    ]
+  };
+
+  return c.json({
+    success: true,
+    period: `${days}天`,
+    chartOption,
+    rawData: klineData,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ============================================================
 // API 路由：DeepSeek 量化分析
 // ============================================================
 app.post('/api/analyze', async (c) => {

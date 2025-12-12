@@ -297,13 +297,16 @@ async function fetchPriceData() {
 }
 
 // ============================================================
-// 获取K线数据
+// 获取K线数据和图表配置
 // ============================================================
 async function fetchKlineData(days = 30) {
   try {
-    const response = await axios.get(`${API_BASE}/api/kline?days=${days}`);
-    klineData.value = response.data.data;
-    updateChart();
+    const response = await axios.get(`${API_BASE}/api/chart/kline?days=${days}`);
+    klineData.value = response.data.rawData;
+    // 直接使用后端返回的图表配置
+    if (chartInstance.value && response.data.chartOption) {
+      chartInstance.value.setOption(response.data.chartOption);
+    }
   } catch (error) {
     console.error('获取K线数据失败:', error);
     // 生成模拟数据
