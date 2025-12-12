@@ -229,7 +229,7 @@ const renderedAnalysis = computed(() => {
 
 // API 基础路径
 const API_BASE = import.meta.env.PROD 
-  ? 'https://gold-price-monitor-api.2040168455.workers.dev' 
+  ? 'https://gold-backend.chuankangkk.top' 
   : '';
 
 // ============================================================
