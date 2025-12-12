@@ -10,11 +10,22 @@
 </p>
 
 <p align="center">
+  <a href="https://gold.chuankangkk.top"><img src="https://img.shields.io/badge/Demo-在线演示-fbbf24?style=for-the-badge" alt="Demo"></a>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+</p>
+
+<p align="center">
   <strong>🚀 实时金价监控 | 📊 专业K线图表 | 🤖 AI量化分析 | ☁️ 云端部署</strong>
 </p>
 
 <p align="center">
   基于 Vue3 + Hono + DeepSeek AI 构建的专业级黄金价格实时监控与智能量化分析平台
+</p>
+
+<p align="center">
+  <a href="https://gold.chuankangkk.top">🌐 在线演示</a> |
+  <a href="https://github.com/1837620622/Gold-Price-Quantitative-Monitoring-System">📦 GitHub</a> |
+  <a href="#-联系作者">💬 联系作者</a>
 </p>
 
 </div>
@@ -120,8 +131,8 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/1837620622/gold-monitor.git
-cd gold-monitor
+git clone https://github.com/1837620622/Gold-Price-Quantitative-Monitoring-System.git
+cd Gold-Price-Quantitative-Monitoring-System
 
 # 启动后端
 cd backend
@@ -289,8 +300,8 @@ gold-monitor/
 **⭐ 如果这个项目对你有帮助，请给个 Star 支持一下！**
 
 <p>
-  <img src="https://img.shields.io/github/stars/1837620622/gold-monitor?style=social" alt="GitHub Stars">
-  <img src="https://img.shields.io/github/forks/1837620622/gold-monitor?style=social" alt="GitHub Forks">
+  <img src="https://img.shields.io/github/stars/1837620622/Gold-Price-Quantitative-Monitoring-System?style=social" alt="GitHub Stars">
+  <img src="https://img.shields.io/github/forks/1837620622/Gold-Price-Quantitative-Monitoring-System?style=social" alt="GitHub Forks">
 </p>
 
 Made with ❤️ by 万能程序员
