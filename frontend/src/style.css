@@ -509,49 +509,122 @@ body {
   min-height: 300px;
 }
 
-/* 手机端K线图适配 */
+/* TradingView容器 */
+.tradingview-container {
+  height: 450px;
+  padding: 0;
+}
+
+.chart-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.chart-source {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* 电脑端/手机端显示控制 */
+.desktop-only {
+  display: block !important;
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+/* 手机端提示样式 */
+.mobile-chart-notice {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.mobile-chart-notice .notice-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.mobile-chart-notice h3 {
+  color: #fbbf24;
+  font-size: 18px;
+  margin: 0 0 12px 0;
+}
+
+.mobile-chart-notice p {
+  color: #9ca3af;
+  font-size: 14px;
+  margin: 0 0 20px 0;
+}
+
+.mobile-chart-notice .notice-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #fbbf24;
+  font-size: 13px;
+}
+
+/* 分析等待提示样式 */
+.analyzing-title {
+  color: #fbbf24;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.analyzing-hint {
+  color: #9ca3af;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* 手机端适配 */
 @media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: block !important;
+  }
+  
   .chart-section {
     padding: 12px;
     margin: 12px 0;
     border-radius: 12px;
   }
   
-  .chart-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .mobile-chart-notice {
+    padding: 30px 16px;
   }
   
-  .chart-header h3 {
-    font-size: 14px;
+  .mobile-chart-notice .notice-icon {
+    font-size: 40px;
   }
   
-  .period-selector {
-    width: 100%;
-    justify-content: flex-start;
+  .mobile-chart-notice h3 {
+    font-size: 16px;
   }
   
-  .period-selector button {
-    padding: 6px 10px;
+  .mobile-chart-notice p {
+    font-size: 13px;
+  }
+  
+  .mobile-chart-notice .notice-tip {
     font-size: 12px;
-    flex: 1;
-    text-align: center;
-  }
-  
-  .chart-container {
-    padding: 8px;
-  }
-  
-  .chart-canvas {
-    height: 280px;
-    min-height: 250px;
+    padding: 8px 12px;
   }
 }
 
 /* 平板端适配 */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .chart-canvas {
+  .tradingview-container {
     height: 380px;
   }
 }

@@ -98,28 +98,39 @@
         </div>
       </section>
 
-      <!-- K线图区域 - 使用后端API数据渲染 -->
-      <section class="chart-section">
+      <!-- K线图区域 - 电脑端显示TradingView -->
+      <section class="chart-section desktop-only">
         <div class="chart-header">
           <h3>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
             </svg>
-            黄金价格K线图
+            XAU/USD 国际金价走势
           </h3>
-          <div class="period-selector">
-            <button 
-              v-for="period in periods" 
-              :key="period.value"
-              :class="{ active: currentPeriod === period.value }"
-              @click="changePeriod(period.value)"
-            >
-              {{ period.label }}
-            </button>
-          </div>
+          <span class="chart-source">TradingView</span>
         </div>
-        <div class="chart-container">
-          <div ref="klineChart" class="chart-canvas"></div>
+        <div class="chart-container tradingview-container">
+          <iframe 
+            src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=1a1a24&studies=[]&theme=dark&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN"
+            class="chart-iframe"
+            frameborder="0"
+            allowtransparency="true"
+            scrolling="no"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+
+      <!-- 手机端提示 -->
+      <section class="chart-section mobile-only">
+        <div class="mobile-chart-notice">
+          <div class="notice-icon">📊</div>
+          <h3>K线图仅支持电脑端访问</h3>
+          <p>请使用电脑浏览器查看完整K线图</p>
+          <div class="notice-tip">
+            <span>🪜</span>
+            <span>需要科学上网工具访问TradingView</span>
+          </div>
         </div>
       </section>
 
@@ -139,7 +150,8 @@
             <div class="analyzing-animation">
               <span></span><span></span><span></span>
             </div>
-            <p>DeepSeek-V3 正在分析市场数据...</p>
+            <p class="analyzing-title">DeepSeek 深度分析中...</p>
+            <p class="analyzing-hint">大概需要1-2分钟，请耐心等待</p>
           </div>
           <div v-else class="analysis-text markdown-body" v-html="renderedAnalysis"></div>
         </div>
