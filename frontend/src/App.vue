@@ -98,31 +98,7 @@
         </div>
       </section>
 
-      <!-- 图表区域 - 嵌入真实图表 -->
-      <section class="charts-row single-chart">
-        <!-- 国际金价走势图 - 嵌入TradingView -->
-        <div class="chart-card full-width">
-          <div class="chart-card-header">
-            <div class="chart-card-title">
-              <span class="title-icon intl">●</span>
-              <h3>XAU/USD 国际金价走势</h3>
-            </div>
-            <span class="chart-source">TradingView</span>
-          </div>
-          <div class="chart-iframe-container">
-            <iframe 
-              src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=1a1a24&studies=[]&theme=dark&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN&utm_source=localhost&utm_medium=widget_new&utm_campaign=chart&utm_term=OANDA%3AXAUUSD"
-              class="chart-iframe"
-              frameborder="0"
-              allowtransparency="true"
-              scrolling="no"
-              allowfullscreen
-            ></iframe>
-          </div>
-        </div>
-      </section>
-
-      <!-- K线图区域 -->
+      <!-- K线图区域 - 使用后端API数据渲染 -->
       <section class="chart-section">
         <div class="chart-header">
           <h3>
@@ -228,9 +204,7 @@ const priceData = ref({
 
 const klineData = ref([]);
 const klineChart = ref(null);
-const intlChart = ref(null);
 const chartInstance = ref(null);
-const intlChartInstance = ref(null);
 
 const periods = [
   { label: '7D', value: 7 },
@@ -298,7 +272,6 @@ function updateTime() {
 function refreshAllData() {
   fetchPriceData();
   fetchKlineData(currentPeriod.value);
-  updateIntlChart();
 }
 
 function changePeriod(days) {
@@ -380,98 +353,14 @@ function generateMockKlineData(days) {
 // 初始化图表
 // ============================================================
 function initChart() {
-  // 初始化国内K线图
+  // 初始化K线图
   if (klineChart.value) {
     chartInstance.value = echarts.init(klineChart.value, 'dark');
   }
   
-  // 初始化国际金价折线图
-  if (intlChart.value) {
-    intlChartInstance.value = echarts.init(intlChart.value, 'dark');
-    updateIntlChart();
-  }
-  
   window.addEventListener('resize', () => {
     chartInstance.value?.resize();
-    intlChartInstance.value?.resize();
   });
-}
-
-// ============================================================
-// 更新国际金价折线图
-// ============================================================
-function updateIntlChart() {
-  if (!intlChartInstance.value) return;
-  
-  // 生成模拟的国际金价历史数据
-  const days = currentPeriod.value;
-  const basePrice = priceData.value.international?.price || 2650;
-  const dates = [];
-  const prices = [];
-  const now = Date.now();
-  
-  for (let i = days; i >= 0; i--) {
-    const timestamp = now - i * 24 * 60 * 60 * 1000;
-    dates.push(new Date(timestamp).toISOString().split('T')[0]);
-    const variation = (Math.random() - 0.5) * 100;
-    prices.push(Math.round((basePrice + variation - (i * 2)) * 100) / 100);
-  }
-  
-  const option = {
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      borderColor: '#fbbf24',
-      textStyle: { color: '#fff' },
-      formatter: (params) => {
-        const p = params[0];
-        return `${p.name}<br/>价格: $${p.value.toFixed(2)}`;
-      }
-    },
-    grid: {
-      left: '12%',
-      right: '5%',
-      top: '10%',
-      bottom: '15%',
-    },
-    xAxis: {
-      type: 'category',
-      data: dates,
-      axisLine: { lineStyle: { color: '#3a3a4a' } },
-      axisLabel: { color: '#888', fontSize: 10 },
-      splitLine: { show: false },
-    },
-    yAxis: {
-      type: 'value',
-      axisLine: { lineStyle: { color: '#3a3a4a' } },
-      axisLabel: { color: '#888', fontSize: 10, formatter: '${value}' },
-      splitLine: { lineStyle: { color: '#2a2a3a', type: 'dashed' } },
-      scale: true,
-    },
-    series: [{
-      type: 'line',
-      data: prices,
-      smooth: true,
-      symbol: 'none',
-      lineStyle: {
-        color: '#fbbf24',
-        width: 2,
-      },
-      areaStyle: {
-        color: {
-          type: 'linear',
-          x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: 'rgba(251, 191, 36, 0.3)' },
-            { offset: 1, color: 'rgba(251, 191, 36, 0.05)' }
-          ]
-        }
-      }
-    }]
-  };
-  
-  intlChartInstance.value.setOption(option);
 }
 
 // ============================================================
