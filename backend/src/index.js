@@ -613,10 +613,11 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
   const intlChangePercent = intl.changePercent || 0;
   const domTrend = domChangePercent >= 0 ? 'up' : 'down';
   const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
-  // 标题不使用 emoji 避免乱码
+  // 生成更专业的标题
+  const changeDir = domChangePercent >= 0 ? '上涨' : '下跌';
   const pushTypeTitle = pushType === 'alert' 
-    ? `金价波动 涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
-    : `实时金价 AU9999 ${dom.price?.toFixed(2)}元`;
+    ? `黄金价格${changeDir} ${Math.abs(domChangePercent).toFixed(2)}%` 
+    : `黄金实时行情`;
 
   return `
 <!DOCTYPE html>
@@ -626,40 +627,65 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%); color: #fff; padding: 16px; }
-    .container { max-width: 400px; margin: 0 auto; background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; border: 1px solid rgba(251,191,36,0.2); }
-    .header { text-align: center; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 2px solid rgba(251,191,36,0.5); }
-    .header h1 { font-size: 20px; color: #fbbf24; font-weight: 700; }
-    .header .time { color: #a1a1aa; font-size: 12px; margin-top: 6px; }
-    .price-card { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 4px solid #fbbf24; }
-    .price-card.intl { border-left-color: #60a5fa; }
-    .price-label { font-size: 14px; color: #d1d5db; margin-bottom: 6px; font-weight: 500; }
-    .price-value { font-size: 34px; font-weight: 800; }
-    .price-value.up { color: #4ade80; }
-    .price-value.down { color: #f87171; }
-    .price-change { font-size: 16px; font-weight: 600; margin-top: 4px; }
-    .price-change.up { color: #4ade80; }
-    .price-change.down { color: #f87171; }
-    .footer { text-align: center; padding-top: 12px; font-size: 11px; color: #71717a; }
+    body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #fff; padding: 0; }
+    .container { max-width: 100%; background: linear-gradient(180deg, #161b22 0%, #0d1117 100%); }
+    .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; text-align: center; border-bottom: 3px solid #fbbf24; }
+    .header h1 { font-size: 24px; color: #fbbf24; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
+    .header .subtitle { font-size: 13px; color: #8b949e; }
+    .price-section { padding: 20px; }
+    .price-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #fbbf24; }
+    .price-card.intl { border-left-color: #58a6ff; }
+    .price-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .price-label { font-size: 15px; color: #c9d1d9; font-weight: 600; }
+    .price-badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(251,191,36,0.2); color: #fbbf24; }
+    .price-badge.intl { background: rgba(88,166,255,0.2); color: #58a6ff; }
+    .price-main { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+    .price-value { font-size: 42px; font-weight: 900; letter-spacing: -2px; }
+    .price-value.up { color: #3fb950; }
+    .price-value.down { color: #f85149; }
+    .price-unit { font-size: 16px; color: #8b949e; }
+    .price-change { font-size: 18px; font-weight: 700; }
+    .price-change.up { color: #3fb950; }
+    .price-change.down { color: #f85149; }
+    .footer { text-align: center; padding: 15px 20px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1); }
+    .footer-brand { color: #fbbf24; font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .footer-dev { color: #484f58; font-size: 11px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>${pushTypeTitle}</h1>
-      <div class="time">${now}</div>
+      <div class="subtitle">${now} | Gold Monitor</div>
     </div>
-    <div class="price-card">
-      <div class="price-label">[国内] AU9999 上海黄金交易所</div>
-      <div class="price-value ${domTrend}">${dom.price?.toFixed(2) || '--'} 元/克</div>
-      <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '+' : ''}${domChangePercent.toFixed(2)}%</div>
+    <div class="price-section">
+      <div class="price-card">
+        <div class="price-header">
+          <span class="price-label">国内AU9999</span>
+          <span class="price-badge">上海黄金</span>
+        </div>
+        <div class="price-main">
+          <span class="price-value ${domTrend}">${dom.price?.toFixed(2) || '--'}</span>
+          <span class="price-unit">元/克</span>
+        </div>
+        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '+' : ''}${domChangePercent.toFixed(2)}% ${domChangePercent >= 0 ? '上涨' : '下跌'}</div>
+      </div>
+      <div class="price-card intl">
+        <div class="price-header">
+          <span class="price-label">国际XAU/USD</span>
+          <span class="price-badge intl">伦敦现货</span>
+        </div>
+        <div class="price-main">
+          <span class="price-value ${intlTrend}">${intl.price?.toFixed(2) || '--'}</span>
+          <span class="price-unit">美元/盎司</span>
+        </div>
+        <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '+' : ''}${intlChangePercent.toFixed(2)}%</div>
+      </div>
     </div>
-    <div class="price-card intl">
-      <div class="price-label">[国际] XAU/USD 伦敦现货</div>
-      <div class="price-value ${intlTrend}">${intl.price?.toFixed(2) || '--'} 美元/盎司</div>
-      <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '+' : ''}${intlChangePercent.toFixed(2)}%</div>
+    <div class="footer">
+      <div class="footer-brand">Gold Monitor - 黄金价格监控</div>
+      <div class="footer-dev">开发者：传康KK</div>
     </div>
-    <div class="footer">开发者：传康KK | Gold Monitor</div>
   </div>
 </body>
 </html>`;
@@ -672,10 +698,11 @@ async function executePush(env, priceData, pushType = 'scheduled') {
   const dom = priceData.domestic;
   
   // 第一步：立即推送价格（快速响应）
-  // 标题不使用 emoji 避免乱码
+  // 生成吸引人的标题
+  const changeDir = (dom.changePercent || 0) >= 0 ? '上涨' : '下跌';
   const priceTitle = pushType === 'alert'
-    ? `[预警] 金价涨跌${Math.abs(dom.changePercent || 0).toFixed(2)}%`
-    : `[播报] AU9999 ${dom.price?.toFixed(2)}元/克`;
+    ? `黄金${changeDir}${Math.abs(dom.changePercent || 0).toFixed(2)}% 触发预警`
+    : `黄金实时行情 ${dom.price?.toFixed(2)}元/克`;
   
   const quickHtml = generateQuickPriceHtml(priceData, pushType);
   const priceResult = await sendPushPlusNotification(env, priceTitle, quickHtml, 'html');
