@@ -414,14 +414,13 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
   const domTrend = domChangePercent >= 0 ? 'up' : 'down';
   const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
   
-  // 生成吸引人的推送标题
-  const trendEmoji = domChangePercent >= 0 ? '🔥' : '❄️';
+  // 生成推送标题（不使用 emoji 避免乱码）
   const pushTypeTitle = pushType === 'alert' 
-    ? `${trendEmoji} 金价大波动！涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
-    : `${trendEmoji} 实时金价｜AU9999 ¥${dom.price?.toFixed(2)}`;
+    ? `金价波动 涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
+    : `实时金价 AU9999 ${dom.price?.toFixed(2)}元`;
   const pushTypeDesc = pushType === 'alert' 
-    ? `⚠️ 触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
-    : '📊 每30分钟自动推送 · 实时行情';
+    ? `触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
+    : '每30分钟自动推送 - 实时行情';
 
   // 简化AI分析内容（移除markdown格式）
   const cleanAnalysis = analysisText
@@ -614,10 +613,10 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
   const intlChangePercent = intl.changePercent || 0;
   const domTrend = domChangePercent >= 0 ? 'up' : 'down';
   const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
-  const trendEmoji = domChangePercent >= 0 ? '🔥' : '❄️';
+  // 标题不使用 emoji 避免乱码
   const pushTypeTitle = pushType === 'alert' 
-    ? `${trendEmoji} 金价大波动！涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
-    : `${trendEmoji} 实时金价｜AU9999 ¥${dom.price?.toFixed(2)}`;
+    ? `金价波动 涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
+    : `实时金价 AU9999 ${dom.price?.toFixed(2)}元`;
 
   return `
 <!DOCTYPE html>
@@ -627,18 +626,18 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, 'PingFang SC', sans-serif; background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%); color: #fff; padding: 16px; }
+    body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%); color: #fff; padding: 16px; }
     .container { max-width: 400px; margin: 0 auto; background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; border: 1px solid rgba(251,191,36,0.2); }
     .header { text-align: center; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 2px solid rgba(251,191,36,0.5); }
     .header h1 { font-size: 20px; color: #fbbf24; font-weight: 700; }
     .header .time { color: #a1a1aa; font-size: 12px; margin-top: 6px; }
     .price-card { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 4px solid #fbbf24; }
     .price-card.intl { border-left-color: #60a5fa; }
-    .price-label { font-size: 13px; color: #d1d5db; margin-bottom: 6px; }
-    .price-value { font-size: 32px; font-weight: 800; }
+    .price-label { font-size: 14px; color: #d1d5db; margin-bottom: 6px; font-weight: 500; }
+    .price-value { font-size: 34px; font-weight: 800; }
     .price-value.up { color: #4ade80; }
     .price-value.down { color: #f87171; }
-    .price-change { font-size: 15px; font-weight: 600; margin-top: 4px; }
+    .price-change { font-size: 16px; font-weight: 600; margin-top: 4px; }
     .price-change.up { color: #4ade80; }
     .price-change.down { color: #f87171; }
     .footer { text-align: center; padding-top: 12px; font-size: 11px; color: #71717a; }
@@ -651,14 +650,14 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
       <div class="time">${now}</div>
     </div>
     <div class="price-card">
-      <div class="price-label">🇨🇳 国内金价 AU9999</div>
-      <div class="price-value ${domTrend}">¥${dom.price?.toFixed(2) || '--'}</div>
-      <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '▲+' : '▼'}${domChangePercent.toFixed(2)}%</div>
+      <div class="price-label">[国内] AU9999 上海黄金交易所</div>
+      <div class="price-value ${domTrend}">${dom.price?.toFixed(2) || '--'} 元/克</div>
+      <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '+' : ''}${domChangePercent.toFixed(2)}%</div>
     </div>
     <div class="price-card intl">
-      <div class="price-label">🌍 国际金价 XAU/USD</div>
-      <div class="price-value ${intlTrend}">$${intl.price?.toFixed(2) || '--'}</div>
-      <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '▲+' : '▼'}${intlChangePercent.toFixed(2)}%</div>
+      <div class="price-label">[国际] XAU/USD 伦敦现货</div>
+      <div class="price-value ${intlTrend}">${intl.price?.toFixed(2) || '--'} 美元/盎司</div>
+      <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '+' : ''}${intlChangePercent.toFixed(2)}%</div>
     </div>
     <div class="footer">开发者：传康KK | Gold Monitor</div>
   </div>
@@ -671,12 +670,12 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
 // ============================================================
 async function executePush(env, priceData, pushType = 'scheduled') {
   const dom = priceData.domestic;
-  const trendEmoji = (dom.changePercent || 0) >= 0 ? '�' : '❄️';
   
   // 第一步：立即推送价格（快速响应）
+  // 标题不使用 emoji 避免乱码
   const priceTitle = pushType === 'alert'
-    ? `${trendEmoji} 金价预警｜涨跌${Math.abs(dom.changePercent || 0).toFixed(2)}%`
-    : `${trendEmoji} 金价播报｜AU9999 ¥${dom.price?.toFixed(2)}`;
+    ? `[预警] 金价涨跌${Math.abs(dom.changePercent || 0).toFixed(2)}%`
+    : `[播报] AU9999 ${dom.price?.toFixed(2)}元/克`;
   
   const quickHtml = generateQuickPriceHtml(priceData, pushType);
   const priceResult = await sendPushPlusNotification(env, priceTitle, quickHtml, 'html');
