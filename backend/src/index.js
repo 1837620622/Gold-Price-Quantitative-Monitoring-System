@@ -414,11 +414,14 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
   const domTrend = domChangePercent >= 0 ? 'up' : 'down';
   const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
   
-  // 推送类型标题
-  const pushTypeTitle = pushType === 'alert' ? '⚠️ 金价异动预警' : '📊 金价定时播报';
+  // 生成吸引人的推送标题
+  const trendEmoji = domChangePercent >= 0 ? '🔥' : '❄️';
+  const pushTypeTitle = pushType === 'alert' 
+    ? `${trendEmoji} 金价大波动！涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
+    : `${trendEmoji} 实时金价｜AU9999 ¥${dom.price?.toFixed(2)}`;
   const pushTypeDesc = pushType === 'alert' 
-    ? `国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%，触发预警推送`
-    : '每半小时定时推送金价行情';
+    ? `⚠️ 触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
+    : '📊 每30分钟自动推送 · 实时行情';
 
   // 简化AI分析内容（移除markdown格式）
   const cleanAnalysis = analysisText
@@ -437,34 +440,34 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; }
-    .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #fbbf24; margin-bottom: 20px; }
-    .header h1 { font-size: 24px; color: #fbbf24; margin-bottom: 8px; }
-    .header .type-badge { display: inline-block; background: ${pushType === 'alert' ? '#ef4444' : '#3b82f6'}; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-bottom: 8px; }
-    .header .time { color: #9ca3af; font-size: 13px; }
-    .price-cards { display: flex; gap: 15px; margin-bottom: 20px; }
-    .price-card { flex: 1; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.1); }
-    .price-card.intl { border-left: 4px solid #3b82f6; }
-    .price-card.dom { border-left: 4px solid #fbbf24; }
-    .price-label { font-size: 12px; color: #9ca3af; margin-bottom: 5px; }
-    .price-value { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
-    .price-value.up { color: #22c55e; }
-    .price-value.down { color: #ef4444; }
-    .price-change { font-size: 14px; }
-    .price-change.up { color: #22c55e; }
-    .price-change.down { color: #ef4444; }
-    .price-change.up::before { content: '▲ '; }
-    .price-change.down::before { content: '▼ '; }
-    .detail-row { display: flex; justify-content: space-between; font-size: 12px; color: #9ca3af; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.1); }
-    .analysis-section { background: rgba(251,191,36,0.1); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid rgba(251,191,36,0.3); }
-    .analysis-title { font-size: 14px; color: #fbbf24; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .analysis-title::before { content: '🤖'; }
-    .analysis-content { font-size: 13px; line-height: 1.8; color: #e5e7eb; white-space: pre-wrap; }
-    .footer { text-align: center; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .footer .brand { color: #fbbf24; font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-    .footer .contact { color: #6b7280; font-size: 11px; }
-    .footer .watermark { color: #4b5563; font-size: 10px; margin-top: 10px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 50%, #0d1117 100%); color: #fff; padding: 16px; font-size: 16px; line-height: 1.6; }
+    .container { max-width: 420px; margin: 0 auto; background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; border: 1px solid rgba(251,191,36,0.2); }
+    .header { text-align: center; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 2px solid rgba(251,191,36,0.5); }
+    .header h1 { font-size: 22px; color: #fbbf24; margin-bottom: 6px; font-weight: 700; text-shadow: 0 0 20px rgba(251,191,36,0.3); }
+    .header .type-badge { display: inline-block; background: ${pushType === 'alert' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #3b82f6, #2563eb)'}; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+    .header .time { color: #a1a1aa; font-size: 13px; }
+    .price-section { margin-bottom: 16px; }
+    .price-card { background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); }
+    .price-card.intl { border-left: 5px solid #60a5fa; }
+    .price-card.dom { border-left: 5px solid #fbbf24; }
+    .price-label { font-size: 14px; color: #d1d5db; margin-bottom: 8px; font-weight: 500; }
+    .price-value { font-size: 36px; font-weight: 800; margin-bottom: 4px; letter-spacing: -1px; }
+    .price-value.up { color: #4ade80; text-shadow: 0 0 15px rgba(74,222,128,0.3); }
+    .price-value.down { color: #f87171; text-shadow: 0 0 15px rgba(248,113,113,0.3); }
+    .price-change { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+    .price-change.up { color: #4ade80; }
+    .price-change.down { color: #f87171; }
+    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .detail-item { text-align: center; }
+    .detail-item .label { font-size: 11px; color: #71717a; display: block; }
+    .detail-item .value { font-size: 14px; color: #e4e4e7; font-weight: 600; }
+    .analysis-section { background: linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(251,191,36,0.05) 100%); border-radius: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(251,191,36,0.25); }
+    .analysis-title { font-size: 15px; color: #fbbf24; margin-bottom: 12px; font-weight: 600; }
+    .analysis-content { font-size: 14px; line-height: 1.8; color: #e4e4e7; }
+    .footer { text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .footer .brand { color: #fbbf24; font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+    .footer .contact { color: #a1a1aa; font-size: 12px; line-height: 1.8; }
+    .footer .watermark { color: #52525b; font-size: 11px; margin-top: 8px; padding: 6px 12px; background: rgba(0,0,0,0.3); border-radius: 6px; display: inline-block; }
   </style>
 </head>
 <body>
@@ -475,32 +478,33 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
       <div class="time">更新时间：${now}</div>
     </div>
     
-    <div class="price-cards">
-      <div class="price-card intl">
-        <div class="price-label">🌍 国际金价 XAU/USD</div>
-        <div class="price-value ${intlTrend}">$${intl.price?.toFixed(2) || '--'}</div>
-        <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '+' : ''}${intlChangePercent.toFixed(2)}%</div>
-        <div class="detail-row">
-          <span>昨收: $${intl.previousClose?.toFixed(2) || '--'}</span>
-          <span>白银: $${intl.silverPrice?.toFixed(2) || '--'}</span>
+    <div class="price-section">
+      <div class="price-card dom">
+        <div class="price-label">�🇳 国内金价 AU9999（上海黄金交易所）</div>
+        <div class="price-value ${domTrend}">¥${dom.price?.toFixed(2) || '--'}</div>
+        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '▲ +' : '▼ '}${domChangePercent.toFixed(2)}%（${domChangePercent >= 0 ? '+' : ''}${(dom.change || 0).toFixed(2)}元）</div>
+        <div class="detail-grid">
+          <div class="detail-item"><span class="label">开盘</span><span class="value">¥${dom.open?.toFixed(2) || '--'}</span></div>
+          <div class="detail-item"><span class="label">最高</span><span class="value" style="color:#4ade80">¥${dom.high?.toFixed(2) || '--'}</span></div>
+          <div class="detail-item"><span class="label">最低</span><span class="value" style="color:#f87171">¥${dom.low?.toFixed(2) || '--'}</span></div>
         </div>
       </div>
       
-      <div class="price-card dom">
-        <div class="price-label">🇨🇳 国内金价 AU9999</div>
-        <div class="price-value ${domTrend}">¥${dom.price?.toFixed(2) || '--'}</div>
-        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '+' : ''}${domChangePercent.toFixed(2)}%</div>
-        <div class="detail-row">
-          <span>开: ¥${dom.open?.toFixed(2) || '--'}</span>
-          <span>高: ¥${dom.high?.toFixed(2) || '--'}</span>
-          <span>低: ¥${dom.low?.toFixed(2) || '--'}</span>
+      <div class="price-card intl">
+        <div class="price-label">� 国际金价 XAU/USD（伦敦现货）</div>
+        <div class="price-value ${intlTrend}">$${intl.price?.toFixed(2) || '--'}</div>
+        <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '▲ +' : '▼ '}${intlChangePercent.toFixed(2)}%</div>
+        <div class="detail-grid">
+          <div class="detail-item"><span class="label">昨收</span><span class="value">$${intl.previousClose?.toFixed(2) || '--'}</span></div>
+          <div class="detail-item"><span class="label">白银</span><span class="value">$${intl.silverPrice?.toFixed(2) || '--'}</span></div>
+          <div class="detail-item"><span class="label">来源</span><span class="value">${intl.source || '--'}</span></div>
         </div>
       </div>
     </div>
     
     <div class="analysis-section">
-      <div class="analysis-title">AI 智能分析摘要</div>
-      <div class="analysis-content">${cleanAnalysis}...</div>
+      <div class="analysis-title">🤖 AI 智能分析</div>
+      <div class="analysis-content">${cleanAnalysis}</div>
     </div>
     
     <div class="footer">
@@ -600,31 +604,85 @@ function shouldScheduledPush() {
 }
 
 // ============================================================
-// 工具函数：执行推送（包含价格预警和定时推送逻辑）
+// 工具函数：生成纯价格推送 HTML（不含AI分析，快速推送）
+// ============================================================
+function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
+  const intl = priceData.international;
+  const dom = priceData.domestic;
+  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  const domChangePercent = dom.changePercent || 0;
+  const intlChangePercent = intl.changePercent || 0;
+  const domTrend = domChangePercent >= 0 ? 'up' : 'down';
+  const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
+  const trendEmoji = domChangePercent >= 0 ? '🔥' : '❄️';
+  const pushTypeTitle = pushType === 'alert' 
+    ? `${trendEmoji} 金价大波动！涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
+    : `${trendEmoji} 实时金价｜AU9999 ¥${dom.price?.toFixed(2)}`;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, 'PingFang SC', sans-serif; background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%); color: #fff; padding: 16px; }
+    .container { max-width: 400px; margin: 0 auto; background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; border: 1px solid rgba(251,191,36,0.2); }
+    .header { text-align: center; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 2px solid rgba(251,191,36,0.5); }
+    .header h1 { font-size: 20px; color: #fbbf24; font-weight: 700; }
+    .header .time { color: #a1a1aa; font-size: 12px; margin-top: 6px; }
+    .price-card { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 4px solid #fbbf24; }
+    .price-card.intl { border-left-color: #60a5fa; }
+    .price-label { font-size: 13px; color: #d1d5db; margin-bottom: 6px; }
+    .price-value { font-size: 32px; font-weight: 800; }
+    .price-value.up { color: #4ade80; }
+    .price-value.down { color: #f87171; }
+    .price-change { font-size: 15px; font-weight: 600; margin-top: 4px; }
+    .price-change.up { color: #4ade80; }
+    .price-change.down { color: #f87171; }
+    .footer { text-align: center; padding-top: 12px; font-size: 11px; color: #71717a; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${pushTypeTitle}</h1>
+      <div class="time">${now}</div>
+    </div>
+    <div class="price-card">
+      <div class="price-label">🇨🇳 国内金价 AU9999</div>
+      <div class="price-value ${domTrend}">¥${dom.price?.toFixed(2) || '--'}</div>
+      <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '▲+' : '▼'}${domChangePercent.toFixed(2)}%</div>
+    </div>
+    <div class="price-card intl">
+      <div class="price-label">🌍 国际金价 XAU/USD</div>
+      <div class="price-value ${intlTrend}">$${intl.price?.toFixed(2) || '--'}</div>
+      <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '▲+' : '▼'}${intlChangePercent.toFixed(2)}%</div>
+    </div>
+    <div class="footer">开发者：传康KK | Gold Monitor</div>
+  </div>
+</body>
+</html>`;
+}
+
+// ============================================================
+// 工具函数：执行推送（先推送价格，再推送AI分析）
 // ============================================================
 async function executePush(env, priceData, pushType = 'scheduled') {
-  // 生成K线数据用于AI分析
-  const klineData = generateKlineData(30, priceData.domestic.price);
-  
-  // 获取AI分析
-  const analysis = await analyzeWithDeepSeek(env, priceData, klineData);
-  const analysisText = analysis.analysis || '暂无分析数据';
-  
-  // 生成推送标题
   const dom = priceData.domestic;
-  const changeSign = (dom.changePercent || 0) >= 0 ? '📈' : '📉';
-  const title = pushType === 'alert'
-    ? `${changeSign} 金价异动｜AU9999 ${dom.changePercent >= 0 ? '+' : ''}${(dom.changePercent || 0).toFixed(2)}%`
-    : `${changeSign} 金价播报｜AU9999 ¥${dom.price?.toFixed(2)}`;
+  const trendEmoji = (dom.changePercent || 0) >= 0 ? '�' : '❄️';
   
-  // 生成HTML内容
-  const htmlContent = generatePushHtml(priceData, analysisText, pushType);
+  // 第一步：立即推送价格（快速响应）
+  const priceTitle = pushType === 'alert'
+    ? `${trendEmoji} 金价预警｜涨跌${Math.abs(dom.changePercent || 0).toFixed(2)}%`
+    : `${trendEmoji} 金价播报｜AU9999 ¥${dom.price?.toFixed(2)}`;
   
-  // 发送推送（传递 env 参数以获取环境变量）
-  const result = await sendPushPlusNotification(env, title, htmlContent, 'html');
+  const quickHtml = generateQuickPriceHtml(priceData, pushType);
+  const priceResult = await sendPushPlusNotification(env, priceTitle, quickHtml, 'html');
   
   // 更新推送状态
-  if (result.success) {
+  if (priceResult.success) {
     lastPushPrice = dom.price;
     lastPushTime = Date.now();
     if (pushType === 'scheduled') {
@@ -632,7 +690,23 @@ async function executePush(env, priceData, pushType = 'scheduled') {
     }
   }
   
-  return result;
+  // 第二步：异步获取AI分析并推送（不阻塞）
+  (async () => {
+    try {
+      const klineData = generateKlineData(30, dom.price);
+      const analysis = await analyzeWithDeepSeek(env, priceData, klineData);
+      const analysisText = analysis.analysis || '暂无分析数据';
+      
+      const analysisTitle = `🤖 AI分析｜${analysis.model || 'DeepSeek'}`;
+      const analysisHtml = generatePushHtml(priceData, analysisText, pushType);
+      
+      await sendPushPlusNotification(env, analysisTitle, analysisHtml, 'html');
+    } catch (error) {
+      console.error('AI分析推送失败:', error.message);
+    }
+  })();
+  
+  return priceResult;
 }
 
 // ============================================================
