@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <strong>🚀 实时金价监控 | 📊 专业K线图表 | 🤖 AI量化分析 | ☁️ 云端部署</strong>
+  <strong>🚀 实时金价监控 | 📊 专业K线图表 | 🤖 AI量化分析 | 📲 微信推送</strong>
 </p>
 
 <p align="center">
@@ -25,8 +25,46 @@
 <p align="center">
   <a href="https://gold.chuankangkk.top">🌐 在线演示</a> |
   <a href="https://github.com/1837620622/Gold-Price-Quantitative-Monitoring-System">📦 GitHub</a> |
+  <a href="#-订阅金价推送">📲 订阅推送</a> |
   <a href="#-联系作者">💬 联系作者</a>
 </p>
+
+</div>
+
+---
+
+## 📲 订阅金价推送
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="300">
+
+<img src="./image.png" alt="订阅二维码" width="200">
+
+**扫码订阅金价推送**
+
+</td>
+<td>
+
+### 🔔 推送功能
+
+- ⏰ **每30分钟** 自动推送最新金价行情
+- 📈 **涨跌预警** 涨跌幅超1%自动推送
+- 🤖 **AI分析** 包含DeepSeek智能分析摘要
+- 📱 **微信接收** 通过微信公众号接收消息
+
+### 📋 推送内容
+
+- 国内AU9999实时价格
+- 国际XAU/USD现货价格
+- 涨跌幅与趋势分析
+- AI量化投资建议
+
+</td>
+</tr>
+</table>
 
 </div>
 
@@ -303,22 +341,25 @@ gold-monitor/
 
 ### 📲 PushPlus 推送配置
 
-本项目使用 PushPlus 实现微信群组推送：
+本项目使用 PushPlus 实现微信群组推送，配置步骤：
 
-```javascript
-// 推送配置（在 backend/src/index.js 中）
-{
-  token: "your-pushplus-token",      // PushPlus 用户 Token
-  secretKey: "your-secret-key",      // 群组密钥
-  channel: "cp",                     // 群组推送渠道
-}
+1. 注册 [PushPlus](https://www.pushplus.plus/) 账号并获取 Token
+2. 创建群组，获取群组编码（Topic）
+3. 配置 Cloudflare 环境变量：
+
+```bash
+# 配置推送密钥
+npx wrangler secret put PUSHPLUS_TOKEN    # 输入你的 Token
+npx wrangler secret put PUSHPLUS_TOPIC    # 输入群组编码（可选，不填则推送给自己）
 ```
 
 **推送规则：**
-- 每 **30分钟** 定时推送金价行情
-- 国内金价涨跌幅达 **1%-2%** 时触发预警推送
-- 推送内容包含 **AI 智能分析摘要**
-- 美观的 HTML 模板，带开发者水印
+| 类型 | 触发条件 | 推送内容 |
+|:-----|:---------|:---------|
+| 定时推送 | 每 30 分钟 | 金价行情 + AI分析 |
+| 预警推送 | 涨跌幅 1%-2% | 异动提醒 + AI分析 |
+
+**每日配额：** 约 100 条（200条额度完全够用）
 
 ---
 
