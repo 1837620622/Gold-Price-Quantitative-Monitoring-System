@@ -693,12 +693,12 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
 
 // ============================================================
 // 工具函数：执行推送（先推送价格，再推送AI分析）
+// ctx 参数用于 waitUntil，确保异步任务在响应后继续执行
 // ============================================================
-async function executePush(env, priceData, pushType = 'scheduled') {
+async function executePush(env, priceData, pushType = 'scheduled', ctx = null) {
   const dom = priceData.domestic;
   
   // 第一步：立即推送价格（快速响应）
-  // 生成吸引人的标题
   const changeDir = (dom.changePercent || 0) >= 0 ? '上涨' : '下跌';
   const priceTitle = pushType === 'alert'
     ? `黄金${changeDir}${Math.abs(dom.changePercent || 0).toFixed(2)}% 触发预警`
@@ -716,21 +716,31 @@ async function executePush(env, priceData, pushType = 'scheduled') {
     }
   }
   
-  // 第二步：异步获取AI分析并推送（不阻塞）
-  (async () => {
+  // 第二步：获取AI分析并推送
+  // 使用 waitUntil 确保异步任务在 Workers 响应后继续执行
+  const aiPushPromise = (async () => {
     try {
       const klineData = generateKlineData(30, dom.price);
       const analysis = await analyzeWithDeepSeek(env, priceData, klineData);
       const analysisText = analysis.analysis || '暂无分析数据';
       
-      const analysisTitle = `🤖 AI分析｜${analysis.model || 'DeepSeek'}`;
+      const analysisTitle = `AI智能分析 ${analysis.model || 'DeepSeek'}`;
       const analysisHtml = generatePushHtml(priceData, analysisText, pushType);
       
       await sendPushPlusNotification(env, analysisTitle, analysisHtml, 'html');
+      console.log('AI分析推送成功');
     } catch (error) {
       console.error('AI分析推送失败:', error.message);
     }
   })();
+  
+  // 如果有 ctx（来自 Hono 上下文），使用 waitUntil 保持异步任务运行
+  if (ctx && ctx.executionCtx && ctx.executionCtx.waitUntil) {
+    ctx.executionCtx.waitUntil(aiPushPromise);
+  } else {
+    // 没有 ctx 时直接等待（用于 Cron Trigger）
+    await aiPushPromise;
+  }
   
   return priceResult;
 }
@@ -1051,8 +1061,8 @@ app.post('/api/push/test', async (c) => {
     
     const priceData = { international, domestic };
     
-    // 执行测试推送
-    const result = await executePush(c.env, priceData, 'scheduled');
+    // 执行测试推送（传递 c 以支持 waitUntil）
+    const result = await executePush(c.env, priceData, 'scheduled', c);
     
     return c.json({
       success: result.success,
@@ -1103,8 +1113,8 @@ app.post('/api/push/scheduled', async (c) => {
     
     const priceData = { international, domestic };
     
-    // 执行定时推送
-    const result = await executePush(c.env, priceData, 'scheduled');
+    // 执行定时推送（传递 c 以支持 waitUntil）
+    const result = await executePush(c.env, priceData, 'scheduled', c);
     
     return c.json({
       success: result.success,
@@ -1184,8 +1194,8 @@ app.get('/api/monitor', async (c) => {
         changePercent: domestic.changePercent,
       });
       
-      // 执行预警推送
-      pushResult = await executePush(c.env, priceData, 'alert');
+      // 执行预警推送（传递 c 以支持 waitUntil）
+      pushResult = await executePush(c.env, priceData, 'alert', c);
       pushTriggered = true;
     }
     
@@ -1196,8 +1206,8 @@ app.get('/api/monitor', async (c) => {
         message: '满足定时推送条件（距上次推送超过30分钟）',
       });
       
-      // 执行定时推送
-      pushResult = await executePush(c.env, priceData, 'scheduled');
+      // 执行定时推送（传递 c 以支持 waitUntil）
+      pushResult = await executePush(c.env, priceData, 'scheduled', c);
       pushTriggered = true;
     }
     
@@ -1252,8 +1262,8 @@ app.post('/api/push/force', async (c) => {
     
     const priceData = { international, domestic };
     
-    // 强制执行推送
-    const result = await executePush(c.env, priceData, pushType);
+    // 强制执行推送（传递 c 以支持 waitUntil）
+    const result = await executePush(c.env, priceData, pushType, c);
     
     return c.json({
       success: result.success,
