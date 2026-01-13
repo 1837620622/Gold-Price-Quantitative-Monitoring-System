@@ -19,6 +19,13 @@
         <span class="current-time">{{ currentTime }}</span>
       </div>
       <div class="header-right">
+        <button class="subscribe-btn" @click="showQrModal = true" title="订阅金价推送">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="btn-text">订阅推送</span>
+        </button>
         <button class="refresh-btn" @click="refreshAllData" title="刷新数据">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 4v6h6M23 20v-6h-6"/>
@@ -185,6 +192,43 @@
         </div>
       </div>
     </div>
+
+    <!-- 二维码订阅弹窗 -->
+    <div class="qr-modal-overlay" v-if="showQrModal" @click.self="showQrModal = false">
+      <div class="qr-modal">
+        <button class="qr-close-btn" @click="showQrModal = false">&times;</button>
+        <div class="qr-header">
+          <h2>订阅金价推送</h2>
+          <p>扫码加入群组，实时接收金价行情通知</p>
+        </div>
+        <div class="qr-body">
+          <div class="qr-image-wrapper">
+            <img src="/qrcode.png" alt="订阅二维码" class="qr-image" />
+          </div>
+          <div class="qr-info">
+            <div class="qr-feature">
+              <span class="feature-icon">⏰</span>
+              <span>每30分钟自动推送金价行情</span>
+            </div>
+            <div class="qr-feature">
+              <span class="feature-icon">📊</span>
+              <span>涨跌幅超1%自动预警</span>
+            </div>
+            <div class="qr-feature">
+              <span class="feature-icon">🤖</span>
+              <span>AI智能分析摘要</span>
+            </div>
+          </div>
+        </div>
+        <div class="qr-footer">
+          <p class="qr-expire">二维码有效期：30天</p>
+          <p class="qr-tip">长按图片保存到手机，使用微信扫一扫加入</p>
+          <a class="qr-download-btn" href="/qrcode.png" download="金价推送订阅二维码.png">
+            保存二维码到本地
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -231,6 +275,7 @@ const analysisTimestamp = ref('');
 const analysisModel = ref('');
 const currentTime = ref('');
 const latency = ref(0);
+const showQrModal = ref(false);  // 二维码弹窗显示状态
 
 // 计算属性：渲染Markdown
 const renderedAnalysis = computed(() => {
