@@ -422,14 +422,16 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
     ? `触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
     : '每30分钟自动推送 - 实时行情';
 
-  // 简化AI分析内容（移除markdown格式）
+  // 简化AI分析内容（移除markdown格式，限制长度避免推送不完整）
   const cleanAnalysis = analysisText
     .replace(/#{1,6}\s*/g, '')
     .replace(/\*\*/g, '')
     .replace(/\*/g, '')
     .replace(/---/g, '')
     .replace(/═+/g, '')
-    .substring(0, 800);
+    .replace(/▶/g, '')
+    .replace(/•/g, '-')
+    .substring(0, 500) + '...';
 
   return `
 <!DOCTYPE html>
@@ -479,7 +481,7 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
     
     <div class="price-section">
       <div class="price-card dom">
-        <div class="price-label">�🇳 国内金价 AU9999（上海黄金交易所）</div>
+        <div class="price-label">[国内] AU9999 上海黄金交易所</div>
         <div class="price-value ${domTrend}">¥${dom.price?.toFixed(2) || '--'}</div>
         <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '▲ +' : '▼ '}${domChangePercent.toFixed(2)}%（${domChangePercent >= 0 ? '+' : ''}${(dom.change || 0).toFixed(2)}元）</div>
         <div class="detail-grid">
@@ -490,7 +492,7 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
       </div>
       
       <div class="price-card intl">
-        <div class="price-label">� 国际金价 XAU/USD（伦敦现货）</div>
+        <div class="price-label">[国际] XAU/USD 伦敦现货</div>
         <div class="price-value ${intlTrend}">$${intl.price?.toFixed(2) || '--'}</div>
         <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '▲ +' : '▼ '}${intlChangePercent.toFixed(2)}%</div>
         <div class="detail-grid">
@@ -502,7 +504,7 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
     </div>
     
     <div class="analysis-section">
-      <div class="analysis-title">🤖 AI 智能分析</div>
+      <div class="analysis-title">AI 智能分析摘要</div>
       <div class="analysis-content">${cleanAnalysis}</div>
     </div>
     
