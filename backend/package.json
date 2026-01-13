@@ -1,0 +1,19 @@
+{
+  "name": "gold-price-monitor-backend",
+  "version": "1.0.0",
+  "description": "黄金价格检测系统后端 - 支持DeepSeek量化分析",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "hono": "^4.6.0",
+    "openai": "^4.70.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0",
+    "@cloudflare/workers-types": "^4.20241127.0"
+  }
+}
