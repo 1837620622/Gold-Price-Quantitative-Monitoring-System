@@ -422,16 +422,19 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
     ? `触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
     : '每30分钟自动推送 - 实时行情';
 
-  // 简化AI分析内容（移除markdown格式，限制长度避免推送不完整）
+  // 简化AI分析内容（移除markdown格式，添加换行，限制长度）
   const cleanAnalysis = analysisText
     .replace(/#{1,6}\s*/g, '')
     .replace(/\*\*/g, '')
     .replace(/\*/g, '')
-    .replace(/---/g, '')
+    .replace(/---/g, '<br><br>')
     .replace(/═+/g, '')
     .replace(/▶/g, '')
     .replace(/•/g, '-')
-    .substring(0, 500) + '...';
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>')
+    .replace(/(\d+\.\s)/g, '<br><br>$1')
+    .substring(0, 600) + '...';
 
   return `
 <!DOCTYPE html>
