@@ -520,7 +520,7 @@ async function sendPushPlusNotification(env, title, content, template = 'html') 
   try {
     // 从环境变量读取配置
     const token = env.PUSHPLUS_TOKEN;
-    const option = env.PUSHPLUS_OPTION;  // 企业微信应用编码
+    const topic = env.PUSHPLUS_TOPIC;  // 群组编码（用于一对多推送）
     
     if (!token) {
       console.error('PushPlus Token 未配置');
@@ -528,15 +528,19 @@ async function sendPushPlusNotification(env, title, content, template = 'html') 
     }
     
     // 根据 PushPlus 官方文档构建请求
-    // 使用 channel: 'cp' 和 option 参数实现企业微信应用群组推送
+    // 使用微信公众号渠道，如果配置了 topic 则推送给群组成员
     const requestBody = {
       token: token,                          // 用户Token（从环境变量读取）
       title: title,                          // 消息标题
       content: content,                      // 消息内容
       template: template,                    // 发送模板（html/txt/json/markdown）
-      channel: 'cp',                         // 发送渠道：企业微信应用
-      option: option,                        // 企业微信应用编码
+      channel: 'wechat',                     // 发送渠道：微信公众号
     };
+    
+    // 如果配置了群组编码，则推送给群组所有成员
+    if (topic) {
+      requestBody.topic = topic;
+    }
     
     const response = await fetch(PUSHPLUS_API_URL, {
       method: 'POST',
