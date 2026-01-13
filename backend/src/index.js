@@ -20,7 +20,7 @@ const app = new Hono();
 // 官方文档：https://www.pushplus.plus/doc/guide/api.html
 // 环境变量配置：
 //   - PUSHPLUS_TOKEN: 用户Token
-//   - PUSHPLUS_TOPIC: 群组编码（用于一对多推送）
+//   - PUSHPLUS_OPTION: 企业微信应用编码（用于cp渠道群组推送）
 // ============================================================
 const PUSHPLUS_API_URL = 'https://www.pushplus.plus/send';
 
@@ -520,7 +520,7 @@ async function sendPushPlusNotification(env, title, content, template = 'html') 
   try {
     // 从环境变量读取配置
     const token = env.PUSHPLUS_TOKEN;
-    const topic = env.PUSHPLUS_TOPIC;
+    const option = env.PUSHPLUS_OPTION;  // 企业微信应用编码
     
     if (!token) {
       console.error('PushPlus Token 未配置');
@@ -528,19 +528,15 @@ async function sendPushPlusNotification(env, title, content, template = 'html') 
     }
     
     // 根据 PushPlus 官方文档构建请求
-    // 使用 topic 参数实现群组一对多推送
+    // 使用 channel: 'cp' 和 option 参数实现企业微信应用群组推送
     const requestBody = {
       token: token,                          // 用户Token（从环境变量读取）
       title: title,                          // 消息标题
       content: content,                      // 消息内容
       template: template,                    // 发送模板（html/txt/json/markdown）
-      channel: 'wechat',                     // 发送渠道：微信公众号
+      channel: 'cp',                         // 发送渠道：企业微信应用
+      option: option,                        // 企业微信应用编码
     };
-    
-    // 如果配置了群组编码，则添加 topic 参数
-    if (topic) {
-      requestBody.topic = topic;
-    }
     
     const response = await fetch(PUSHPLUS_API_URL, {
       method: 'POST',
