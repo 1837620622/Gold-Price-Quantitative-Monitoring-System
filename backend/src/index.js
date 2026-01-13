@@ -16,14 +16,13 @@ import { cors } from 'hono/cors';
 const app = new Hono();
 
 // ============================================================
-// PushPlus 推送配置
+// PushPlus 推送配置（从环境变量读取，保护敏感信息）
 // 官方文档：https://www.pushplus.plus/doc/guide/api.html
+// 环境变量配置：
+//   - PUSHPLUS_TOKEN: 用户Token
+//   - PUSHPLUS_TOPIC: 群组编码（用于一对多推送）
 // ============================================================
-const PUSHPLUS_CONFIG = {
-  token: '7dba765a07dc482487fefdc88cdd7e11',     // 用户Token
-  topic: 'ogIU755rfW4_6zCpphCbpuGLeZQ4',         // 群组编码（用于一对多推送）
-  apiUrl: 'https://www.pushplus.plus/send',
-};
+const PUSHPLUS_API_URL = 'https://www.pushplus.plus/send';
 
 // ============================================================
 // 价格监控状态（用于检测涨跌幅变化）
@@ -517,23 +516,38 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
 // ============================================================
 // 工具函数：发送 PushPlus 推送（群组推送）
 // ============================================================
-async function sendPushPlusNotification(title, content, template = 'html') {
+async function sendPushPlusNotification(env, title, content, template = 'html') {
   try {
+    // 从环境变量读取配置
+    const token = env.PUSHPLUS_TOKEN;
+    const topic = env.PUSHPLUS_TOPIC;
+    
+    if (!token) {
+      console.error('PushPlus Token 未配置');
+      return { success: false, msg: 'PUSHPLUS_TOKEN 环境变量未配置' };
+    }
+    
     // 根据 PushPlus 官方文档构建请求
     // 使用 topic 参数实现群组一对多推送
-    const response = await fetch(PUSHPLUS_CONFIG.apiUrl, {
+    const requestBody = {
+      token: token,                          // 用户Token（从环境变量读取）
+      title: title,                          // 消息标题
+      content: content,                      // 消息内容
+      template: template,                    // 发送模板（html/txt/json/markdown）
+      channel: 'wechat',                     // 发送渠道：微信公众号
+    };
+    
+    // 如果配置了群组编码，则添加 topic 参数
+    if (topic) {
+      requestBody.topic = topic;
+    }
+    
+    const response = await fetch(PUSHPLUS_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        token: PUSHPLUS_CONFIG.token,       // 用户Token
-        title: title,                        // 消息标题
-        content: content,                    // 消息内容
-        template: template,                  // 发送模板（html/txt/json/markdown）
-        topic: PUSHPLUS_CONFIG.topic,        // 群组编码（一对多推送）
-        channel: 'wechat',                   // 发送渠道：微信公众号
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const result = await response.json();
@@ -606,8 +620,8 @@ async function executePush(env, priceData, pushType = 'scheduled') {
   // 生成HTML内容
   const htmlContent = generatePushHtml(priceData, analysisText, pushType);
   
-  // 发送推送
-  const result = await sendPushPlusNotification(title, htmlContent, 'html');
+  // 发送推送（传递 env 参数以获取环境变量）
+  const result = await sendPushPlusNotification(env, title, htmlContent, 'html');
   
   // 更新推送状态
   if (result.success) {
