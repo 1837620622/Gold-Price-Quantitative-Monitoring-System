@@ -3,8 +3,8 @@
  * 黄金价格检测系统 - Cloudflare Workers 后端服务
  * ============================================================
  * 数据源（均为免费公共接口，无需 API Key）：
- * - 国际金价 XAU/USD：api.gold-api.com
- * - 美元兑人民币汇率：open.er-api.com（仅在国内金价获取失败时用于估算）
+ * - 国际金价 XAU/USD / 白银：api.gold-api.com
+ * - 美元兑人民币汇率：open.er-api.com（用于溢价计算，及国内价缺失时估算）
  * - 国内 AU9999 实时行情 / 日K线：东方财富 push2 / push2his
  *
  * 可选：
@@ -17,7 +17,7 @@
  *   PUSHPLUS_TOPIC       PushPlus 群组编码（可选）
  *   MODELSCOPE_API_KEY   ModelScope API Key（可选）
  * 可选绑定：
- *   GOLD_KV              KV 命名空间，持久化推送/预警状态（未绑定时状态只存在内存）
+ *   GOLD_KV              KV 命名空间，持久化推送/预警/分析缓存（未绑定时只存在内存）
  * ============================================================
  */
 
@@ -42,17 +42,24 @@ const FETCH_TIMEOUT_MS = 8000;
 const AI_TIMEOUT_MS = 30000;
 const OZ_TO_GRAM = 31.1035;
 const MAX_KLINE_DAYS = 250;
+const DEFAULT_KLINE_DAYS = 30;
 
 // 合理性校验范围：超出即视为数据异常（如单位错误），拒绝使用
 const SANE_INTL_RANGE = [100, 100000];   // 美元/盎司
 const SANE_DOMESTIC_RANGE = [100, 5000]; // 元/克
+const SANE_FX_RANGE = [1, 20];           // 美元兑人民币
 
 // 预警参数
 const ALERT_THRESHOLD_PERCENT = 1;       // 涨跌幅达到 1% 即预警（不设上限）
-const ALERT_REPEAT_MOVE_PERCENT = 0.5;   // 同方向再次预警需价格相对上次预警价再变动 0.5%
+const ALERT_REPEAT_MOVE_PERCENT = 0.5;   // 同日同方向再次预警需价格相对上次预警价再变动 0.5%
 // 定时推送间隔 30 分钟；Cron 实际触发有少量抖动，留 2 分钟容差避免漏推
 const SCHEDULED_MIN_GAP_MS = 28 * 60 * 1000;
-const ANALYSIS_CACHE_MS = 15 * 60 * 1000;
+
+// 缓存时长
+const SNAPSHOT_TTL_MS = 15 * 1000;           // 行情快照：削弱前端轮询对上游的压力
+const FX_TTL_MS = 6 * 60 * 60 * 1000;        // 汇率每日更新，缓存 6 小时
+const KLINE_TTL_MS = 5 * 60 * 1000;          // 日K线
+const ANALYSIS_CACHE_MS = 15 * 60 * 1000;    // AI 分析结果（写入 KV，跨实例共享）
 
 // ============================================================
 // 工具函数：基础
@@ -61,6 +68,10 @@ const round2 = (v) => Math.round(v * 100) / 100;
 const isFiniteNumber = (v) => typeof v === 'number' && Number.isFinite(v);
 const inRange = (v, [min, max]) => isFiniteNumber(v) && v >= min && v <= max;
 const fmt = (v, digits = 2) => (isFiniteNumber(v) ? v.toFixed(digits) : '--');
+const signed = (v) => (isFiniteNumber(v) ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}` : '--');
+const signedPercent = (v) => (isFiniteNumber(v) ? `${signed(v)}%` : '--');
+const toneOf = (v) => (!isFiniteNumber(v) ? 'tone-flat' : v >= 0 ? 'tone-up' : 'tone-down');
+const arrowOf = (v) => (!isFiniteNumber(v) ? '' : v >= 0 ? '▲ ' : '▼ ');
 
 function escapeHtml(str) {
   return String(str)
@@ -79,7 +90,7 @@ function safeEqual(a, b) {
   return diff === 0;
 }
 
-function clampDays(value, fallback = 30) {
+function clampDays(value, fallback = DEFAULT_KLINE_DAYS) {
   const n = Number.parseInt(value, 10);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(Math.max(n, 1), MAX_KLINE_DAYS);
@@ -88,6 +99,10 @@ function clampDays(value, fallback = 30) {
 // 上海时区日期（YYYY-MM-DD），用于判断"同一天"
 function shanghaiDate(ts) {
   return new Date(ts + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+function nowInShanghai() {
+  return new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
 }
 
 async function fetchJson(url, { headers = {}, timeoutMs = FETCH_TIMEOUT_MS, ...init } = {}) {
@@ -107,8 +122,32 @@ async function fetchJson(url, { headers = {}, timeoutMs = FETCH_TIMEOUT_MS, ...i
 }
 
 // ============================================================
-// 状态存储：优先使用 KV（持久化），未绑定时退回内存
-// 注意：内存状态在 Worker 实例回收后会丢失，建议绑定 GOLD_KV
+// 进程内缓存 + 并发合并（同一个 key 同时只发起一次上游请求）
+// 失败不缓存；isCacheable 返回 false 时也不缓存
+// ============================================================
+const memoCache = new Map();
+const memoInflight = new Map();
+
+function memo(key, ttlMs, loader, isCacheable = () => true) {
+  const hit = memoCache.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return Promise.resolve(hit.value);
+  if (memoInflight.has(key)) return memoInflight.get(key);
+
+  const task = (async () => {
+    try {
+      const value = await loader();
+      if (isCacheable(value)) memoCache.set(key, { at: Date.now(), value });
+      return value;
+    } finally {
+      memoInflight.delete(key);
+    }
+  })();
+  memoInflight.set(key, task);
+  return task;
+}
+
+// ============================================================
+// 状态存储：优先使用 KV（跨实例持久化），未绑定时退回内存
 // ============================================================
 const memoryState = {};
 
@@ -132,21 +171,21 @@ async function setState(env, key, value) {
 
 // ============================================================
 // 行情：国际金价（gold-api.com，免费无需 Key）
+// 注意：该接口不提供涨跌幅/昨收，相关字段返回 null，不伪造数值
 // ============================================================
 async function fetchInternationalGoldPrice() {
-  const data = await fetchJson(`${GOLD_API_URL}/XAU`);
-  const price = Number(data?.price);
-  if (!inRange(price, SANE_INTL_RANGE)) throw new Error(`国际金价数据异常: ${data?.price}`);
+  const [goldR, silverR] = await Promise.allSettled([
+    fetchJson(`${GOLD_API_URL}/XAU`),
+    fetchJson(`${GOLD_API_URL}/XAG`),
+  ]);
+  if (goldR.status === 'rejected') throw goldR.reason;
+
+  const price = Number(goldR.value?.price);
+  if (!inRange(price, SANE_INTL_RANGE)) throw new Error(`国际金价数据异常: ${goldR.value?.price}`);
 
   // 白银为辅助信息，失败不影响主数据
-  let silverPrice = null;
-  try {
-    const silver = await fetchJson(`${GOLD_API_URL}/XAG`);
-    const s = Number(silver?.price);
-    if (isFiniteNumber(s) && s > 0) silverPrice = round2(s);
-  } catch (error) {
-    console.error('白银价格获取失败:', error.message);
-  }
+  if (silverR.status === 'rejected') console.error('白银价格获取失败:', silverR.reason?.message);
+  const silver = silverR.status === 'fulfilled' ? Number(silverR.value?.price) : NaN;
 
   return {
     success: true,
@@ -154,23 +193,24 @@ async function fetchInternationalGoldPrice() {
     currency: 'USD',
     unit: '盎司',
     price: round2(price),
-    // 该接口不提供涨跌幅与昨收，返回 null 而不是伪造数值
     change: null,
     changePercent: null,
     previousClose: null,
-    silverPrice,
-    timestamp: data.updatedAt || new Date().toISOString(),
+    silverPrice: isFiniteNumber(silver) && silver > 0 ? round2(silver) : null,
+    timestamp: goldR.value?.updatedAt || new Date().toISOString(),
   };
 }
 
 // ============================================================
-// 行情：美元兑人民币（open.er-api.com，免费无需 Key）
+// 行情：美元兑人民币（open.er-api.com，免费无需 Key，每日更新，缓存 6 小时）
 // ============================================================
-async function fetchUsdCnyRate() {
-  const data = await fetchJson(FX_API_URL);
-  const rate = Number(data?.rates?.CNY);
-  if (!isFiniteNumber(rate) || rate <= 0) throw new Error('汇率数据异常');
-  return rate;
+function getUsdCnyRate() {
+  return memo('fx', FX_TTL_MS, async () => {
+    const data = await fetchJson(FX_API_URL);
+    const rate = Number(data?.rates?.CNY);
+    if (!inRange(rate, SANE_FX_RANGE)) throw new Error('汇率数据异常');
+    return Math.round(rate * 10000) / 10000;
+  });
 }
 
 // ============================================================
@@ -219,7 +259,6 @@ async function fetchEastmoneyAU9999() {
 // 国内行情不可用时：由国际金价 × 汇率 ÷ 31.1035 估算。
 // 估算价不含国内溢价，且没有真实涨跌幅，因此标记 estimated，预警逻辑会忽略它。
 function estimateDomesticPrice(intl, usdCny) {
-  const price = round2((intl.price * usdCny) / OZ_TO_GRAM);
   return {
     success: true,
     source: 'estimated',
@@ -228,7 +267,7 @@ function estimateDomesticPrice(intl, usdCny) {
     name: '黄金9999（估算）',
     currency: 'CNY',
     unit: '克',
-    price,
+    price: round2((intl.price * usdCny) / OZ_TO_GRAM),
     open: null,
     high: null,
     low: null,
@@ -243,49 +282,62 @@ function estimateDomesticPrice(intl, usdCny) {
   };
 }
 
+// 国内溢价（相对国际金价按汇率折算为元/克）；估算价没有意义，返回 null
+function calcPremium(domestic, international, usdCny) {
+  if (!domestic || domestic.estimated || !international || !isFiniteNumber(usdCny)) return null;
+  const theoretical = (international.price * usdCny) / OZ_TO_GRAM;
+  return round2((domestic.price / theoretical - 1) * 100);
+}
+
+function settle(result, label, errors) {
+  if (result.status === 'fulfilled') return result.value;
+  const message = result.reason?.message ?? '未知错误';
+  errors.push(`${label}: ${message}`);
+  console.error(`${label}获取失败:`, message);
+  return null;
+}
+
 // ============================================================
-// 行情快照：国际 + 国内并行获取，失败的一方返回 null，不伪造数据
+// 行情快照：三路并行获取；失败的一方为 null，绝不伪造数据
 // ============================================================
-async function getMarketSnapshot() {
-  const errors = [];
-  const [intlResult, domResult] = await Promise.allSettled([
+async function loadMarketSnapshot() {
+  const [intlR, domR, fxR] = await Promise.allSettled([
     fetchInternationalGoldPrice(),
     fetchEastmoneyAU9999(),
+    getUsdCnyRate(),
   ]);
 
-  const international = intlResult.status === 'fulfilled' ? intlResult.value : null;
-  if (!international) {
-    errors.push(`国际金价: ${intlResult.reason?.message}`);
-    console.error('国际金价获取失败:', intlResult.reason?.message);
+  const errors = [];
+  const international = settle(intlR, '国际金价', errors);
+  let domestic = settle(domR, '国内金价', errors);
+  const usdCny = settle(fxR, '汇率', errors);
+
+  if (!domestic && international && usdCny) {
+    domestic = estimateDomesticPrice(international, usdCny);
   }
 
-  let domestic = domResult.status === 'fulfilled' ? domResult.value : null;
-  if (!domestic) {
-    errors.push(`国内金价: ${domResult.reason?.message}`);
-    console.error('国内金价获取失败:', domResult.reason?.message);
-    if (international) {
-      try {
-        const rate = await fetchUsdCnyRate();
-        domestic = estimateDomesticPrice(international, rate);
-      } catch (error) {
-        errors.push(`汇率: ${error.message}`);
-        console.error('汇率获取失败:', error.message);
-      }
-    }
-  }
+  return {
+    international,
+    domestic,
+    fx: usdCny ? { usdCny, source: 'open.er-api.com' } : null,
+    premiumPercent: calcPremium(domestic, international, usdCny),
+    errors,
+    timestamp: new Date().toISOString(),
+  };
+}
 
-  return { international, domestic, errors, timestamp: new Date().toISOString() };
+function getMarketSnapshot() {
+  return memo('snapshot', SNAPSHOT_TTL_MS, loadMarketSnapshot, (s) => Boolean(s.international || s.domestic));
 }
 
 // ============================================================
 // 行情：国内 AU9999 日K线（东方财富，真实历史数据）
 // 返回字段顺序：日期,开盘,收盘,最高,最低,成交量
 // ============================================================
-async function fetchDailyKline(days = 30) {
-  const limit = clampDays(days);
+async function fetchDailyKline(days) {
   const result = await fetchJson(
     `${EASTMONEY_KLINE_URL}?secid=118.AU9999&fields1=f1,f2,f3,f4,f5,f6` +
-      `&fields2=f51,f52,f53,f54,f55,f56&klt=101&fqt=0&end=20500101&lmt=${limit}`,
+      `&fields2=f51,f52,f53,f54,f55,f56&klt=101&fqt=0&end=20500101&lmt=${days}`,
     { headers: { Referer: 'https://quote.eastmoney.com/' } }
   );
   const lines = result?.data?.klines;
@@ -307,25 +359,38 @@ async function fetchDailyKline(days = 30) {
     .filter((k) => [k.open, k.close, k.high, k.low].every(isFiniteNumber));
 }
 
+function getDailyKline(days) {
+  return memo(`kline:${days}`, KLINE_TTL_MS, () => fetchDailyKline(days));
+}
+
 // ============================================================
-// 工具函数：DeepSeek（ModelScope）量化分析
+// AI 量化分析（ModelScope：DeepSeek-V3.2 → Qwen2.5-72B → 规则摘要）
 // ============================================================
+const MODEL_LABELS = {
+  'DeepSeek-V3.2': 'DeepSeek-V3.2',
+  'Qwen2.5-72B': 'Qwen2.5-72B',
+  'auto-analysis': '规则摘要（未启用AI）',
+};
+
 function buildRuleBasedAnalysis(snapshot, weekChange) {
-  const intl = snapshot.international;
-  const dom = snapshot.domestic;
-  const pct = dom.changePercent ?? 0;
-  const trend = pct >= 0 ? '上涨' : '下跌';
-  const suggestion = Math.abs(pct) > 1 ? '波动较大，建议观望' : '波动平稳，可适量配置';
+  const { international: intl, domestic: dom, premiumPercent } = snapshot;
+  const pct = dom.changePercent;
+  const hasChange = isFiniteNumber(pct);
+  const trend = !hasChange ? '暂无涨跌数据（估算价）' : pct >= 0 ? '上涨' : '下跌';
+  const suggestion = !hasChange
+    ? '国内价为估算值，暂不给出操作建议，请以交易所实时价为准'
+    : Math.abs(pct) > 1 ? '波动较大，建议观望' : '波动平稳，可适量配置';
+  const premiumLine = isFiniteNumber(premiumPercent) ? `国内溢价（参考）：${signed(premiumPercent)}%\n` : '';
 
   return `【自动分析报告】
 
 当前市场状态：${trend}
 国际金价：${intl ? `${fmt(intl.price)} 美元/盎司` : '暂无数据'}
 国内AU9999：${fmt(dom.price)} 元/克${dom.estimated ? '（估算价）' : ''}
-
+${premiumLine}
 技术面分析：
-- 今日涨跌幅：${dom.changePercent == null ? 'N/A' : `${fmt(dom.changePercent)}%`}
-- 近7日涨跌幅：${weekChange == null ? 'N/A' : `${fmt(weekChange)}%`}
+- 今日涨跌幅：${hasChange ? signedPercent(pct) : 'N/A'}
+- 近7日涨跌幅：${weekChange == null ? 'N/A' : signedPercent(weekChange)}
 - 今日区间：${dom.low == null || dom.high == null ? 'N/A' : `${fmt(dom.low)} - ${fmt(dom.high)} 元`}
 
 投资建议：${suggestion}
@@ -353,8 +418,7 @@ async function callModelScope(apiKey, model, messages, options) {
 }
 
 async function analyzeWithDeepSeek(env, snapshot, klineData) {
-  const dom = snapshot.domestic;
-  const intl = snapshot.international;
+  const { international: intl, domestic: dom, premiumPercent } = snapshot;
   const apiKey = env.MODELSCOPE_API_KEY;
 
   const recent = klineData.slice(-7);
@@ -371,31 +435,27 @@ async function analyzeWithDeepSeek(env, snapshot, klineData) {
     };
   }
 
-  const estimateNote = dom.estimated
-    ? '\n注意：国内价为根据国际金价与汇率估算，并非交易所实时价，请据此谨慎判断。'
-    : '';
+  const prompt = `作为专业的黄金量化分析师，请根据以下【实时数据】提供量化分析报告。
 
-  const prompt = `作为专业的黄金量化分析师，请根据以下【实时数据】提供专业的量化分析报告。
-
-【实时行情数据】（数据时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}）
+【实时行情数据】（数据时间：${nowInShanghai()}）
 
 ▶ 国际金价 XAU/USD
   • 最新价格：${intl ? fmt(intl.price) : 'N/A'} 美元/盎司
-  • 数据来源：${intl?.source || 'N/A'}
+  • 白银：${intl ? fmt(intl.silverPrice) : 'N/A'} 美元/盎司
+  • 美元兑人民币：${snapshot.fx ? fmt(snapshot.fx.usdCny, 4) : 'N/A'}
 
 ▶ 国内AU9999
-  • 最新价格：${fmt(dom.price)} 元/克${dom.estimated ? '（估算）' : ''}
+  • 最新价格：${fmt(dom.price)} 元/克${dom.estimated ? '（估算价，非交易所实时价）' : ''}
   • 今日开盘：${fmt(dom.open)} 元/克
   • 最高价：${fmt(dom.high)} 元/克
   • 最低价：${fmt(dom.low)} 元/克
   • 昨收价：${fmt(dom.previousClose)} 元/克
   • 涨跌额：${fmt(dom.change)} 元
-  • 涨跌幅：${fmt(dom.changePercent)}%
-  • 数据来源：${dom.source}
-${estimateNote}
+  • 涨跌幅：${isFiniteNumber(dom.changePercent) ? `${signed(dom.changePercent)}%` : 'N/A'}
+  • 国内溢价（相对国际金价折算）：${isFiniteNumber(premiumPercent) ? `${signed(premiumPercent)}%` : 'N/A'}
 
 ▶ 近7日走势（真实日K线）
-  • 7日累计涨跌幅：${weekChange == null ? 'N/A' : `${fmt(weekChange)}%`}
+  • 7日累计涨跌幅：${weekChange == null ? 'N/A' : signedPercent(weekChange)}
 
 ═══════════════════════════════════════
 请按以下格式输出专业分析报告，仅基于上述数据，不要编造未提供的数据：
@@ -410,7 +470,7 @@ ${estimateNote}
 - 国内金价支撑位：
 
 ### 3. 技术指标信号
-（基于日内振幅与近7日走势分析动量与波动）
+（基于日内振幅、溢价与近7日走势分析动量与波动）
 
 ### 4. 短线操作建议（1-5个交易日）
 
@@ -447,11 +507,42 @@ ${estimateNote}
   };
 }
 
-// ============================================================
-// 工具函数：推送 HTML 模板
-// ============================================================
+// 量化分析结果：统一入口，并发请求合并，成功调用 AI 的结果写入 KV 缓存
+let analysisInflight = null;
 
-// AI 输出是不可信内容：先截断原文，再转义，最后做有限的排版替换
+async function buildAnalysis(env) {
+  const snapshot = await getMarketSnapshot();
+  if (!snapshot.domestic) {
+    return { success: false, message: '行情暂不可用，请稍后重试', priceData: snapshot, timestamp: new Date().toISOString() };
+  }
+
+  const klineData = await getDailyKline(DEFAULT_KLINE_DAYS).catch(() => []);
+  const analysis = await analyzeWithDeepSeek(env, snapshot, klineData);
+  const payload = { success: true, priceData: snapshot, analysis, timestamp: new Date().toISOString() };
+
+  if (analysis.model !== 'auto-analysis') {
+    await setState(env, 'analysisCache', { at: Date.now(), payload });
+  }
+  return payload;
+}
+
+async function getAnalysis(env) {
+  const cached = await getState(env, 'analysisCache');
+  if (cached && Date.now() - cached.at < ANALYSIS_CACHE_MS) {
+    return { ...cached.payload, cached: true };
+  }
+  if (!analysisInflight) {
+    analysisInflight = buildAnalysis(env).finally(() => {
+      analysisInflight = null;
+    });
+  }
+  return { ...(await analysisInflight), cached: false };
+}
+
+// ============================================================
+// 推送模板（PushPlus HTML）
+// 配色：红涨绿跌（与国内行情习惯一致）；AI 输出先截断、再转义，防止注入
+// ============================================================
 function toPushSummary(analysisText) {
   const raw = String(analysisText || '');
   const truncated = raw.length > 600;
@@ -469,22 +560,35 @@ function toPushSummary(analysisText) {
   return truncated ? `${text}...` : text;
 }
 
+const PUSH_BASE_CSS = `
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #f5f5f5; padding: 12px; font-size: 15px; line-height: 1.6; }
+    .tone-up { color: #ff5b5f; }
+    .tone-down { color: #3ddc84; }
+    .tone-flat { color: #a1a1aa; }
+    .card { background: rgba(255,255,255,0.05); border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.08); }
+    .label { font-size: 13px; color: #c9d1d9; margin-bottom: 6px; }
+    .value { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+    .change { font-size: 15px; font-weight: 600; margin-top: 4px; }
+    .grid { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .grid div { text-align: center; flex: 1; }
+    .grid .k { display: block; font-size: 11px; color: #8b949e; }
+    .grid .v { font-size: 14px; font-weight: 600; color: #e4e4e7; }
+    .footer { text-align: center; padding-top: 12px; font-size: 12px; color: #8b949e; }
+`;
+
 function generatePushHtml(snapshot, analysisText, pushType = 'scheduled') {
-  const intl = snapshot.international || {};
+  const intl = snapshot.international;
   const dom = snapshot.domestic;
-  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-
-  const domChangePercent = dom.changePercent ?? 0;
-  const intlChangePercent = intl.changePercent ?? 0;
-  const domTrend = domChangePercent >= 0 ? 'up' : 'down';
-  const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
-
+  const domPct = dom.changePercent;
+  const intlPct = intl?.changePercent ?? null;
   const pushTypeTitle = pushType === 'alert'
-    ? `金价波动 涨跌${Math.abs(domChangePercent).toFixed(2)}%`
+    ? `金价波动 涨跌${isFiniteNumber(domPct) ? `${Math.abs(domPct).toFixed(2)}%` : '--'}`
     : `实时金价 AU9999 ${fmt(dom.price)}元`;
   const pushTypeDesc = pushType === 'alert'
-    ? `触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
+    ? `触发预警：国内金价涨跌幅达 ${isFiniteNumber(domPct) ? Math.abs(domPct).toFixed(2) : '--'}%`
     : '每30分钟自动推送 - 实时行情';
+  const badgeColor = pushType === 'alert' ? '#dc2626' : '#2563eb';
 
   return `
 <!DOCTYPE html>
@@ -492,96 +596,66 @@ function generatePushHtml(snapshot, analysisText, pushType = 'scheduled') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 50%, #0d1117 100%); color: #fff; padding: 16px; font-size: 16px; line-height: 1.6; }
-    .container { max-width: 420px; margin: 0 auto; background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; border: 1px solid rgba(251,191,36,0.2); }
-    .header { text-align: center; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 2px solid rgba(251,191,36,0.5); }
-    .header h1 { font-size: 22px; color: #fbbf24; margin-bottom: 6px; font-weight: 700; text-shadow: 0 0 20px rgba(251,191,36,0.3); }
-    .header .type-badge { display: inline-block; background: ${pushType === 'alert' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #3b82f6, #2563eb)'}; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
-    .header .time { color: #a1a1aa; font-size: 13px; }
-    .price-section { margin-bottom: 16px; }
-    .price-card { background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); }
-    .price-card.intl { border-left: 5px solid #60a5fa; }
-    .price-card.dom { border-left: 5px solid #fbbf24; }
-    .price-label { font-size: 14px; color: #d1d5db; margin-bottom: 8px; font-weight: 500; }
-    .price-value { font-size: 36px; font-weight: 800; margin-bottom: 4px; letter-spacing: -1px; }
-    .price-value.up { color: #4ade80; text-shadow: 0 0 15px rgba(74,222,128,0.3); }
-    .price-value.down { color: #f87171; text-shadow: 0 0 15px rgba(248,113,113,0.3); }
-    .price-change { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
-    .price-change.up { color: #4ade80; }
-    .price-change.down { color: #f87171; }
-    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .detail-item { text-align: center; }
-    .detail-item .label { font-size: 11px; color: #71717a; display: block; }
-    .detail-item .value { font-size: 14px; color: #e4e4e7; font-weight: 600; }
-    .analysis-section { background: linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(251,191,36,0.05) 100%); border-radius: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(251,191,36,0.25); }
-    .analysis-title { font-size: 15px; color: #fbbf24; margin-bottom: 12px; font-weight: 600; }
-    .analysis-content { font-size: 14px; line-height: 1.8; color: #e4e4e7; }
-    .footer { text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .footer .brand { color: #fbbf24; font-weight: 700; font-size: 15px; margin-bottom: 6px; }
-    .footer .contact { color: #a1a1aa; font-size: 12px; line-height: 1.8; }
-    .footer .watermark { color: #52525b; font-size: 11px; margin-top: 8px; padding: 6px 12px; background: rgba(0,0,0,0.3); border-radius: 6px; display: inline-block; }
+  <style>${PUSH_BASE_CSS}
+    .badge { display: inline-block; background: ${badgeColor}; padding: 4px 12px; border-radius: 16px; font-size: 12px; margin-bottom: 8px; }
+    .title { font-size: 20px; color: #fbbf24; font-weight: 700; margin-bottom: 4px; }
+    .time { color: #8b949e; font-size: 12px; }
+    .analysis { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); }
+    .analysis h4 { color: #fbbf24; font-size: 14px; margin-bottom: 8px; }
+    .analysis p { font-size: 14px; line-height: 1.8; color: #e4e4e7; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="type-badge">${pushTypeDesc}</div>
-      <h1>${escapeHtml(pushTypeTitle)}</h1>
-      <div class="time">更新时间：${now}</div>
-    </div>
+  <div class="card" style="text-align:center">
+    <div class="badge">${escapeHtml(pushTypeDesc)}</div>
+    <div class="title">${escapeHtml(pushTypeTitle)}</div>
+    <div class="time">更新时间：${nowInShanghai()}</div>
+  </div>
 
-    <div class="price-section">
-      <div class="price-card dom">
-        <div class="price-label">[国内] AU9999 ${dom.estimated ? '（估算价）' : '上海黄金交易所'}</div>
-        <div class="price-value ${domTrend}">¥${fmt(dom.price)}</div>
-        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '▲ +' : '▼ '}${domChangePercent.toFixed(2)}%（${domChangePercent >= 0 ? '+' : ''}${fmt(dom.change ?? 0)}元）</div>
-        <div class="detail-grid">
-          <div class="detail-item"><span class="label">开盘</span><span class="value">¥${fmt(dom.open)}</span></div>
-          <div class="detail-item"><span class="label">最高</span><span class="value" style="color:#4ade80">¥${fmt(dom.high)}</span></div>
-          <div class="detail-item"><span class="label">最低</span><span class="value" style="color:#f87171">¥${fmt(dom.low)}</span></div>
-        </div>
-      </div>
-
-      <div class="price-card intl">
-        <div class="price-label">[国际] XAU/USD 现货</div>
-        <div class="price-value ${intlTrend}">$${fmt(intl.price)}</div>
-        <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '▲ +' : '▼ '}${intlChangePercent.toFixed(2)}%</div>
-        <div class="detail-grid">
-          <div class="detail-item"><span class="label">昨收</span><span class="value">$${fmt(intl.previousClose)}</span></div>
-          <div class="detail-item"><span class="label">白银</span><span class="value">$${fmt(intl.silverPrice)}</span></div>
-          <div class="detail-item"><span class="label">来源</span><span class="value">${escapeHtml(intl.source || '--')}</span></div>
-        </div>
-      </div>
+  <div class="card">
+    <div class="label">[国内] AU9999 ${dom.estimated ? '（估算价）' : '上海黄金交易所'}</div>
+    <div class="value ${toneOf(domPct)}">¥${fmt(dom.price)}</div>
+    <div class="change ${toneOf(domPct)}">${arrowOf(domPct)}${signedPercent(domPct)}${isFiniteNumber(dom.change) ? `（${signed(dom.change)}元）` : ''}</div>
+    <div class="grid">
+      <div><span class="k">开盘</span><span class="v">¥${fmt(dom.open)}</span></div>
+      <div><span class="k">最高</span><span class="v tone-up">¥${fmt(dom.high)}</span></div>
+      <div><span class="k">最低</span><span class="v tone-down">¥${fmt(dom.low)}</span></div>
     </div>
+  </div>
 
-    <div class="analysis-section">
-      <div class="analysis-title">AI 智能分析摘要</div>
-      <div class="analysis-content">${toPushSummary(analysisText)}</div>
+  <div class="card">
+    <div class="label">[国际] XAU/USD 现货</div>
+    <div class="value ${toneOf(intlPct)}">$${fmt(intl?.price)}</div>
+    <div class="change ${toneOf(intlPct)}">${arrowOf(intlPct)}${signedPercent(intlPct)}</div>
+    <div class="grid">
+      <div><span class="k">白银</span><span class="v">$${fmt(intl?.silverPrice)}</span></div>
+      <div><span class="k">溢价</span><span class="v">${signedPercent(snapshot.premiumPercent)}</span></div>
+      <div><span class="k">来源</span><span class="v">${escapeHtml(intl?.source || '--')}</span></div>
     </div>
+  </div>
 
-    <div class="footer">
-      <div class="brand">Gold Monitor - 黄金价格智能监控</div>
-      <div class="contact">Vx: 1837620622 | 邮箱: 2040168455@qq.com</div>
-      <div class="watermark">开发者：传康KK | 咸鱼/B站：万能程序员</div>
-    </div>
+  <div class="card analysis">
+    <h4>AI 智能分析摘要</h4>
+    <p>${toPushSummary(analysisText)}</p>
+  </div>
+
+  <div class="footer">
+    <div>Gold Monitor - 黄金价格智能监控</div>
+    <div>Vx: 1837620622 | 邮箱: 2040168455@qq.com</div>
+    <div>开发者：传康KK | 咸鱼/B站：万能程序员</div>
   </div>
 </body>
 </html>`;
 }
 
 function generateQuickPriceHtml(snapshot, pushType = 'scheduled') {
-  const intl = snapshot.international || {};
+  const intl = snapshot.international;
   const dom = snapshot.domestic;
-  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-  const domChangePercent = dom.changePercent ?? 0;
-  const intlChangePercent = intl.changePercent ?? 0;
-  const domTrend = domChangePercent >= 0 ? 'up' : 'down';
-  const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
-  const changeDir = domChangePercent >= 0 ? '上涨' : '下跌';
+  const domPct = dom.changePercent;
+  const intlPct = intl?.changePercent ?? null;
+  const changeDir = isFiniteNumber(domPct) && domPct < 0 ? '下跌' : '上涨';
   const pushTypeTitle = pushType === 'alert'
-    ? `黄金价格${changeDir} ${Math.abs(domChangePercent).toFixed(2)}%`
+    ? `黄金价格${changeDir} ${isFiniteNumber(domPct) ? Math.abs(domPct).toFixed(2) : '--'}%`
     : '黄金实时行情';
 
   return `
@@ -590,68 +664,31 @@ function generateQuickPriceHtml(snapshot, pushType = 'scheduled') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #fff; padding: 0; }
-    .container { max-width: 100%; background: linear-gradient(180deg, #161b22 0%, #0d1117 100%); }
-    .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; text-align: center; border-bottom: 3px solid #fbbf24; }
-    .header h1 { font-size: 24px; color: #fbbf24; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
-    .header .subtitle { font-size: 13px; color: #8b949e; }
-    .price-section { padding: 20px; }
-    .price-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #fbbf24; }
-    .price-card.intl { border-left-color: #58a6ff; }
-    .price-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .price-label { font-size: 15px; color: #c9d1d9; font-weight: 600; }
-    .price-badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(251,191,36,0.2); color: #fbbf24; }
-    .price-badge.intl { background: rgba(88,166,255,0.2); color: #58a6ff; }
-    .price-main { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
-    .price-value { font-size: 42px; font-weight: 900; letter-spacing: -2px; }
-    .price-value.up { color: #3fb950; }
-    .price-value.down { color: #f85149; }
-    .price-unit { font-size: 16px; color: #8b949e; }
-    .price-change { font-size: 18px; font-weight: 700; }
-    .price-change.up { color: #3fb950; }
-    .price-change.down { color: #f85149; }
-    .footer { text-align: center; padding: 15px 20px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1); }
-    .footer-brand { color: #fbbf24; font-weight: 700; font-size: 14px; margin-bottom: 4px; }
-    .footer-dev { color: #484f58; font-size: 11px; }
+  <style>${PUSH_BASE_CSS}
+    .title { font-size: 20px; color: #fbbf24; font-weight: 800; text-align: center; margin-bottom: 4px; }
+    .sub { font-size: 12px; color: #8b949e; text-align: center; margin-bottom: 12px; }
+    .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(251,191,36,0.2); color: #fbbf24; }
+    .tag.intl { background: rgba(88,166,255,0.2); color: #58a6ff; }
+    .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>${escapeHtml(pushTypeTitle)}</h1>
-      <div class="subtitle">${now} | Gold Monitor</div>
-    </div>
-    <div class="price-section">
-      <div class="price-card">
-        <div class="price-header">
-          <span class="price-label">国内AU9999</span>
-          <span class="price-badge">${dom.estimated ? '估算价' : '上海黄金'}</span>
-        </div>
-        <div class="price-main">
-          <span class="price-value ${domTrend}">${fmt(dom.price)}</span>
-          <span class="price-unit">元/克</span>
-        </div>
-        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '+' : ''}${domChangePercent.toFixed(2)}% ${changeDir}</div>
-      </div>
-      <div class="price-card intl">
-        <div class="price-header">
-          <span class="price-label">国际XAU/USD</span>
-          <span class="price-badge intl">现货</span>
-        </div>
-        <div class="price-main">
-          <span class="price-value ${intlTrend}">${fmt(intl.price)}</span>
-          <span class="price-unit">美元/盎司</span>
-        </div>
-        <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '+' : ''}${intlChangePercent.toFixed(2)}%</div>
-      </div>
-    </div>
-    <div class="footer">
-      <div class="footer-brand">Gold Monitor - 黄金价格监控</div>
-      <div class="footer-dev">开发者：传康KK</div>
-    </div>
+  <div class="title">${escapeHtml(pushTypeTitle)}</div>
+  <div class="sub">${nowInShanghai()} | Gold Monitor</div>
+
+  <div class="card">
+    <div class="row"><span class="label">国内 AU9999</span><span class="tag">${dom.estimated ? '估算价' : '上海黄金'}</span></div>
+    <div class="value ${toneOf(domPct)}">${fmt(dom.price)} <span style="font-size:14px;color:#8b949e">元/克</span></div>
+    <div class="change ${toneOf(domPct)}">${arrowOf(domPct)}${signedPercent(domPct)}</div>
   </div>
+
+  <div class="card">
+    <div class="row"><span class="label">国际 XAU/USD</span><span class="tag intl">现货</span></div>
+    <div class="value ${toneOf(intlPct)}">${fmt(intl?.price)} <span style="font-size:14px;color:#8b949e">美元/盎司</span></div>
+    <div class="change ${toneOf(intlPct)}">${arrowOf(intlPct)}${signedPercent(intlPct)}</div>
+  </div>
+
+  <div class="footer">Gold Monitor - 黄金价格监控 | 开发者：传康KK</div>
 </body>
 </html>`;
 }
@@ -669,16 +706,15 @@ async function sendPushPlusNotification(env, title, content, template = 'html') 
   const requestBody = { token, title, content, template, channel: 'wechat' };
   if (env.PUSHPLUS_TOPIC) requestBody.topic = env.PUSHPLUS_TOPIC;
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     const response = await fetch(PUSHPLUS_API_URL, {
       method: 'POST',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
-    }).finally(() => clearTimeout(timer));
-
+    });
     const result = await response.json();
     if (result.code === 200) {
       console.log('PushPlus 推送成功:', result.msg);
@@ -689,6 +725,8 @@ async function sendPushPlusNotification(env, title, content, template = 'html') 
   } catch (error) {
     console.error('PushPlus 推送异常:', error.message);
     return { success: false, msg: '推送请求异常' };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -704,8 +742,7 @@ function evaluateAlert(domestic, lastAlert) {
   if (Math.abs(pct) < ALERT_THRESHOLD_PERCENT) return false;
 
   const direction = pct >= 0 ? 'up' : 'down';
-  const today = shanghaiDate(Date.now());
-  if (lastAlert && lastAlert.date === today && lastAlert.direction === direction) {
+  if (lastAlert && lastAlert.date === shanghaiDate(Date.now()) && lastAlert.direction === direction) {
     const movePercent = Math.abs((domestic.price - lastAlert.price) / lastAlert.price) * 100;
     if (movePercent < ALERT_REPEAT_MOVE_PERCENT) return false;
   }
@@ -726,7 +763,7 @@ async function recordPush(env, dom, pushType) {
   if (pushType === 'alert') {
     await setState(env, 'lastAlert', {
       price: dom.price,
-      direction: (dom.changePercent ?? 0) >= 0 ? 'up' : 'down',
+      direction: dom.changePercent >= 0 ? 'up' : 'down',
       time: now,
       date: shanghaiDate(now),
     });
@@ -734,31 +771,31 @@ async function recordPush(env, dom, pushType) {
 }
 
 // ============================================================
-// 执行推送：先发价格，再异步发送 AI 分析
+// 执行推送：先发价格；价格发送成功后再异步发送 AI 分析
 // waitUntil 可选：HTTP 请求和 Cron 都会传入，保证后台任务不被提前终止
 // ============================================================
 async function executePush(env, snapshot, pushType = 'scheduled', waitUntil = null) {
   const dom = snapshot.domestic;
   if (!dom) return { success: false, msg: '国内金价不可用，已跳过推送' };
+  if (pushType === 'alert' && !isFiniteNumber(dom.changePercent)) {
+    return { success: false, msg: '国内价为估算值，无涨跌幅，不发送预警' };
+  }
 
-  const changePercent = dom.changePercent ?? 0;
-  const changeDir = changePercent >= 0 ? '上涨' : '下跌';
+  const pct = dom.changePercent;
   const priceTitle = pushType === 'alert'
-    ? `黄金${changeDir}${Math.abs(changePercent).toFixed(2)}% 触发预警`
+    ? `黄金${pct >= 0 ? '上涨' : '下跌'}${Math.abs(pct).toFixed(2)}% 触发预警`
     : `黄金实时行情 ${fmt(dom.price)}元/克`;
 
   const priceResult = await sendPushPlusNotification(env, priceTitle, generateQuickPriceHtml(snapshot, pushType), 'html');
-  if (priceResult.success) {
-    await recordPush(env, dom, pushType);
-  }
+  if (!priceResult.success) return priceResult;
+  await recordPush(env, dom, pushType);
 
   const aiTask = (async () => {
     try {
-      const klineData = await fetchDailyKline(30).catch(() => []);
+      const klineData = await getDailyKline(DEFAULT_KLINE_DAYS).catch(() => []);
       const analysis = await analyzeWithDeepSeek(env, snapshot, klineData);
-      const analysisHtml = generatePushHtml(snapshot, analysis.analysis, pushType);
-      await sendPushPlusNotification(env, `AI智能分析 ${analysis.model}`, analysisHtml, 'html');
-      console.log('AI分析推送完成');
+      const title = `AI智能分析 ${MODEL_LABELS[analysis.model] ?? analysis.model}`;
+      await sendPushPlusNotification(env, title, generatePushHtml(snapshot, analysis.analysis, pushType), 'html');
     } catch (error) {
       console.error('AI分析推送失败:', error.message);
     }
@@ -777,7 +814,7 @@ async function executePush(env, snapshot, pushType = 'scheduled', waitUntil = nu
 async function runMonitorCycle(env, waitUntil = null) {
   const snapshot = await getMarketSnapshot();
   if (!snapshot.domestic) {
-    return { snapshot, alerts: [], pushTriggered: false, pushResult: null, reason: '行情不可用' };
+    return { snapshot, alerts: [], pushTriggered: false, pushResult: null, reason: '国内行情不可用' };
   }
 
   const alerts = [];
@@ -802,7 +839,10 @@ async function runMonitorCycle(env, waitUntil = null) {
 // ============================================================
 // 中间件
 // ============================================================
-app.use('*', secureHeaders());
+app.use('*', secureHeaders({
+  // API 会被另一个域名（前端站点）跨域调用，不能沿用默认的 same-origin
+  crossOriginResourcePolicy: 'cross-origin',
+}));
 app.use('*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'OPTIONS'],
@@ -811,6 +851,7 @@ app.use('*', cors({
 
 // 管理接口鉴权：必须携带 Authorization: Bearer <ADMIN_TOKEN>，未配置时一律拒绝
 async function requireAdmin(c, next) {
+  c.header('Cache-Control', 'no-store');
   const token = c.env?.ADMIN_TOKEN;
   if (!token) {
     return c.json({ success: false, message: '管理接口未启用（ADMIN_TOKEN 未配置）' }, 503);
@@ -833,10 +874,10 @@ function backgroundRunner(c) {
   }
 }
 
-const serverError = (c, message, error) => {
+function serverError(c, message, error) {
   console.error(message, error);
   return c.json({ success: false, message, timestamp: new Date().toISOString() }, 500);
-};
+}
 
 // ============================================================
 // API 路由：健康检查
@@ -845,15 +886,15 @@ app.get('/', (c) => {
   return c.json({
     status: 'ok',
     service: '黄金价格检测系统 API',
-    version: '2.1.0',
+    version: '2.2.0',
     endpoints: [
-      'GET /api/price/international - 获取国际金价',
-      'GET /api/price/domestic - 获取国内AU9999价格',
-      'GET /api/price/all - 获取所有价格数据',
-      'GET /api/kline?days=30 - 获取真实日K线数据',
-      'GET /api/chart/kline?days=30 - 获取K线图配置',
+      'GET /api/price/international - 国际金价（XAU/USD）',
+      'GET /api/price/domestic - 国内AU9999价格（估算时 estimated=true）',
+      'GET /api/price/all - 行情快照（含汇率与国内溢价）',
+      'GET /api/kline?days=30 - 真实日K线（1-250天）',
+      'GET /api/chart/kline?days=30 - K线图配置',
       'POST /api/analyze - 量化分析（结果缓存15分钟）',
-      'GET /api/push/status - 获取推送状态',
+      'GET /api/push/status - 推送状态',
       'POST /api/push/test - 测试推送（需 ADMIN_TOKEN）',
       'POST /api/push/scheduled - 定时推送（需 ADMIN_TOKEN）',
       'POST /api/push/force - 强制推送（需 ADMIN_TOKEN）',
@@ -866,30 +907,25 @@ app.get('/', (c) => {
 // API 路由：价格
 // ============================================================
 app.get('/api/price/international', async (c) => {
-  try {
-    const data = await fetchInternationalGoldPrice();
-    return c.json(data);
-  } catch (error) {
-    return serverError(c, '国际金价获取失败', error);
+  const snapshot = await getMarketSnapshot();
+  if (!snapshot.international) {
+    return c.json({ success: false, message: '国际金价暂不可用', errors: snapshot.errors }, 503);
   }
+  return c.json(snapshot.international);
 });
 
 app.get('/api/price/domestic', async (c) => {
-  try {
-    const data = await fetchEastmoneyAU9999().catch(async (error) => {
-      console.error('国内金价获取失败:', error.message);
-      const intl = await fetchInternationalGoldPrice();
-      return estimateDomesticPrice(intl, await fetchUsdCnyRate());
-    });
-    return c.json(data);
-  } catch (error) {
-    return serverError(c, '国内金价获取失败', error);
+  const snapshot = await getMarketSnapshot();
+  if (!snapshot.domestic) {
+    return c.json({ success: false, message: '国内金价暂不可用', errors: snapshot.errors }, 503);
   }
+  return c.json(snapshot.domestic);
 });
 
 app.get('/api/price/all', async (c) => {
   const snapshot = await getMarketSnapshot();
-  return c.json({ success: Boolean(snapshot.domestic || snapshot.international), ...snapshot });
+  const ok = Boolean(snapshot.domestic || snapshot.international);
+  return c.json({ success: ok, ...snapshot }, ok ? 200 : 503);
 });
 
 // ============================================================
@@ -898,7 +934,7 @@ app.get('/api/price/all', async (c) => {
 app.get('/api/kline', async (c) => {
   const days = clampDays(c.req.query('days'));
   try {
-    const data = await fetchDailyKline(days);
+    const data = await getDailyKline(days);
     return c.json({ success: true, period: `${days}天`, data, timestamp: new Date().toISOString() });
   } catch (error) {
     return serverError(c, 'K线数据获取失败', error);
@@ -956,7 +992,7 @@ function buildKlineChartOption(klineData) {
 app.get('/api/chart/kline', async (c) => {
   const days = clampDays(c.req.query('days'));
   try {
-    const klineData = await fetchDailyKline(days);
+    const klineData = await getDailyKline(days);
     return c.json({
       success: true,
       period: `${days}天`,
@@ -970,37 +1006,25 @@ app.get('/api/chart/kline', async (c) => {
 });
 
 // ============================================================
-// API 路由：AI 量化分析（公开，但结果缓存 15 分钟以控制 AI 调用成本）
+// API 路由：AI 量化分析（公开，结果缓存 15 分钟以控制 AI 调用成本）
 // ============================================================
 app.post('/api/analyze', async (c) => {
   try {
-    const cached = await getState(c.env, 'analysisCache');
-    if (cached && Date.now() - cached.at < ANALYSIS_CACHE_MS) {
-      return c.json({ ...cached.payload, cached: true });
-    }
-
-    const snapshot = await getMarketSnapshot();
-    if (!snapshot.domestic) {
-      return c.json({ success: false, message: '行情暂不可用，请稍后重试', priceData: snapshot }, 503);
-    }
-
-    const klineData = await fetchDailyKline(30).catch(() => []);
-    const analysis = await analyzeWithDeepSeek(c.env, snapshot, klineData);
-    const payload = { success: true, priceData: snapshot, analysis, timestamp: new Date().toISOString() };
-    await setState(c.env, 'analysisCache', { at: Date.now(), payload });
-    return c.json({ ...payload, cached: false });
+    const result = await getAnalysis(c.env);
+    return c.json(result, result.success ? 200 : 503);
   } catch (error) {
     return serverError(c, 'AI 分析失败', error);
   }
 });
 
 // ============================================================
-// 管理接口：推送
+// 管理接口：推送与监控（需 ADMIN_TOKEN）
 // ============================================================
 function priceSummary(snapshot) {
   return {
     international: snapshot.international && { price: snapshot.international.price, changePercent: snapshot.international.changePercent },
     domestic: snapshot.domestic && { price: snapshot.domestic.price, changePercent: snapshot.domestic.changePercent, estimated: snapshot.domestic.estimated },
+    premiumPercent: snapshot.premiumPercent,
   };
 }
 

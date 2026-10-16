@@ -101,7 +101,7 @@
 
 ### 📊 专业图表展示
 - TradingView 国际金价K线图
-- 金投网 AU9999 走势图
+- 东方财富 AU9999 真实日K线（7 / 30 / 90 日，含 MA5 / MA10）
 - 支持多周期切换
 - 专业技术指标
 
@@ -158,8 +158,8 @@
 │                      Gold Monitor                            │
 ├─────────────────────────────────────────────────────────────┤
 │  Frontend (Vue 3 + Vite)                                    │
-│  ├── TailwindCSS 样式框架                                    │
-│  ├── ECharts 图表库                                          │
+│  ├── 自研设计系统（深浅主题，红涨绿跌）                      │
+│  ├── ECharts 图表库（挂载后按需加载）                        │
 │  ├── TradingView 嵌入图表                                    │
 │  └── Marked Markdown渲染                                     │
 ├─────────────────────────────────────────────────────────────┤
@@ -232,7 +232,7 @@ cd ../frontend
 # 安装依赖
 npm install
 
-# 修改API地址（src/App.vue中的API_BASE）
+# 修改API地址（src/api.js 中的 API_BASE）
 
 # 构建并部署
 npm run build
@@ -300,14 +300,21 @@ gold-monitor/
 │   └── 📄 .dev.vars              # 环境变量
 │
 ├── 📂 frontend/                   # 前端应用
+│   ├── 📂 public/
+│   │   ├── 📄 _headers           # Netlify 安全响应头（含 CSP）
+│   │   ├── 📄 favicon.svg
+│   │   └── 📷 qrcode.png         # 订阅二维码
 │   ├── 📂 src/
-│   │   ├── 📄 App.vue            # 主组件
-│   │   ├── 📄 main.js            # 入口文件
-│   │   └── 📄 style.css          # 样式文件
+│   │   ├── 📄 App.vue            # 页面布局与 AI 分析流程
+│   │   ├── 📄 api.js             # 后端 API 封装
+│   │   ├── 📄 format.js          # 数值与时间格式化
+│   │   ├── 📄 style.css          # 设计系统（深浅主题）
+│   │   ├── 📂 components/        # PriceCard / KlineCard / AiCard / AnalysisReport 等
+│   │   ├── 📂 composables/       # useMarket（轮询与状态）/ useTheme（主题）
+│   │   └── 📂 lib/               # ECharts 按需引入 / Markdown 渲染与消毒
 │   ├── 📄 index.html
 │   ├── 📄 package.json
-│   ├── 📄 vite.config.js
-│   └── 📄 tailwind.config.js
+│   └── 📄 vite.config.js
 │
 ├── 📂 docs/                       # 文档资源
 │   ├── 📷 preview-1.png          # 预览图1
