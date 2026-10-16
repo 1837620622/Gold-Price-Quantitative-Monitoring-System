@@ -18,6 +18,12 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
 
 export function renderMarkdown(text) {
   if (!text) return '';
-  const html = marked.parse(String(text), { async: false, gfm: true, breaks: true });
+  let str = String(text);
+  // 优雅转化 DeepSeek-R1 模型的 <think> 思考链标签为专业推演引用框
+  str = str.replace(/<think>([\s\S]*?)<\/think>/gi, (_, thinkContent) => {
+    const cleanContent = thinkContent.trim().replace(/\n/g, '\n> ');
+    return `\n\n> 🧠 **AI 深度量化推理过程**\n>\n> ${cleanContent}\n\n`;
+  });
+  const html = marked.parse(str, { async: false, gfm: true, breaks: true });
   return DOMPurify.sanitize(html);
 }
