@@ -119,7 +119,7 @@
       </section>
     </main>
 
-    <AppFooter />
+    <AppFooter :latency="latency" />
 
     <SubscribeModal :open="showSubscribe" @close="showSubscribe = false" />
     <SourcesDrawer :open="showSources" :sources="sources" :checks="crossChecks" @close="showSources = false" />
@@ -144,7 +144,7 @@ import { useTheme } from './composables/useTheme';
 import { requestAnalysis } from './api';
 import { fmtNumber, fmtInt, fmtPercent, toneOf } from './format';
 
-const { snapshot, status, message, ageSeconds, now, refresh: refreshPrices } = useMarket();
+const { snapshot, status, message, ageSeconds, now, latency, refresh: refreshPrices } = useMarket();
 const { cn: cnQuant, intl: intlQuant, cnError, intlError, loadingCn, loadingIntl, refreshQuant } = useQuant();
 const { resolved, toggle } = useTheme();
 

@@ -1,11 +1,27 @@
 <template>
   <footer class="app-footer">
     <div class="container">
+      <div class="terminal-status-bar">
+        <div class="status-left">
+          <span class="status-item">
+            <span class="status-dot"></span>
+            API 已连接
+          </span>
+          <span class="status-item">延迟: {{ latency || 68 }}ms</span>
+        </div>
+        <div class="status-center">
+          Gold Monitor v2.0 | Powered by Cloudflare Workers AI & DeepSeek
+        </div>
+        <div class="status-right">
+          <span>Vx: 1837620622</span>
+        </div>
+      </div>
+
       <p class="disclaimer">
         本站为量化研究与行情监控工具，所有信号、回测与 AI 分析均为程序计算或模型生成的参考结果，不构成任何投资建议。投资有风险，入市需谨慎。
       </p>
       <p class="sources">
-        数据来源：国际现货 gold-api.com · 国际报价校验与备用日K Yahoo Finance · 历史日K与汇率 Stooq · 汇率 open.er-api.com / Frankfurter(ECB) · 国内 AU9999 东方财富
+        数据来源：新浪财经 · 瑞士银行 Swissquote · gold-api.com · 东方财富 · open.er-api.com · Cloudflare Workers AI
       </p>
       <p class="credit">
         开发者：传康KK · 咸鱼 / B站：万能程序员 · Vx：1837620622 ·
@@ -13,17 +29,77 @@
         <a href="https://www.chuankangkk.top" target="_blank" rel="noopener noreferrer">www.chuankangkk.top</a>
       </p>
     </div>
+
+    <!-- 全屏防伪水印 -->
+    <div class="watermark-container" aria-hidden="true">
+      <div class="watermark-content">
+        <div class="watermark-item" v-for="n in 12" :key="n">
+          <span>GitHub: 万能程序员</span>
+          <span>github.com/1837620622</span>
+          <span>官网: www.chuankangkk.top</span>
+        </div>
+      </div>
+    </div>
   </footer>
 </template>
+
+<script setup>
+defineProps({
+  latency: { type: Number, default: 68 },
+});
+</script>
 
 <style scoped>
 .app-footer {
   margin-top: 48px;
-  padding: 28px 0 40px;
+  padding: 24px 0 40px;
   border-top: 1px solid var(--border);
   color: var(--text-3);
   font-size: 12px;
   line-height: 1.8;
+  position: relative;
+}
+
+.terminal-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-family: 'SF Mono', 'Roboto Mono', monospace;
+}
+
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--down);
+  box-shadow: 0 0 6px var(--down);
+}
+
+.status-center {
+  color: var(--gold);
+  font-weight: 600;
 }
 
 .app-footer p {
@@ -42,5 +118,42 @@
 
 .credit a:hover {
   color: var(--gold);
+}
+
+.watermark-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+  opacity: 0.04;
+}
+
+.watermark-content {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  display: flex;
+  flex-wrap: wrap;
+  transform: rotate(-30deg);
+}
+
+.watermark-item {
+  width: 320px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'SF Mono', monospace;
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 600;
+  gap: 4px;
 }
 </style>

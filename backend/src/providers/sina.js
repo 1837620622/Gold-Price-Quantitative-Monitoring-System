@@ -7,7 +7,7 @@
  */
 
 import { SOURCE_URLS, SANE } from '../config.js';
-import { fetchText } from '../lib/http.js';
+import { fetchText, fetchJson } from '../lib/http.js';
 import { track, declareSource } from '../lib/sources.js';
 import { inRange, isNum, round } from '../lib/util.js';
 
@@ -109,3 +109,21 @@ export async function fetchSinaFx() {
     return { rate: round(rate, 4), asOf: new Date().toISOString() };
   });
 }
+
+export async function fetchSinaXauDaily(days = 250) {
+  return track(NAME, 'sina-xau-daily', async () => {
+    const json = await fetchJson('https://stock2.finance.sina.com.cn/futures/api/json.php/GlobalFuturesService.getGlobalFuturesDailyKLine?symbol=XAU', {
+      headers: SINA_REFERER,
+    });
+    if (!Array.isArray(json) || json.length === 0) throw new Error('新浪国际黄金K线为空');
+    return json.slice(-days).map((d) => ({
+      date: d.date,
+      open: Number(d.open),
+      high: Number(d.high),
+      low: Number(d.low),
+      close: Number(d.close),
+      volume: Number(d.volume) || 0,
+    }));
+  });
+}
+

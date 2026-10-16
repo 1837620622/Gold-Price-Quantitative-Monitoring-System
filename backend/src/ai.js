@@ -235,36 +235,84 @@ async function callSiliconFlow(apiKey, prompt) {
   });
 }
 
-// Cloudflare Workers AI 内置免费大模型调用
+// Cloudflare Workers AI 内置大模型矩阵（分级调用与用量保护）
 async function callWorkersAi(aiBinding, prompt) {
   if (!aiBinding || typeof aiBinding.run !== 'function') throw new Error('Workers AI 未绑定');
-  const candidates = [
-    '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-    '@cf/qwen/qwen2.5-72b-instruct',
-    '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+
+  // 模型分级列表：按质量与神经元配额动态降级
+  const tiers = [
+    // 第一梯队：旗舰级深度推理（适度限制 max_tokens 控制用量）
+    {
+      models: [
+        '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+        '@cf/qwen/qwen2.5-72b-instruct',
+        '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+      ],
+      maxTokens: 1200,
+      tierName: '深度研报',
+    },
+    // 第二梯队：均衡省流高性价比（神经元开销仅为 72B 的 1/4，质量出色）
+    {
+      models: [
+        '@cf/qwen/qwen2.5-14b-instruct',
+      ],
+      maxTokens: 1000,
+      tierName: '均衡分析',
+    },
+    // 第三梯队：极速超低消耗兜底（毫秒级响应，几乎不耗额度）
+    {
+      models: [
+        '@cf/qwen/qwen2.5-7b-instruct',
+        '@cf/meta/llama-3.1-8b-instruct',
+        '@cf/mistral/mistral-7b-instruct-v0.2',
+      ],
+      maxTokens: 800,
+      tierName: '极速快报',
+    },
   ];
-  for (const model of candidates) {
-    try {
-      const response = await aiBinding.run(model, {
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 2000,
-      });
-      const text = response?.response || response?.choices?.[0]?.message?.content;
-      if (text) return { content: text, modelName: `Workers AI (${model.split('/').pop()})` };
-    } catch (e) {
-      console.warn(`Workers AI 模型 ${model} 失败:`, e.message);
+
+  for (const tier of tiers) {
+    for (const model of tier.models) {
+      try {
+        const response = await aiBinding.run(model, {
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: prompt },
+          ],
+          max_tokens: tier.maxTokens,
+          temperature: 0.6,
+        });
+        const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
+        if (text && typeof text === 'string' && text.trim().length > 20) {
+          const shortName = model.split('/').pop();
+          return { content: text.trim(), modelName: `Workers AI · ${shortName} (${tier.tierName})` };
+        }
+      } catch (e) {
+        console.warn(`Workers AI 模型 ${model} 调用失败:`, e.message);
+        // 如果是达到每日配额限制，直接跳到下一梯队或外部
+        if (/quota|rate|limit|exceeded|10000|429/i.test(e.message)) {
+          break;
+        }
+      }
     }
   }
-  throw new Error('Workers AI 尝试均失败');
+  throw new Error('Workers AI 所有模型均未能成功响应');
 }
 
 export async function generateAnalysis(env, snapshot, quant) {
   const prompt = buildPrompt(snapshot, quant);
 
-  // 1. 优先尝试 ModelScope（若配置 Key）
+  // 1. 首选：Cloudflare Workers AI 原生内置大模型（免 Key、零外部延迟、分级省流）
+  if (env?.AI) {
+    try {
+      const result = await callWorkersAi(env.AI, prompt);
+      return { success: true, analysis: result.content, model: result.modelName, timestamp: new Date().toISOString() };
+    } catch (error) {
+      console.warn('Cloudflare Workers AI 尝试后转入备用模型:', error.message);
+    }
+  }
+
+  // 2. 备选：ModelScope（若配置 Key）
   if (env?.MODELSCOPE_API_KEY) {
     for (const candidate of MODELS) {
       try {
@@ -276,7 +324,7 @@ export async function generateAnalysis(env, snapshot, quant) {
     }
   }
 
-  // 2. 尝试 DeepSeek 官方 API
+  // 3. 备选：DeepSeek 官方 API
   if (env?.DEEPSEEK_API_KEY) {
     try {
       const content = await callDeepSeek(env.DEEPSEEK_API_KEY, prompt);
@@ -286,7 +334,7 @@ export async function generateAnalysis(env, snapshot, quant) {
     }
   }
 
-  // 3. 尝试 硅基流动 SiliconFlow
+  // 4. 备选：硅基流动 SiliconFlow
   if (env?.SILICONFLOW_API_KEY) {
     try {
       const content = await callSiliconFlow(env.SILICONFLOW_API_KEY, prompt);
@@ -296,7 +344,7 @@ export async function generateAnalysis(env, snapshot, quant) {
     }
   }
 
-  // 4. 尝试 OpenRouter 免费模型
+  // 5. 备选：OpenRouter 免费模型
   if (env?.OPENROUTER_API_KEY) {
     try {
       const content = await callOpenRouter(env.OPENROUTER_API_KEY, prompt);
@@ -306,17 +354,7 @@ export async function generateAnalysis(env, snapshot, quant) {
     }
   }
 
-  // 5. 尝试 Cloudflare Workers AI 内置免费大模型
-  if (env?.AI) {
-    try {
-      const result = await callWorkersAi(env.AI, prompt);
-      return { success: true, analysis: result.content, model: result.modelName, timestamp: new Date().toISOString() };
-    } catch (error) {
-      console.error('Cloudflare Workers AI 失败:', error.message);
-    }
-  }
-
-  // 6. 无缝降级：专业规则引擎摘要
+  // 6. 无缝降级：专业规则引擎摘要（零用量消耗、100% 高可用）
   return { success: true, analysis: ruleBased(snapshot, quant), model: 'auto-analysis', timestamp: new Date().toISOString() };
 }
 

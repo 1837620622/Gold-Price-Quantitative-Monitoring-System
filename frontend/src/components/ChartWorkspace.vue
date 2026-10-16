@@ -90,6 +90,23 @@
       </p>
     </template>
 
+    <!-- TradingView 国际金价走势 -->
+    <template v-else-if="tab === 'tradingview'">
+      <div class="tradingview-container">
+        <iframe 
+          src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=1a1a24&studies=[]&theme=dark&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN"
+          class="chart-iframe"
+          frameborder="0"
+          allowtransparency="true"
+          scrolling="no"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <p class="note">
+        数据来源于 TradingView (OANDA XAU/USD)，包含全球做市商连续报价、深度K线与指标工具。
+      </p>
+    </template>
+
     <!-- 回测 -->
     <template v-else>
       <div v-if="activeBacktest?.available">
@@ -119,10 +136,11 @@ const props = defineProps({
 });
 
 const TABS = [
+  { key: 'tradingview', label: 'TradingView 走势' },
   { key: 'cn', label: '国内 AU9999' },
   { key: 'intl', label: '国际 XAU/USD' },
-  { key: 'premium', label: '国内溢价' },
   { key: 'ratio', label: '金银比率' },
+  { key: 'premium', label: '国内溢价' },
   { key: 'backtest', label: '策略回测' },
 ];
 const PERIODS = [
@@ -203,6 +221,7 @@ const zoomStart = computed(() => {
 
 const subtitle = computed(() => {
   const q = activeQuant.value;
+  if (tab.value === 'tradingview') return 'TradingView 国际现货黄金 (XAU/USD) 实时行情图表';
   if (tab.value === 'premium') return '国内相对国际金价折算的溢价，及其历史分布';
   if (tab.value === 'ratio') return '国际现货金银价格比率，套利与宏观配置参考';
   if (tab.value === 'backtest') return '基于真实日K的策略回测，对比买入持有';
@@ -219,6 +238,27 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.tradingview-container {
+  width: 100%;
+  height: 540px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #1a1a24;
+}
+
+.chart-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .tradingview-container {
+    height: 380px;
+  }
 }
 
 .head {

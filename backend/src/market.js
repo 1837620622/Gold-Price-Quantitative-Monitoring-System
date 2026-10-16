@@ -18,7 +18,7 @@ import { fetchYahooSpot, fetchYahooDaily } from './providers/yahoo.js';
 import { fetchStooqDaily } from './providers/stooq.js';
 import { fetchUsdCnyLatest, fetchUsdCnyHistory } from './providers/fx.js';
 import { fetchAU9999Quote, fetchAU9999Kline } from './providers/eastmoney.js';
-import { fetchSinaDomesticQuote, fetchSinaSpot, fetchSinaSilverSpot, fetchSinaFx } from './providers/sina.js';
+import { fetchSinaDomesticQuote, fetchSinaSpot, fetchSinaSilverSpot, fetchSinaFx, fetchSinaXauDaily } from './providers/sina.js';
 import { fetchSwissquoteSpot } from './providers/swissquote.js';
 import { analyzeMarket, alignPremium, sanitizeBars } from './quant/engine.js';
 
@@ -219,18 +219,47 @@ export const getSnapshot = () =>
 // 历史数据：每个 getter 都带缓存与并发合并
 // ------------------------------------------------------------
 export const getDomesticKline = (days) =>
-  memo(`kline-cn:${days}`, TTL.kline, () => fetchAU9999Kline(days));
+  memo(`kline-cn:${days}`, TTL.kline, async () => {
+    try {
+      return await fetchAU9999Kline(days);
+    } catch (emErr) {
+      console.warn('东方财富K线失败，启用国际金价与汇率理论折算K线:', emErr.message);
+      const [xauBars, fxBars] = await Promise.all([
+        getGoldHistory(days),
+        getFxHistory(days).catch(() => []),
+      ]);
+      const fxMap = new Map((fxBars || []).map((f) => [f.date, f.rate]));
+      const defaultRate = 7.25;
+      return xauBars.map((b) => {
+        const rate = fxMap.get(b.date) || defaultRate;
+        return {
+          date: b.date,
+          open: round((b.open * rate) / OZ_TO_GRAM, 2),
+          high: round((b.high * rate) / OZ_TO_GRAM, 2),
+          low: round((b.low * rate) / OZ_TO_GRAM, 2),
+          close: round((b.close * rate) / OZ_TO_GRAM, 2),
+          volume: 0,
+          estimated: true,
+        };
+      });
+    }
+  });
 
-// 国际日K：Stooq 为主，Yahoo 为备
+// 国际日K：新浪主通道（高可用不限IP），Stooq 为备，Yahoo 为兜底
 export const getGoldHistory = (days) =>
   memo(`hist-xau:${days}`, TTL.history, async () => {
     try {
-      return (await fetchStooqDaily('xauusd')).slice(-days);
-    } catch (stooqError) {
+      return (await fetchSinaXauDaily(days)).slice(-days);
+    } catch (sinaErr) {
+      console.warn('新浪国际日K不可用，尝试备用源:', sinaErr.message);
       try {
-        return (await fetchYahooDaily(days)).slice(-days);
-      } catch (yahooError) {
-        throw new Error(`国际金价历史不可用（Stooq: ${stooqError.message}；Yahoo: ${yahooError.message}）`);
+        return (await fetchStooqDaily('xauusd')).slice(-days);
+      } catch (stooqError) {
+        try {
+          return (await fetchYahooDaily(days)).slice(-days);
+        } catch (yahooError) {
+          throw new Error(`国际金价历史不可用（Sina: ${sinaErr.message}；Stooq: ${stooqError.message}；Yahoo: ${yahooError.message}）`);
+        }
       }
     }
   });
