@@ -1,586 +1,369 @@
 <template>
-  <!-- ============================================================ -->
-  <!-- 黄金价格检测系统 - 专业金融交易终端界面 -->
-  <!-- ============================================================ -->
-  <div class="terminal-container">
-    <!-- 顶部导航栏 -->
-    <header class="top-header">
-      <div class="header-left">
-        <div class="logo">
-          <span class="logo-symbol">Au</span>
-          <span class="logo-text">GOLD MONITOR</span>
-        </div>
-        <div class="market-status">
-          <span class="status-dot"></span>
-          <span>实时行情</span>
-        </div>
-      </div>
-      <div class="header-center">
-        <span class="current-time">{{ currentTime }}</span>
-      </div>
-      <div class="header-right">
-        <button class="subscribe-btn" @click="showQrModal = true" title="订阅金价推送">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          <span class="btn-text">订阅推送</span>
-        </button>
-        <button class="refresh-btn" @click="refreshAllData" title="刷新数据">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 4v6h6M23 20v-6h-6"/>
-            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-          </svg>
-        </button>
-      </div>
-    </header>
+  <div class="app">
+    <a class="skip-link" href="#main">跳到主要内容</a>
 
-    <!-- 主内容区域 - 新布局 -->
-    <main class="main-content-new">
-      <!-- 顶部价格卡片区域 -->
-      <section class="price-cards-row">
-        <!-- 国际金价卡片 -->
-        <div class="price-card-new">
-          <div class="card-icon intl">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </div>
-          <div class="card-info">
-            <div class="card-label">XAU/USD <span class="badge">SPOT</span></div>
-            <div class="card-price" :class="getPriceClass(priceData.international?.changePercent)">
-              {{ formatPrice(priceData.international?.price, 'USD') }}
-            </div>
-            <div class="card-change" :class="getPriceClass(priceData.international?.changePercent)">
-              {{ formatChange(priceData.international?.change) }} ({{ formatPercent(priceData.international?.changePercent) }})
-            </div>
-          </div>
-          <div class="card-extra">
-            <div class="extra-item"><span>昨收</span><span>{{ priceData.international?.previousClose?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>白银</span><span>{{ priceData.international?.silverPrice?.toFixed(2) || '--' }}</span></div>
-          </div>
-        </div>
+    <AppHeader
+      :status="status"
+      :theme="resolved"
+      :age-seconds="ageSeconds"
+      :now="now"
+      :sources-ok="sourcesOk"
+      :sources-total="sourcesTotal"
+      @refresh="refreshAll"
+      @toggle-theme="toggle"
+      @subscribe="showSubscribe = true"
+      @sources="showSources = true"
+    />
 
-        <!-- 国内AU9999卡片 -->
-        <div class="price-card-new domestic">
-          <div class="card-icon cn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </div>
-          <div class="card-info">
-            <div class="card-label">AU9999 <span class="badge cn">CNY</span></div>
-            <div class="card-price" :class="getPriceClass(priceData.domestic?.changePercent)">
-              {{ formatPrice(priceData.domestic?.price, 'CNY') }}
-            </div>
-            <div class="card-change" :class="getPriceClass(priceData.domestic?.changePercent)">
-              {{ formatChange(priceData.domestic?.change) }} ({{ formatPercent(priceData.domestic?.changePercent) }})
-            </div>
-          </div>
-          <div class="card-extra">
-            <div class="extra-item"><span>开盘</span><span>{{ priceData.domestic?.open?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>最高</span><span class="up">{{ priceData.domestic?.high?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>最低</span><span class="down">{{ priceData.domestic?.low?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>成交量</span><span>{{ priceData.domestic?.volume || '--' }}</span></div>
-          </div>
-        </div>
+    <main id="main" class="container main">
+      <div v-if="message && status !== 'live'" class="alert" :class="`alert-${status}`" role="status">
+        {{ message }}
+      </div>
 
-        <!-- AI分析按钮卡片 -->
-        <div class="ai-card">
-          <div class="ai-header">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2zm-3 9a1 1 0 100 2 1 1 0 000-2zm6 0a1 1 0 100 2 1 1 0 000-2z"/>
-            </svg>
-            <div>
-              <div class="ai-title">AI 量化分析</div>
-              <div class="ai-model">{{ analysisModel || 'DeepSeek-V3' }}</div>
-            </div>
-          </div>
-          <button class="ai-btn" @click="runAnalysis" :disabled="analyzing">
-            <span v-if="analyzing" class="spinner"></span>
-            {{ analyzing ? '分析中...' : '开始分析' }}
-          </button>
+      <!-- 01 行情概览 -->
+      <section class="block" aria-labelledby="sec-overview">
+        <h2 id="sec-overview" class="section-title"><span>01</span>行情概览</h2>
+        <div class="hero-grid">
+          <PriceCard
+            class="hero-cn"
+            code="AU9999"
+            name="上海黄金交易所 · 国内现货"
+            :tag="domestic?.estimated ? '估算' : 'CNY'"
+            unit="元 / 克"
+            currency="CNY"
+            :price="domestic?.price ?? null"
+            :change="domestic?.change ?? null"
+            :change-percent="domestic?.changePercent ?? null"
+            :stats="domesticStats"
+            :sparkline="cnSpark"
+            :estimated="Boolean(domestic?.estimated)"
+            :loading="loading"
+            :note="domesticNote"
+            accent="gold"
+          />
+          <PriceCard
+            class="hero-intl"
+            code="XAU/USD"
+            name="伦敦现货黄金"
+            tag="SPOT"
+            unit="美元 / 盎司"
+            currency="USD"
+            :price="international?.price ?? null"
+            :change="international?.change ?? null"
+            :change-percent="international?.changePercent ?? null"
+            :stats="internationalStats"
+            :sparkline="intlSpark"
+            :loading="loading"
+            :note="internationalNote"
+            accent="blue"
+          />
+          <AiCard
+            class="hero-ai"
+            :state="analysis.state"
+            :timestamp="analysis.timestamp"
+            :cached="analysis.cached"
+            :error="analysis.error"
+            :unavailable="aiUnavailable"
+            @run="runAnalysis"
+          />
         </div>
       </section>
 
-      <!-- K线图区域 - 电脑端显示TradingView -->
-      <section class="chart-section desktop-only">
-        <div class="chart-header">
-          <h3>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-            </svg>
-            XAU/USD 国际金价走势
-          </h3>
-          <span class="chart-source">TradingView</span>
-        </div>
-        <div class="chart-container tradingview-container">
-          <iframe 
-            src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=1a1a24&studies=[]&theme=dark&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN"
-            class="chart-iframe"
-            frameborder="0"
-            allowtransparency="true"
-            scrolling="no"
-            allowfullscreen
-          ></iframe>
+      <!-- 02 量化信号与指标 -->
+      <section class="block" aria-labelledby="sec-quant">
+        <h2 id="sec-quant" class="section-title"><span>02</span>量化信号与指标</h2>
+        <div class="analytics-grid">
+          <SignalPanel
+            v-if="cnQuant?.available"
+            class="an-signal"
+            :signal="cnQuant.signal"
+            :levels="cnQuant.levels"
+            :as-of="cnQuant.asOf"
+          />
+          <div v-else class="card notice-card an-signal">
+            {{ cnError || '量化信号计算中…' }}
+          </div>
+          <RiskTiles v-if="cnQuant?.available" class="an-tiles" :quant="cnQuant" />
         </div>
       </section>
 
-      <!-- 手机端提示 -->
-      <section class="chart-section mobile-only">
-        <div class="mobile-chart-notice">
-          <div class="notice-icon">📊</div>
-          <h3>K线图仅支持电脑端访问</h3>
-          <p>请使用电脑浏览器查看完整K线图</p>
-          <div class="notice-tip">
-            <span>🪜</span>
-            <span>需要科学上网工具访问TradingView</span>
-          </div>
-        </div>
+      <!-- 03 图表工作台 -->
+      <section class="block" aria-labelledby="sec-charts">
+        <h2 id="sec-charts" class="section-title"><span>03</span>图表与回测</h2>
+        <ChartWorkspace
+          :cn="cnQuant"
+          :intl="intlQuant"
+          :cn-error="cnError"
+          :intl-error="intlError"
+          :loading-cn="loadingCn"
+          :loading-intl="loadingIntl"
+          :theme="resolved"
+        />
       </section>
 
-      <!-- AI分析结果区域 -->
-      <section class="analysis-section" v-if="analysisResult || analyzing">
-        <div class="analysis-header">
-          <h3>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
-            </svg>
-            AI 智能分析报告
-          </h3>
-          <span class="analysis-time">{{ analysisTimestamp }}</span>
-        </div>
-        <div class="analysis-body">
-          <div v-if="analyzing" class="analyzing-state">
-            <div class="analyzing-animation">
-              <span></span><span></span><span></span>
-            </div>
-            <p class="analyzing-title">DeepSeek 深度分析中...</p>
-            <p class="analyzing-hint">大概需要1-2分钟，请耐心等待</p>
-          </div>
-          <div v-else class="analysis-text markdown-body" v-html="renderedAnalysis"></div>
-        </div>
+      <!-- 04 AI 报告 -->
+      <section v-if="analysis.state !== 'idle'" class="block" aria-labelledby="sec-report">
+        <h2 id="sec-report" class="section-title"><span>04</span>AI 分析报告</h2>
+        <AnalysisReport
+          id="report"
+          :state="analysis.state"
+          :text="analysis.text"
+          :model="analysis.model"
+          :timestamp="analysis.timestamp"
+          :cached="analysis.cached"
+          :error="analysis.error"
+          :quant="analysis.quant"
+        />
       </section>
     </main>
 
-    <!-- 底部状态栏 -->
-    <footer class="status-bar">
-      <div class="status-left">
-        <span class="status-item">
-          <span class="status-indicator online"></span>
-          API 已连接
-        </span>
-        <span class="status-item">延迟: {{ latency }}ms</span>
-      </div>
-      <div class="status-center">
-        Gold Monitor v1.0 | Powered by DeepSeek AI
-      </div>
-      <div class="status-right">
-        <span>Vx: 1837620622</span>
-      </div>
-    </footer>
+    <AppFooter />
 
-    <!-- 全屏水印 -->
-    <div class="watermark-container">
-      <div class="watermark-content">
-        <div class="watermark-item" v-for="n in 20" :key="n">
-          <span>GitHub: 万能程序员</span>
-          <span>github.com/1837620622</span>
-          <span>官网: www.chuankangkk.top</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 二维码订阅弹窗 -->
-    <div class="qr-modal-overlay" v-if="showQrModal" @click.self="showQrModal = false">
-      <div class="qr-modal">
-        <button class="qr-close-btn" @click="showQrModal = false">&times;</button>
-        <div class="qr-header">
-          <h2>订阅金价推送</h2>
-          <p>扫码加入群组，实时接收金价行情通知</p>
-        </div>
-        <div class="qr-body">
-          <div class="qr-image-wrapper">
-            <img src="/qrcode.png" alt="订阅二维码" class="qr-image" />
-          </div>
-          <div class="qr-info">
-            <div class="qr-feature">
-              <span class="feature-icon">⏰</span>
-              <span>每30分钟自动推送金价行情</span>
-            </div>
-            <div class="qr-feature">
-              <span class="feature-icon">📊</span>
-              <span>涨跌幅超1%自动预警</span>
-            </div>
-            <div class="qr-feature">
-              <span class="feature-icon">🤖</span>
-              <span>AI智能分析摘要</span>
-            </div>
-          </div>
-        </div>
-        <div class="qr-footer">
-          <p class="qr-expire">二维码有效期：30天</p>
-          <p class="qr-tip">长按图片保存到手机，使用微信扫一扫加入</p>
-          <a class="qr-download-btn" href="/qrcode.png" download="金价推送订阅二维码.png">
-            保存二维码到本地
-          </a>
-        </div>
-      </div>
-    </div>
+    <SubscribeModal :open="showSubscribe" @close="showSubscribe = false" />
+    <SourcesDrawer :open="showSources" :sources="sources" :checks="crossChecks" @close="showSources = false" />
   </div>
 </template>
 
 <script setup>
-/**
- * ============================================================
- * 黄金价格检测系统 - 主应用逻辑
- * ============================================================
- */
+import { ref, computed } from 'vue';
+import AppHeader from './components/AppHeader.vue';
+import PriceCard from './components/PriceCard.vue';
+import AiCard from './components/AiCard.vue';
+import SignalPanel from './components/SignalPanel.vue';
+import RiskTiles from './components/RiskTiles.vue';
+import ChartWorkspace from './components/ChartWorkspace.vue';
+import AnalysisReport from './components/AnalysisReport.vue';
+import SourcesDrawer from './components/SourcesDrawer.vue';
+import AppFooter from './components/AppFooter.vue';
+import SubscribeModal from './components/SubscribeModal.vue';
+import { useMarket } from './composables/useMarket';
+import { useQuant } from './composables/useQuant';
+import { useTheme } from './composables/useTheme';
+import { requestAnalysis } from './api';
+import { fmtNumber, fmtInt, fmtPercent, toneOf } from './format';
 
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import * as echarts from 'echarts';
-import axios from 'axios';
-import { marked } from 'marked';
+const { snapshot, status, message, ageSeconds, now, refresh: refreshPrices } = useMarket();
+const { cn: cnQuant, intl: intlQuant, cnError, intlError, loadingCn, loadingIntl, refreshQuant } = useQuant();
+const { resolved, toggle } = useTheme();
 
-// 配置marked选项
-marked.setOptions({
-  breaks: true,
-  gfm: true,
+const showSubscribe = ref(false);
+const showSources = ref(false);
+
+function refreshAll() {
+  refreshPrices();
+  refreshQuant();
+}
+
+// ------------------------------------------------------------
+// 派生数据
+// ------------------------------------------------------------
+const domestic = computed(() => snapshot.value?.domestic ?? null);
+const international = computed(() => snapshot.value?.international ?? null);
+const fx = computed(() => snapshot.value?.fx ?? null);
+const premiumPercent = computed(() => snapshot.value?.premiumPercent ?? null);
+const loading = computed(() => status.value === 'loading');
+const aiUnavailable = computed(() => !loading.value && !domestic.value);
+
+const cnSpark = computed(() => (cnQuant.value?.bars ?? []).slice(-60).map((b) => b.close));
+const intlSpark = computed(() => (intlQuant.value?.bars ?? []).slice(-60).map((b) => b.close));
+
+const domesticNote = computed(() => {
+  if (domestic.value?.estimated) return '由国际金价 × 汇率换算，并非交易所实时价，不触发涨跌预警';
+  if (!domestic.value && !loading.value) return '国内金价暂不可用';
+  return '';
 });
 
-// ============================================================
-// 响应式数据定义
-// ============================================================
-const priceData = ref({
-  international: null,
-  domestic: null,
+const internationalNote = computed(() => {
+  if (!international.value && !loading.value) return '国际金价暂不可用';
+  return '';
 });
 
-const klineData = ref([]);
-const klineChart = ref(null);
-const chartInstance = ref(null);
-
-const periods = [
-  { label: '7D', value: 7 },
-  { label: '30D', value: 30 },
-  { label: '90D', value: 90 },
-];
-const currentPeriod = ref(30);
-
-const analyzing = ref(false);
-const analysisResult = ref('');
-const analysisTimestamp = ref('');
-const analysisModel = ref('');
-const currentTime = ref('');
-const latency = ref(0);
-const showQrModal = ref(false);  // 二维码弹窗显示状态
-
-// 计算属性：渲染Markdown
-const renderedAnalysis = computed(() => {
-  if (!analysisResult.value) return '';
-  return marked(analysisResult.value);
+const domesticStats = computed(() => {
+  const d = domestic.value;
+  return [
+    { label: '开盘', value: fmtNumber(d?.open) },
+    { label: '最高', value: fmtNumber(d?.high) },
+    { label: '最低', value: fmtNumber(d?.low) },
+    { label: '昨收', value: fmtNumber(d?.previousClose) },
+    { label: '成交量', value: d?.volume != null ? `${fmtInt(d.volume)} 手` : '--' },
+  ];
 });
 
-// API 基础路径
-const API_BASE = import.meta.env.PROD 
-  ? 'https://gold-backend.chuankangkk.top' 
-  : '';
+const internationalStats = computed(() => {
+  const silver = international.value?.silverPrice;
+  return [
+    { label: '白银 XAG', value: silver != null ? `$${fmtNumber(silver)}` : '--' },
+    { label: 'USD / CNY', value: fmtNumber(fx.value?.usdCny, 4) },
+    { label: '国内溢价', value: fmtPercent(premiumPercent.value), tone: toneOf(premiumPercent.value) },
+  ];
+});
 
-// ============================================================
-// 工具函数
-// ============================================================
-function formatPrice(price, currency) {
-  if (!price) return '--';
-  const formatted = price.toFixed(2);
-  return currency === 'USD' ? `$${formatted}` : `¥${formatted}`;
-}
+const sources = computed(() => snapshot.value?.sources ?? []);
+const activeSources = computed(() => sources.value.filter((s) => s.status !== 'idle'));
+const sourcesOk = computed(() => activeSources.value.filter((s) => s.status === 'ok').length);
+const sourcesTotal = computed(() => activeSources.value.length);
+const crossChecks = computed(() => snapshot.value?.crossChecks ?? []);
 
-function formatChange(change) {
-  if (change === undefined || change === null) return '--';
-  const sign = change >= 0 ? '+' : '';
-  return `${sign}${change.toFixed(2)}`;
-}
+// ------------------------------------------------------------
+// AI 分析：生成、展示与错误处理
+// ------------------------------------------------------------
+const analysis = ref({
+  state: 'idle', // idle | loading | done | error
+  text: '',
+  model: '',
+  timestamp: '',
+  cached: false,
+  error: '',
+  quant: null,
+});
 
-function formatPercent(percent) {
-  if (percent === undefined || percent === null) return '--';
-  const sign = percent >= 0 ? '+' : '';
-  return `${sign}${percent.toFixed(2)}%`;
-}
-
-function getPriceClass(changePercent) {
-  if (changePercent === undefined || changePercent === null) return '';
-  return changePercent >= 0 ? 'up' : 'down';
-}
-
-function updateTime() {
-  const now = new Date();
-  currentTime.value = now.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
-
-function refreshAllData() {
-  fetchPriceData();
-  fetchKlineData(currentPeriod.value);
-}
-
-function changePeriod(days) {
-  currentPeriod.value = days;
-  fetchKlineData(days);
-}
-
-// ============================================================
-// 获取价格数据
-// ============================================================
-async function fetchPriceData() {
-  try {
-    const response = await axios.get(`${API_BASE}/api/price/all`);
-    priceData.value = {
-      international: response.data.international,
-      domestic: response.data.domestic,
-    };
-  } catch (error) {
-    console.error('获取价格数据失败:', error);
-    // 使用模拟数据
-    priceData.value = {
-      international: { price: 2650 + Math.random() * 50, source: 'simulated' },
-      domestic: { price: 620 + Math.random() * 10, source: 'simulated' },
-    };
-  }
-}
-
-// ============================================================
-// 获取K线数据和图表配置
-// ============================================================
-async function fetchKlineData(days = 30) {
-  try {
-    const response = await axios.get(`${API_BASE}/api/chart/kline?days=${days}`);
-    klineData.value = response.data.rawData;
-    // 直接使用后端返回的图表配置
-    if (chartInstance.value && response.data.chartOption) {
-      chartInstance.value.setOption(response.data.chartOption);
-    }
-  } catch (error) {
-    console.error('获取K线数据失败:', error);
-    // 生成模拟数据
-    generateMockKlineData(days);
-  }
-}
-
-// ============================================================
-// 生成模拟K线数据
-// ============================================================
-function generateMockKlineData(days) {
-  const data = [];
-  let price = 620;
-  const now = Date.now();
-
-  for (let i = days; i >= 0; i--) {
-    const timestamp = now - i * 24 * 60 * 60 * 1000;
-    const change = (Math.random() - 0.5) * 10;
-    const open = price;
-    const close = price + change;
-    const high = Math.max(open, close) + Math.random() * 5;
-    const low = Math.min(open, close) - Math.random() * 5;
-
-    data.push({
-      date: new Date(timestamp).toISOString().split('T')[0],
-      open: Math.round(open * 100) / 100,
-      high: Math.round(high * 100) / 100,
-      low: Math.round(low * 100) / 100,
-      close: Math.round(close * 100) / 100,
-      volume: Math.floor(Math.random() * 100000 + 50000),
-    });
-
-    price = close;
-  }
-
-  klineData.value = data;
-  updateChart();
-}
-
-// ============================================================
-// 初始化图表
-// ============================================================
-function initChart() {
-  // 初始化K线图
-  if (klineChart.value) {
-    chartInstance.value = echarts.init(klineChart.value, 'dark');
-  }
-  
-  window.addEventListener('resize', () => {
-    chartInstance.value?.resize();
-  });
-}
-
-// ============================================================
-// 更新K线图
-// ============================================================
-function updateChart() {
-  if (!chartInstance.value || !klineData.value.length) return;
-
-  const dates = klineData.value.map(item => item.date);
-  const ohlcData = klineData.value.map(item => [item.open, item.close, item.low, item.high]);
-  const volumes = klineData.value.map((item, index) => {
-    const color = item.close >= item.open ? '#26a69a' : '#ef5350';
-    return { value: item.volume, itemStyle: { color } };
-  });
-
-  const option = {
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'cross' },
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      borderColor: '#fbbf24',
-      textStyle: { color: '#fff' },
-    },
-    legend: {
-      data: ['K线', '成交量'],
-      textStyle: { color: '#9ca3af' },
-    },
-    grid: [
-      { left: '10%', right: '8%', top: '10%', height: '55%' },
-      { left: '10%', right: '8%', top: '72%', height: '18%' },
-    ],
-    xAxis: [
-      {
-        type: 'category',
-        data: dates,
-        scale: true,
-        boundaryGap: true,
-        axisLine: { lineStyle: { color: '#4b5563' } },
-        axisLabel: { color: '#9ca3af' },
-        splitLine: { show: false },
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: dates,
-        scale: true,
-        boundaryGap: true,
-        axisLine: { lineStyle: { color: '#4b5563' } },
-        axisLabel: { show: false },
-        splitLine: { show: false },
-      },
-    ],
-    yAxis: [
-      {
-        scale: true,
-        splitArea: { show: false },
-        axisLine: { lineStyle: { color: '#4b5563' } },
-        axisLabel: { color: '#9ca3af' },
-        splitLine: { lineStyle: { color: '#374151', type: 'dashed' } },
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        splitNumber: 2,
-        axisLabel: { show: false },
-        axisLine: { show: false },
-        axisTick: { show: false },
-        splitLine: { show: false },
-      },
-    ],
-    series: [
-      {
-        name: 'K线',
-        type: 'candlestick',
-        data: ohlcData,
-        itemStyle: {
-          color: '#26a69a',
-          color0: '#ef5350',
-          borderColor: '#26a69a',
-          borderColor0: '#ef5350',
-        },
-      },
-      {
-        name: '成交量',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: volumes,
-      },
-    ],
-  };
-
-  chartInstance.value.setOption(option);
-}
-
-
-// ============================================================
-// 运行AI量化分析
-// ============================================================
 async function runAnalysis() {
-  analyzing.value = true;
-  analysisResult.value = '';
-  analysisTimestamp.value = '';
-  analysisModel.value = '';
+  if (analysis.value.state === 'loading') return;
+  analysis.value = { ...analysis.value, state: 'loading', error: '' };
 
   try {
-    const startTime = Date.now();
-    const response = await axios.post(`${API_BASE}/api/analyze`);
-    latency.value = Date.now() - startTime;
-    
-    if (response.data.success && response.data.analysis) {
-      analysisResult.value = response.data.analysis.analysis || response.data.analysis;
-      analysisModel.value = response.data.analysis.model || 'DeepSeek';
-      analysisTimestamp.value = new Date().toLocaleString('zh-CN');
+    const data = await requestAnalysis();
+    if (data.success && data.analysis?.analysis) {
+      analysis.value = {
+        state: 'done',
+        text: data.analysis.analysis,
+        model: data.analysis.model || '',
+        timestamp: data.timestamp,
+        cached: Boolean(data.cached),
+        error: '',
+        quant: data.quant ?? null,
+      };
     } else {
-      analysisResult.value = '分析结果获取失败，请稍后重试。';
+      analysis.value = { ...analysis.value, state: 'error', error: data.message || '分析暂不可用，请稍后重试' };
     }
   } catch (error) {
-    console.error('AI分析失败:', error);
-    analysisResult.value = `分析请求失败: ${error.message}\n\n请检查后端服务是否正常运行，以及API密钥是否配置正确。`;
-  } finally {
-    analyzing.value = false;
+    const text = error?.response?.data?.message || '分析请求失败，请检查网络后重试';
+    analysis.value = { ...analysis.value, state: 'error', error: text };
+  }
+}
+</script>
+
+<style scoped>
+.main {
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.block {
+  margin-top: 36px;
+}
+
+.block:first-child {
+  margin-top: 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+
+.section-title span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.hero-cn,
+.hero-intl,
+.hero-ai {
+  grid-column: span 12;
+  min-width: 0;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.an-signal,
+.an-tiles {
+  grid-column: span 12;
+  min-width: 0;
+}
+
+.notice-card {
+  color: var(--text-2);
+  font-size: 14px;
+  text-align: center;
+  padding: 36px 20px;
+}
+
+.alert {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+
+.alert-partial,
+.alert-stale {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.alert-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+@media (min-width: 768px) {
+  .hero-cn,
+  .hero-intl {
+    grid-column: span 6;
+  }
+
+  .an-signal,
+  .an-tiles {
+    grid-column: span 6;
   }
 }
 
-// ============================================================
-// 生命周期钩子
-// ============================================================
-let priceUpdateInterval = null;
-let timeUpdateInterval = null;
+@media (min-width: 1024px) {
+  .hero-cn {
+    grid-column: span 5;
+  }
 
-onMounted(() => {
-  // 初始化时间
-  updateTime();
-  timeUpdateInterval = setInterval(updateTime, 1000);
-  
-  // 初始化图表
-  initChart();
-  
-  // 获取初始数据
-  fetchPriceData();
-  fetchKlineData(currentPeriod.value);
+  .hero-intl {
+    grid-column: span 4;
+  }
 
-  // 定时更新价格（每30秒）
-  priceUpdateInterval = setInterval(fetchPriceData, 30000);
-});
+  .hero-ai {
+    grid-column: span 3;
+  }
 
-onUnmounted(() => {
-  // 清理定时器
-  if (priceUpdateInterval) {
-    clearInterval(priceUpdateInterval);
+  .an-signal {
+    grid-column: span 5;
   }
-  if (timeUpdateInterval) {
-    clearInterval(timeUpdateInterval);
+
+  .an-tiles {
+    grid-column: span 7;
   }
-  
-  // 销毁图表实例
-  if (chartInstance.value) {
-    chartInstance.value.dispose();
-  }
-  if (intlChartInstance.value) {
-    intlChartInstance.value.dispose();
-  }
-});
-</script>
+}
+</style>

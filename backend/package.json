@@ -6,11 +6,10 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "start": "node src/server.js"
+    "test": "node --test test/indicators.test.js test/engine.test.js test/providers.test.js test/api.test.js"
   },
   "dependencies": {
-    "hono": "^4.6.0",
-    "openai": "^4.70.0"
+    "hono": "^4.6.0"
   },
   "devDependencies": {
     "wrangler": "^3.90.0",

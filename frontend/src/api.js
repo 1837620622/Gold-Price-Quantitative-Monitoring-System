@@ -1,0 +1,29 @@
+/**
+ * ============================================================
+ * 后端 API 封装
+ * 生产环境指向 Workers 域名；开发环境走 vite 代理（vite.config.js）
+ * ============================================================
+ */
+
+import axios from 'axios';
+
+export const API_BASE = import.meta.env.PROD ? 'https://gold-backend.chuankangkk.top' : '';
+
+const http = axios.create({ baseURL: API_BASE, timeout: 15000 });
+
+export async function fetchPrices() {
+  const { data } = await http.get('/api/price/all');
+  return data;
+}
+
+// market: 'cn'（AU9999，含溢价与回测）| 'intl'（XAU/USD）
+export async function fetchQuant(market, days = 250) {
+  const { data } = await http.get(`/api/quant/${market}`, { params: { days }, timeout: 20000 });
+  return data;
+}
+
+export async function requestAnalysis() {
+  // AI 分析需要 1-2 分钟，单独放宽超时
+  const { data } = await http.post('/api/analyze', null, { timeout: 120000 });
+  return data;
+}
