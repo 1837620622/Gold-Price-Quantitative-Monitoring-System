@@ -2,6 +2,11 @@
  * ============================================================
  * 行情聚合：多源获取、失败降级、交叉校验，以及量化分析的缓存入口
  * 原则：任何一路失败都标记为 null，绝不伪造数据；估算价必须显式标注
+ * 多源架构：
+ *   - 国内金价：东方财富 (主) → 新浪财经 SGE (备) → 汇率公式精准估算
+ *   - 国际金价：gold-api.com (主) → Swissquote 机构源 (备1) → Yahoo Finance (备2) → 新浪财经 (备3)
+ *   - 白银现货：gold-api.com (主) → Swissquote (备1) → 新浪财经 (备2)
+ *   - 美元汇率：open.er-api.com (主) → 新浪外汇 (备1) → Frankfurter ECB (备2) → Stooq (备3)
  * ============================================================
  */
 
@@ -13,6 +18,8 @@ import { fetchYahooSpot, fetchYahooDaily } from './providers/yahoo.js';
 import { fetchStooqDaily } from './providers/stooq.js';
 import { fetchUsdCnyLatest, fetchUsdCnyHistory } from './providers/fx.js';
 import { fetchAU9999Quote, fetchAU9999Kline } from './providers/eastmoney.js';
+import { fetchSinaDomesticQuote, fetchSinaSpot, fetchSinaSilverSpot, fetchSinaFx } from './providers/sina.js';
+import { fetchSwissquoteSpot } from './providers/swissquote.js';
 import { analyzeMarket, alignPremium, sanitizeBars } from './quant/engine.js';
 
 const settle = (result, label, errors) => {
@@ -24,16 +31,53 @@ const settle = (result, label, errors) => {
 };
 
 // ------------------------------------------------------------
-// 国际现货：gold-api.com 为主；Yahoo 提供昨收，并与主源做双源校验
+// 国际现货：多源链式获取与交叉校验
 // ------------------------------------------------------------
 async function loadIntlQuote() {
   const [spotR, yahooR] = await Promise.allSettled([fetchGoldSpot(), fetchYahooSpot()]);
   const errors = [];
-  const spot = settle(spotR, '国际金价(gold-api)', errors);
-  const yahoo = settle(yahooR, '国际金价(Yahoo)', errors);
+  let spot = settle(spotR, '国际金价(gold-api)', errors);
+  let yahoo = settle(yahooR, '国际金价(Yahoo)', errors);
 
-  const price = spot?.price ?? yahoo?.price ?? null;
+  let price = spot?.price ?? yahoo?.price ?? null;
+  let source = spot ? 'gold-api.com' : (yahoo ? 'Yahoo Finance' : null);
+  let silverPrice = spot?.silverPrice ?? null;
+
+  // 兜底一：瑞讯银行 Swissquote
+  if (price === null) {
+    try {
+      const sq = await fetchSwissquoteSpot('XAU');
+      price = sq.price;
+      source = 'Swissquote';
+    } catch (sqErr) {
+      errors.push(`国际金价(Swissquote): ${sqErr.message}`);
+    }
+  }
+
+  // 兜底二：新浪财经
+  if (price === null) {
+    try {
+      const sina = await fetchSinaSpot();
+      price = sina.price;
+      source = '新浪财经';
+    } catch (sinaErr) {
+      errors.push(`国际金价(新浪备用): ${sinaErr.message}`);
+    }
+  }
+
   if (price === null) return { quote: null, errors };
+
+  // 白银现货价格兜底（若主源未包含白银数据）
+  if (silverPrice === null) {
+    try {
+      const sqSilver = await fetchSwissquoteSpot('XAG');
+      silverPrice = sqSilver.price;
+    } catch {
+      try {
+        silverPrice = await fetchSinaSilverSpot();
+      } catch {}
+    }
+  }
 
   const previousClose = yahoo?.previousClose ?? null;
   let crossCheck = { status: 'single', deviationPercent: null, peer: null };
@@ -48,14 +92,14 @@ async function loadIntlQuote() {
 
   return {
     quote: {
-      source: spot ? 'gold-api.com' : 'Yahoo Finance',
+      source: source || 'gold-api.com',
       currency: 'USD',
       unit: '盎司',
       price,
       change: previousClose !== null ? round(price - previousClose, 2) : null,
       changePercent: previousClose !== null ? round(((price - previousClose) / previousClose) * 100, 2) : null,
       previousClose,
-      silverPrice: spot?.silverPrice ?? null,
+      silverPrice,
       asOf: spot?.asOf ?? yahoo?.asOf ?? new Date().toISOString(),
       crossCheck,
     },
@@ -97,7 +141,7 @@ function theoreticalPremium(domesticPrice, intlPrice, usdCny) {
 }
 
 // ------------------------------------------------------------
-// 行情快照：三路并行，失败降级；返回交叉校验结果
+// 行情快照：多路并行，失败逐级降级；返回交叉校验结果
 // ------------------------------------------------------------
 async function loadSnapshot() {
   const [intlR, domR, fxR] = await Promise.allSettled([getIntlQuote(), fetchAU9999Quote(), fetchUsdCnyLatest()]);
@@ -108,7 +152,25 @@ async function loadSnapshot() {
   const international = intlPack.quote;
 
   let domestic = settle(domR, '国内金价', errors);
-  const fx = settle(fxR, '汇率', errors);
+  // 国内金价备用兜底：东方财富故障时，尝试新浪财经
+  if (!domestic) {
+    try {
+      domestic = await fetchSinaDomesticQuote();
+    } catch (sinaErr) {
+      errors.push(`国内金价(新浪备用): ${sinaErr.message}`);
+    }
+  }
+
+  let fx = settle(fxR, '汇率', errors);
+  // 汇率备用兜底：open.er-api 故障时，尝试新浪外汇
+  if (!fx) {
+    try {
+      fx = await fetchSinaFx();
+    } catch (sinaFxErr) {
+      errors.push(`汇率(新浪备用): ${sinaFxErr.message}`);
+    }
+  }
+
   const usdCny = fx?.rate ?? null;
   if (!domestic && international && usdCny) domestic = estimateDomestic(international, usdCny);
 
@@ -136,13 +198,13 @@ async function loadSnapshot() {
     });
   }
   if (domestic?.estimated) {
-    crossChecks.push({ name: '国内价来源', status: 'warn', detail: '东方财富不可用，国内价由国际金价与汇率估算' });
+    crossChecks.push({ name: '国内价来源', status: 'warn', detail: '交易所接口不可用，国内价由国际金价与汇率估算' });
   }
 
   return {
     international,
     domestic,
-    fx: fx ? { usdCny, asOf: fx.asOf, source: 'open.er-api.com' } : null,
+    fx: fx ? { usdCny, asOf: fx.asOf, source: fx.source || 'open.er-api.com' } : null,
     premiumPercent,
     crossChecks,
     errors,
@@ -174,6 +236,80 @@ export const getGoldHistory = (days) =>
   });
 
 export const getFxHistory = (days) => memo(`hist-fx:${days}`, TTL.history, () => fetchUsdCnyHistory(days));
+
+// ------------------------------------------------------------
+// 金银比（Gold/Silver Ratio）接口
+// ------------------------------------------------------------
+export async function getGoldSilverRatio(days = 60) {
+  return memo(`ratio:${days}`, TTL.snapshot, async () => {
+    const snapshot = await getSnapshot();
+    const goldPrice = snapshot.international?.price ?? null;
+    const silverPrice = snapshot.international?.silverPrice ?? null;
+    if (!goldPrice || !silverPrice || silverPrice <= 0) {
+      return {
+        available: false,
+        reason: '金价或银价不可用，无法计算金银比',
+      };
+    }
+    const currentRatio = round(goldPrice / silverPrice, 2);
+
+    let regime = '均衡中枢';
+    let signal = 'neutral';
+    let suggestion = '金银比处于历史合理中枢区间（65-75），贵金属整体估值协同良好。';
+    if (currentRatio >= 85) {
+      regime = '历史极高位（白银极度低估）';
+      signal = 'silver-undervalued';
+      suggestion = '金银比突破85处于历史极高分位，均值回归确定性较高，白银具备更强补涨弹性，可关注多银空金套利或加大白银配置比例。';
+    } else if (currentRatio >= 75) {
+      regime = '偏高区间（避险属性主导）';
+      signal = 'gold-strong';
+      suggestion = '黄金相对白银走势偏强，宏观地缘避险买盘主导行情，警惕金银比冲高动能衰竭。';
+    } else if (currentRatio < 65) {
+      regime = '偏低区间（工业与通胀驱动）';
+      signal = 'silver-strong';
+      suggestion = '金银比处于低位，白银表现显著优于黄金，通常反映强劲的工业需求与通胀预期共振。';
+    }
+
+    return {
+      available: true,
+      current: currentRatio,
+      goldPrice,
+      silverPrice,
+      regime,
+      signal,
+      suggestion,
+      timestamp: new Date().toISOString(),
+    };
+  });
+}
+
+// ------------------------------------------------------------
+// 多策略信号概览
+// ------------------------------------------------------------
+export async function getSignals(market = 'cn', days = QUANT_DAYS) {
+  const quant = await getQuant(market, days);
+  if (!quant?.available) {
+    return { available: false, reason: quant?.reason || '量化数据暂不可用' };
+  }
+  const snapshot = await getSnapshot();
+  const ratio = await getGoldSilverRatio();
+
+  return {
+    available: true,
+    market,
+    name: quant.name,
+    asOf: quant.asOf,
+    price: market === 'cn' ? snapshot.domestic?.price : snapshot.international?.price,
+    signal: quant.signal,
+    levels: quant.levels,
+    risk: quant.risk,
+    pivots: quant.levels?.pivots,
+    premium: quant.premium,
+    ratio: ratio.available ? { current: ratio.current, regime: ratio.regime, signal: ratio.signal } : null,
+    strategiesSummary: quant.backtest?.available ? quant.backtest.strategies : null,
+    timestamp: new Date().toISOString(),
+  };
+}
 
 // ------------------------------------------------------------
 // 量化分析入口（带缓存）

@@ -90,59 +90,60 @@
 <tr>
 <td width="50%">
 
-### 📈 实时价格监控
-- 国际金价 XAU/USD 实时行情
-- 国内 AU9999 上海黄金交易所数据
-- 白银价格同步显示
-- 涨跌幅实时计算
+### 📈 实时价格与跨源容灾
+- 国内 AU9999 / AUTD：东方财富 ➔ 新浪 SGE ➔ 理论汇率估算降级
+- 国际 XAU/USD 现货：gold-api ➔ 瑞士银行 Swissquote ➔ Yahoo ➔ 新浪外盘
+- 国际白银 XAG/USD 与金银比率 (Gold/Silver Ratio) 实时测算
+- 美元离岸/在岸汇率多源容灾（open.er-api / 新浪外汇 / Frankfurter / Stooq）
 
 </td>
 <td width="50%">
 
-### 📊 专业图表展示
-- 国际 XAU/USD 与国内 AU9999 真实日K线（Stooq / Yahoo / 东方财富）
-- 专业技术指标：MA、布林带、MACD、RSI、成交量、量化评分，可自由开关
-- 国内溢价历史与策略回测（EMA 趋势 / 综合评分 vs 买入持有）
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### 🤖 AI量化分析
-- DeepSeek V3.2 最新模型
-- 短期趋势判断
-- 支撑位/压力位分析
-- 操作建议与风险提示
-
-</td>
-<td width="50%">
-
-### 🎨 专业UI设计
-- 金融终端风格界面
-- 深色主题护眼设计
-- 响应式布局适配
-- Markdown格式报告
+### 📊 专业图表与金银比
+- 国际与国内真实日K线，双源容灾清洗无未来数据
+- 技术指标自由开关：MA、布林带、成交量、量化评分、MACD、RSI、KDJ(9,3,3)
+- 独家「金银比率 (Gold/Silver Ratio)」均值回归分析与配对交易参考
+- 国内溢价历史分布与 Z-Score 偏离度监控
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-### 📲 微信推送通知（新增）
-- PushPlus 群组推送
-- 每30分钟定时推送金价
-- 涨跌幅1-2%自动预警
-- 美观HTML推送模板
+### 🤖 多模型 AI 矩阵与专业研报
+- 支持 Cloudflare Workers AI（DeepSeek R1 Distill / Qwen 2.5 72B）免 Key 零成本推演
+- 兼容 OpenRouter（免费模型群）、硅基流动 (SiliconFlow)、DeepSeek 官方 API
+- 宏观对冲基金级量化 Prompt：融合通胀、地缘溢价、多因子、枢轴阶梯与情景推演
+- AI 故障时无缝降级为自研专家规则引擎，100% 保证高可用响应
 
 </td>
 <td width="50%">
 
-### ⏰ 智能监控预警
-- Cloudflare Cron 定时任务
-- 金价异动实时预警
-- AI分析摘要推送
-- 开发者水印标识
+### 🎯 机构级量化与回测矩阵
+- 6大经典与量化策略并列回测：EMA 趋势、过滤趋势、综合评分、布林RSI、溢价套利、买入持有
+- 机构级绩效评估：夏普 (Sharpe)、索提诺 (Sortino)、卡玛 (Calmar)、盈亏比、胜率、最大回撤
+- 每日日内枢轴点梯队 (Pivot Points)：经典 Classic 与斐波那契 Fibonacci 7档阶梯
+- 一键复制格式化行情快报，随时分享社群与交易团队
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📲 微信推送通知
+- PushPlus 频道与群组推送
+- 每 30 分钟定时自动广播
+- 涨跌幅 1-2% 自动告警
+- 优雅 HTML 格式化与移动端排版
+
+</td>
+<td width="50%">
+
+### 🎨 专业金融 UI 与交互
+- 现代金融终端暗色与明色主题随心切换
+- 中国市场红涨绿跌经典视觉标准
+- 极致响应式适配手机、平板与桌面宽屏
+- 一键复制行情与一键订阅
 
 </td>
 </tr>
@@ -154,27 +155,26 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Gold Monitor                           │
+│                      Gold Monitor 2.0                       │
 ├─────────────────────────────────────────────────────────────┤
-│  Frontend (Vue 3 + Vite)                                    │
-│  ├── 行情概览 · 量化信号 · 指标速览                          │
-│  ├── ECharts 图表：K线叠加指标、溢价、回测（按需加载）       │
+│  Frontend (Vue 3 + Vite 6 + ECharts 6)                      │
+│  ├── 行情概览 · 枢轴阶梯 · 指标速览 · 一键复制快报            │
+│  ├── ECharts 工作台：K线+KDJ、国内溢价、金银比、多策略回测   │
 │  ├── 自研设计系统（深浅主题，红涨绿跌）                      │
-│  └── DOMPurify + marked（AI 报告安全渲染）                   │
+│  └── DOMPurify + marked（AI 研报安全渲染）                   │
 ├─────────────────────────────────────────────────────────────┤
 │  Backend (Hono + Cloudflare Workers)                        │
-│  ├── providers/  多源适配，失败降级，健康登记                 │
-│  ├── quant/      指标、逐日评分、信号、回测、溢价（无前视）   │
-│  ├── market.js   双源校验、估算降级、缓存与并发合并           │
-│  └── ai.js / push.js  AI 解释量化结果，PushPlus 推送与预警   │
+│  ├── providers/  东财/新浪/Swissquote/gold-api/Yahoo/Stooq  │
+│  ├── quant/      KDJ/MACD/RSI/OBV/枢轴点/多策略回测矩阵     │
+│  ├── market.js   双源校验、金银比率、故障级联、缓存合并     │
+│  └── ai.js       Workers AI / OpenRouter / DeepSeek / 规则  │
 ├─────────────────────────────────────────────────────────────┤
-│  Data Sources（免费，无需 Key）                              │
-│  ├── gold-api.com       国际现货 XAU / XAG（主）             │
-│  ├── Yahoo Finance      国际报价校验、昨收、备用日K          │
-│  ├── Stooq              XAU/USD、USD/CNY 历史日K（主）       │
-│  ├── Frankfurter (ECB)  历史汇率（备）                       │
-│  ├── open.er-api.com    最新汇率 USD/CNY                     │
-│  └── 东方财富            AU9999 实时行情与日K（国内）        │
+│  Data Sources（多层冗余容灾，免费无需强制 Key）             │
+│  ├── 国内黄金：东方财富 ➔ 新浪 SGE 行情 ➔ 汇率理论估算       │
+│  ├── 国际黄金：gold-api ➔ 瑞士银行 Swissquote ➔ Yahoo ➔ 新浪│
+│  ├── 国际白银：gold-api ➔ Swissquote ➔ 新浪国际             │
+│  ├── 汇率接口：open.er-api ➔ 新浪外汇 ➔ Frankfurter ➔ Stooq │
+│  └── 历史日K：东方财富 (国内) / Stooq ➔ Yahoo (国际)        │
 └─────────────────────────────────────────────────────────────┘
 ```
 

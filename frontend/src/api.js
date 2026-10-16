@@ -7,7 +7,7 @@
 
 import axios from 'axios';
 
-export const API_BASE = import.meta.env.PROD ? 'https://gold-backend.chuankangkk.top' : '';
+export const API_BASE = import.meta.env.VITE_API_BASE || (import.meta.env.PROD ? 'https://gold-backend.chuankangkk.top' : '');
 
 const http = axios.create({ baseURL: API_BASE, timeout: 15000 });
 
@@ -19,6 +19,16 @@ export async function fetchPrices() {
 // market: 'cn'（AU9999，含溢价与回测）| 'intl'（XAU/USD）
 export async function fetchQuant(market, days = 250) {
   const { data } = await http.get(`/api/quant/${market}`, { params: { days }, timeout: 20000 });
+  return data;
+}
+
+export async function fetchRatio(days = 120) {
+  const { data } = await http.get('/api/ratio', { params: { days }, timeout: 15000 });
+  return data;
+}
+
+export async function fetchSignals(market = 'cn', days = 60) {
+  const { data } = await http.get('/api/signals', { params: { market, days }, timeout: 15000 });
   return data;
 }
 

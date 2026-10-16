@@ -32,9 +32,16 @@ export function escapeHtml(str) {
 
 // 恒定时间比较，避免通过响应时间侧信道猜测 Token
 export function safeEqual(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const aLen = a.length;
+  const bLen = b.length;
+  let diff = aLen ^ bLen;
+  const maxLen = Math.max(aLen, bLen);
+  for (let i = 0; i < maxLen; i++) {
+    const codeA = i < aLen ? a.charCodeAt(i) : 0;
+    const codeB = i < bLen ? b.charCodeAt(i) : 0;
+    diff |= codeA ^ codeB;
+  }
   return diff === 0;
 }
 

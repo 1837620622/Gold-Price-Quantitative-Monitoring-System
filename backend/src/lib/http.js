@@ -13,7 +13,13 @@ async function request(url, { timeoutMs = FETCH_TIMEOUT_MS, headers = {}, ...ini
       signal: controller.signal,
       headers: { 'User-Agent': USER_AGENT, ...headers },
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status} (${new URL(url).host})`);
+    if (!res.ok) {
+      let host = 'upstream';
+      try {
+        host = new URL(url).host;
+      } catch {}
+      throw new Error(`HTTP ${res.status} (${host})`);
+    }
     return res;
   } finally {
     clearTimeout(timer);

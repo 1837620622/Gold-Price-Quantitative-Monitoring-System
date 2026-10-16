@@ -27,7 +27,7 @@ let resizeObserver = null;
 const hasData = computed(() => props.bars.length > 0);
 const ariaLabel = computed(() => `${props.name} 日K线与技术指标图`);
 
-// 窗格（pane）按开关动态生成：价格 → 成交量 → 评分 → MACD → RSI
+// 窗格（pane）按开关动态生成：价格 → 成交量 → 评分 → MACD → RSI → KDJ
 function activePanes() {
   const t = props.toggles;
   const hasVolume = props.bars.some((b) => b.volume > 0);
@@ -36,10 +36,11 @@ function activePanes() {
   if (t.score && props.indicators) panes.push('score');
   if (t.macd && props.indicators) panes.push('macd');
   if (t.rsi && props.indicators) panes.push('rsi');
+  if (t.kdj && props.indicators?.kdj) panes.push('kdj');
   return panes;
 }
 
-const WEIGHT = { price: 2.4, volume: 1.3, score: 1, macd: 1.1, rsi: 1 };
+const WEIGHT = { price: 2.4, volume: 1.3, score: 1, macd: 1.1, rsi: 1, kdj: 1.1 };
 
 function yAxisOf(pane, gridIndex, pal) {
   const base = { gridIndex, axisLine: { show: false }, axisTick: { show: false }, splitNumber: 3 };
@@ -51,6 +52,7 @@ function yAxisOf(pane, gridIndex, pal) {
     score: { min: -100, max: 100, interval: 50, axisLabel: label(true), splitLine: grid },
     macd: { scale: true, axisLabel: label(false), splitLine: { show: false } },
     rsi: { min: 0, max: 100, interval: 50, axisLabel: label(true), splitLine: grid },
+    kdj: { min: 0, max: 100, interval: 50, axisLabel: label(true), splitLine: grid },
   };
   return { ...base, ...configs[pane] };
 }
@@ -73,6 +75,7 @@ function tooltipHtml(params, pal, bars, ind, t, panes) {
     if (panes.includes('score')) rows.push(`量化评分 <b>${v(ind.score)}</b>`);
     if (panes.includes('macd')) rows.push(`DIF ${v(ind.dif)} · DEA ${v(ind.dea)} · 柱 ${v(ind.hist)}`);
     if (panes.includes('rsi')) rows.push(`RSI ${v(ind.rsi14)}`);
+    if (panes.includes('kdj') && ind.kdj) rows.push(`K ${v(ind.kdj.k)} · D ${v(ind.kdj.d)} · J ${v(ind.kdj.j)}`);
   }
   return rows.join('<br/>');
 }
@@ -202,6 +205,22 @@ function buildOption() {
         data: [{ yAxis: 30 }, { yAxis: 70 }],
       },
     });
+  }
+
+  if (paneIndex('kdj') >= 0 && ind.kdj) {
+    const i = paneIndex('kdj');
+    series.push({
+      ...line('K', ind.kdj.k, i, pal.kdjK),
+      markLine: {
+        symbol: 'none',
+        silent: true,
+        label: { show: false },
+        lineStyle: { color: pal.axis, type: 'dashed' },
+        data: [{ yAxis: 20 }, { yAxis: 80 }],
+      },
+    });
+    series.push(line('D', ind.kdj.d, i, pal.kdjD));
+    series.push(line('J', ind.kdj.j, i, pal.kdjJ));
   }
 
   const allAxes = panes.map((_, i) => i);

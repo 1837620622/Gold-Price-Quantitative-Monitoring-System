@@ -8,7 +8,11 @@
  */
 
 import { QUANT, OZ_TO_GRAM } from '../config.js';
-import { sma, ema, macd, rsi, bollinger, atr, realizedVol, drawdownSeries, mean, stdev, median, isNum } from './indicators.js';
+import {
+  sma, ema, macd, rsi, bollinger, atr, realizedVol, drawdownSeries,
+  kdj, obv, computePivotPoints, advancedMetrics,
+  mean, stdev, median, isNum
+} from './indicators.js';
 import { round } from '../lib/util.js';
 
 const MA_PERIODS = [5, 10, 20, 60];
@@ -81,6 +85,7 @@ function computeIndicators(bars) {
   const closes = bars.map((b) => b.close);
   const m = macd(closes, QUANT.emaFast, QUANT.emaSlow, QUANT.macdSignal);
   const ma = Object.fromEntries(MA_PERIODS.map((n) => [n, sma(closes, n)]));
+  const kdjRes = kdj(bars, QUANT.kdjN || 9, QUANT.kdjM1 || 3, QUANT.kdjM2 || 3);
   return {
     closes,
     ma,
@@ -90,6 +95,8 @@ function computeIndicators(bars) {
     dea: m.dea,
     hist: m.hist,
     rsi14: rsi(closes, QUANT.rsiPeriod),
+    kdj: kdjRes,
+    obv: obv(bars),
     boll: bollinger(closes, QUANT.bollPeriod, QUANT.bollMultiplier),
     atr14: atr(bars, QUANT.atrPeriod),
     vol20: realizedVol(closes, QUANT.volWindow, QUANT.periodsPerYear),
@@ -112,7 +119,7 @@ function scoreAt(i, bar, ind, premiumZ) {
   if (valid(a) && a > 0) {
     if (valid(ind.emaFast[i]) && valid(ind.emaSlow[i])) {
       const gap = (ind.emaFast[i] - ind.emaSlow[i]) / a;
-      add('trend', 'EMA 趋势', 30, gap, gap >= 0 ? 'EMA12 位于 EMA26 上方，趋势向上' : 'EMA12 位于 EMA26 下方，趋势向下');
+      add('trend', 'EMA 趋势', 25, gap, gap >= 0 ? 'EMA12 位于 EMA26 上方，趋势向上' : 'EMA12 位于 EMA26 下方，趋势向下');
     }
     if (valid(ind.ma[20][i])) {
       const dev = (bar.close - ind.ma[20][i]) / a;
@@ -120,7 +127,7 @@ function scoreAt(i, bar, ind, premiumZ) {
     }
     if (valid(ind.hist[i])) {
       const h = ind.hist[i] / a;
-      add('macd', 'MACD 动能', 20, h * 2, h >= 0 ? 'MACD 柱线为正，动能偏多' : 'MACD 柱线为负，动能偏空');
+      add('macd', 'MACD 动能', 15, h * 2, h >= 0 ? 'MACD 柱线为正，动能偏多' : 'MACD 柱线为负，动能偏空');
     }
   }
   if (valid(ind.rsi14[i])) {
@@ -129,6 +136,24 @@ function scoreAt(i, bar, ind, premiumZ) {
       : r <= 30 ? `RSI ${round(r, 1)} 进入超卖区，关注反弹`
         : `RSI ${round(r, 1)} 处于中性区`;
     add('rsi', 'RSI(14)', 15, (r - 50) / 25, reason);
+  }
+  if (ind.kdj && valid(ind.kdj.k[i]) && valid(ind.kdj.d[i]) && valid(ind.kdj.j[i])) {
+    const kVal = ind.kdj.k[i];
+    const dVal = ind.kdj.d[i];
+    const jVal = ind.kdj.j[i];
+    let kScore = 0;
+    let kReason = 'KDJ 中性运行';
+    if (jVal > 100) {
+      kScore = -0.5;
+      kReason = `KDJ J值(${round(jVal, 1)}) 超买钝化，警惕冲高回落`;
+    } else if (jVal < 0) {
+      kScore = 0.5;
+      kReason = `KDJ J值(${round(jVal, 1)}) 超卖探底，关注反弹契机`;
+    } else {
+      kScore = (kVal - dVal) / 25;
+      kReason = kVal >= dVal ? 'KDJ 金叉多头运行' : 'KDJ 死叉偏空整理';
+    }
+    add('kdj', 'KDJ(9,3,3)', 10, kScore, kReason);
   }
   if (valid(ind.boll.pctB[i])) {
     const p = ind.boll.pctB[i];
@@ -208,6 +233,7 @@ function buildLevels(bars, ind, i) {
   const span = (n, key) => bars.slice(Math.max(0, i - n + 1), i + 1).map((b) => b[key]);
   const uniq = (arr) => [...new Set(arr.map((v) => round(v, 2)))].sort((x, y) => x - y);
   const hasAtr = valid(a);
+  const pivots = computePivotPoints(bars[i].high, bars[i].low, bars[i].close);
   return {
     support: uniq([Math.min(...span(20, 'low')), Math.min(...span(60, 'low'))]),
     resistance: uniq([Math.max(...span(20, 'high')), Math.max(...span(60, 'high'))]),
@@ -217,6 +243,7 @@ function buildLevels(bars, ind, i) {
     refHigh: hasAtr ? round(close + a, 2) : null,
     stopLongRef: hasAtr ? round(close - 2 * a, 2) : null,
     stopShortRef: hasAtr ? round(close + 2 * a, 2) : null,
+    pivots,
   };
 }
 
@@ -258,31 +285,8 @@ function simulate(closes, pos, start) {
     trades,
     exposure: rets.length ? inMarket / rets.length : 0,
     winRate: inMarket ? wins / inMarket : 0,
-  };
-}
-
-function metricsOf(sim) {
-  const { eq, rets } = sim;
-  const total = eq[eq.length - 1] / eq[0] - 1;
-  const years = rets.length / QUANT.periodsPerYear;
-  const cagr = years > 0 ? (1 + total) ** (1 / years) - 1 : 0;
-  const sd = stdev(rets);
-  const m = mean(rets) || 0;
-  let peak = -Infinity;
-  let maxDd = 0;
-  for (const v of eq) {
-    peak = Math.max(peak, v);
-    maxDd = Math.min(maxDd, v / peak - 1);
-  }
-  return {
-    totalReturn: round(total * 100, 2),
-    cagr: round(cagr * 100, 2),
-    vol: round(sd * Math.sqrt(QUANT.periodsPerYear) * 100, 2),
-    sharpe: sd > 0 ? round((m / sd) * Math.sqrt(QUANT.periodsPerYear), 2) : 0,
-    maxDrawdown: round(maxDd * 100, 2),
-    trades: sim.trades,
-    exposure: round(sim.exposure * 100, 1),
-    winRate: round(sim.winRate * 100, 1),
+    inMarket,
+    wins,
   };
 }
 
@@ -294,32 +298,105 @@ function ddOf(eq) {
   });
 }
 
-function backtest(bars, ind, scores) {
+function backtest(bars, ind, scores, premiumZ = null) {
   const n = bars.length;
   const start = QUANT.warmupBars;
   if (n - start < 20) return { available: false, reason: '样本不足，无法回测' };
 
   const closes = bars.map((b) => b.close);
   const posTrend = new Array(n).fill(0);
+  const posTrendFiltered = new Array(n).fill(0);
   const posScore = new Array(n).fill(0);
+  const posBollRsi = new Array(n).fill(0);
+  const posPremiumArb = new Array(n).fill(0);
   const posHold = new Array(n).fill(0);
-  let held = 0;
+
+  let heldScore = 0;
+  let heldBoll = 0;
+  let heldArb = 0;
+
   for (let i = start; i < n; i++) {
-    posTrend[i] = valid(ind.emaFast[i]) && valid(ind.emaSlow[i]) && ind.emaFast[i] > ind.emaSlow[i] ? 1 : 0;
+    // 策略1：EMA 趋势
+    const isBullTrend = valid(ind.emaFast[i]) && valid(ind.emaSlow[i]) && ind.emaFast[i] > ind.emaSlow[i];
+    posTrend[i] = isBullTrend ? 1 : 0;
+
+    // 策略2：EMA 趋势 + MA60 长期趋势过滤（过滤空头弱势反弹）
+    const m60 = ind.ma[60]?.[i];
+    posTrendFiltered[i] = isBullTrend && (!valid(m60) || closes[i] >= m60) ? 1 : 0;
+
+    // 策略3：综合评分迟滞策略
     const s = scores[i];
-    held = held === 1
+    heldScore = heldScore === 1
       ? (valid(s) && s >= QUANT.longExitScore ? 1 : 0)
       : (valid(s) && s >= QUANT.longEntryScore ? 1 : 0);
-    posScore[i] = held;
+    posScore[i] = heldScore;
+
+    // 策略4：布林带 + RSI 均值回归反转策略
+    const r = ind.rsi14[i];
+    const pb = ind.boll.pctB[i];
+    if (heldBoll === 1) {
+      if ((valid(r) && r > 65) || (valid(pb) && pb > 0.9)) heldBoll = 0;
+    } else {
+      if (valid(r) && r < 38 && valid(pb) && pb < 0.2) heldBoll = 1;
+    }
+    posBollRsi[i] = heldBoll;
+
+    // 策略5：溢价套利均值回归策略
+    if (premiumZ && valid(premiumZ[i])) {
+      const z = premiumZ[i];
+      if (heldArb === 1) {
+        if (z >= 0.5) heldArb = 0;
+      } else {
+        if (z <= -1.2) heldArb = 1;
+      }
+    } else {
+      heldArb = 0;
+    }
+    posPremiumArb[i] = heldArb;
+
+    // 策略6：买入持有
     posHold[i] = 1;
   }
 
-  const sims = {
-    trend: simulate(closes, posTrend, start),
-    score: simulate(closes, posScore, start),
-    buyHold: simulate(closes, posHold, start),
-  };
+  const simTrend = simulate(closes, posTrend, start);
+  const simTrendFiltered = simulate(closes, posTrendFiltered, start);
+  const simScore = simulate(closes, posScore, start);
+  const simBollRsi = simulate(closes, posBollRsi, start);
+  const simPremiumArb = simulate(closes, posPremiumArb, start);
+  const simBuyHold = simulate(closes, posHold, start);
+
   const r2 = (arr) => arr.map((v) => round(v, 2));
+
+  const strategies = {
+    trend: { name: 'EMA 趋势', ...advancedMetrics(simTrend) },
+    trendFiltered: { name: '趋势过滤', ...advancedMetrics(simTrendFiltered) },
+    score: { name: '综合评分', ...advancedMetrics(simScore) },
+    bollRsi: { name: '布林反转', ...advancedMetrics(simBollRsi) },
+    buyHold: { name: '买入持有', ...advancedMetrics(simBuyHold) },
+  };
+
+  const equity = {
+    dates: bars.slice(start).map((b) => b.date),
+    trend: r2(simTrend.eq),
+    trendFiltered: r2(simTrendFiltered.eq),
+    score: r2(simScore.eq),
+    bollRsi: r2(simBollRsi.eq),
+    buyHold: r2(simBuyHold.eq),
+  };
+
+  const drawdown = {
+    trend: ddOf(simTrend.eq),
+    trendFiltered: ddOf(simTrendFiltered.eq),
+    score: ddOf(simScore.eq),
+    bollRsi: ddOf(simBollRsi.eq),
+    buyHold: ddOf(simBuyHold.eq),
+  };
+
+  if (premiumZ && premiumZ.some(valid)) {
+    strategies.premiumArb = { name: '溢价回归', ...advancedMetrics(simPremiumArb) };
+    equity.premiumArb = r2(simPremiumArb.eq);
+    drawdown.premiumArb = ddOf(simPremiumArb.eq);
+  }
 
   return {
     available: true,
@@ -328,26 +405,16 @@ function backtest(bars, ind, scores) {
     days: n - start,
     rules: {
       trend: 'EMA12 > EMA26 时持有，次日生效',
+      trendFiltered: 'EMA12 > EMA26 且收盘价站在 MA60 上方',
       score: `综合评分 ≥ ${QUANT.longEntryScore} 开仓，≤ ${QUANT.longExitScore} 平仓`,
-      buyHold: '全程持有',
+      bollRsi: 'RSI < 38 且 %B < 0.2 时低吸反弹，超买冲高平仓',
+      premiumArb: '国内溢价 Z ≤ -1.2 低估介入，Z ≥ 0.5 止盈',
+      buyHold: '全程持有（基准）',
       costPerSwitchPercent: round(COST * 100, 3),
     },
-    strategies: {
-      trend: { name: 'EMA 趋势', ...metricsOf(sims.trend) },
-      score: { name: '综合评分', ...metricsOf(sims.score) },
-      buyHold: { name: '买入持有', ...metricsOf(sims.buyHold) },
-    },
-    equity: {
-      dates: bars.slice(start).map((b) => b.date),
-      trend: r2(sims.trend.eq),
-      score: r2(sims.score.eq),
-      buyHold: r2(sims.buyHold.eq),
-    },
-    drawdown: {
-      trend: ddOf(sims.trend.eq),
-      score: ddOf(sims.score.eq),
-      buyHold: ddOf(sims.buyHold.eq),
-    },
+    strategies,
+    equity,
+    drawdown,
   };
 }
 

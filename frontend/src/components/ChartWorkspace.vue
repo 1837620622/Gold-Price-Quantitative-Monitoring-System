@@ -73,6 +73,23 @@
       </p>
     </template>
 
+    <!-- 金银比率 -->
+    <template v-else-if="tab === 'ratio'">
+      <div v-if="ratioData" class="premium-stats">
+        <div><span>当前金银比</span><b class="tone-up">{{ fmt(ratioData.current) }}</b></div>
+        <div><span>历史均值</span><b>{{ fmt(ratioData.mean) }}</b></div>
+        <div><span>历史分位</span><b>{{ fmt(ratioData.percentile, 0) }}%</b></div>
+        <div><span>市场状态</span><b style="font-size: 14px">{{ ratioData.label }}</b></div>
+        <div><span>配对策略参考</span><span style="font-size: 12px; margin-top: 4px; display: block; color: var(--text-2)">{{ ratioData.suggestion }}</span></div>
+      </div>
+      <div v-if="ratioLoading" class="notice">金银比数据加载中…</div>
+      <RatioChart v-else :series="ratioData?.series || []" :stats="ratioData" :theme="theme" />
+      <p class="note">
+        金银比率 = 国际金价 (XAU/USD) ÷ 国际银价 (XAG/USD)。代表购买 1 盎司黄金所需的白银盎司数。
+        高位（通常 > 80）预示白银被低估，具备均值回归修复潜能；低位（< 65）预示白银相对偏强。
+      </p>
+    </template>
+
     <!-- 回测 -->
     <template v-else>
       <div v-if="activeBacktest?.available">
@@ -84,10 +101,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import KlineChart from './KlineChart.vue';
 import PremiumChart from './PremiumChart.vue';
+import RatioChart from './RatioChart.vue';
 import BacktestPanel from './BacktestPanel.vue';
+import { fetchRatio } from '../api';
 
 const props = defineProps({
   cn: { type: Object, default: null },
@@ -103,6 +122,7 @@ const TABS = [
   { key: 'cn', label: '国内 AU9999' },
   { key: 'intl', label: '国际 XAU/USD' },
   { key: 'premium', label: '国内溢价' },
+  { key: 'ratio', label: '金银比率' },
   { key: 'backtest', label: '策略回测' },
 ];
 const PERIODS = [
@@ -117,6 +137,7 @@ const TOGGLES = [
   { key: 'vol', label: '成交量' },
   { key: 'score', label: '量化评分' },
   { key: 'macd', label: 'MACD' },
+  { key: 'kdj', label: 'KDJ' },
   { key: 'rsi', label: 'RSI' },
 ];
 
@@ -126,14 +147,40 @@ const period = ref(90);
 const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
 const toggles = ref(
   narrow
-    ? { ma: true, boll: false, vol: false, score: true, macd: false, rsi: false }
-    : { ma: true, boll: false, vol: true, score: true, macd: true, rsi: false }
+    ? { ma: true, boll: false, vol: false, score: true, macd: false, kdj: false, rsi: false }
+    : { ma: true, boll: false, vol: true, score: true, macd: true, kdj: false, rsi: false }
 );
 
 // 整体替换状态对象（而非原地修改），使 KlineChart 的 watch 能感知到变化
 function toggleIndicator(key) {
   toggles.value = { ...toggles.value, [key]: !toggles.value[key] };
 }
+
+const ratioData = ref(null);
+const ratioLoading = ref(false);
+
+async function loadRatio() {
+  if (ratioData.value) return;
+  ratioLoading.value = true;
+  try {
+    const data = await fetchRatio(180);
+    if (data.success) {
+      ratioData.value = data;
+    }
+  } catch {
+    // 降级使用静默模式
+  } finally {
+    ratioLoading.value = false;
+  }
+}
+
+watch(tab, (t) => {
+  if (t === 'ratio') loadRatio();
+});
+
+onMounted(() => {
+  loadRatio();
+});
 
 const activeQuant = computed(() => (tab.value === 'intl' ? props.intl : props.cn));
 const activeError = computed(() => {
@@ -157,6 +204,7 @@ const zoomStart = computed(() => {
 const subtitle = computed(() => {
   const q = activeQuant.value;
   if (tab.value === 'premium') return '国内相对国际金价折算的溢价，及其历史分布';
+  if (tab.value === 'ratio') return '国际现货金银价格比率，套利与宏观配置参考';
   if (tab.value === 'backtest') return '基于真实日K的策略回测，对比买入持有';
   return q?.asOf ? `数据截至 ${q.asOf} 收盘` : '日K线与技术指标';
 });

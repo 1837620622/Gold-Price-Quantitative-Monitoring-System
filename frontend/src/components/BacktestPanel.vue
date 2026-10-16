@@ -13,7 +13,11 @@
             <th scope="col">总收益</th>
             <th scope="col">年化</th>
             <th scope="col">年化波动</th>
-            <th scope="col">夏普</th>
+            <th scope="col">夏普比率</th>
+            <th scope="col">索提诺</th>
+            <th scope="col">卡玛</th>
+            <th scope="col">盈亏比</th>
+            <th scope="col">胜率</th>
             <th scope="col">最大回撤</th>
             <th scope="col">换仓</th>
             <th scope="col">持仓占比</th>
@@ -22,14 +26,18 @@
         <tbody>
           <tr v-for="row in rows" :key="row.key">
             <th scope="row">
-              <span class="swatch" :style="{ background: colors[row.key] }"></span>
+              <span class="swatch" :style="{ background: colors[row.key] || '#888' }"></span>
               <span>{{ row.name }}</span>
-              <span class="rule">{{ backtest.rules[row.key] }}</span>
+              <span class="rule">{{ backtest.rules?.[row.key] || '' }}</span>
             </th>
             <td :class="toneOf(row.totalReturn)">{{ signedPct(row.totalReturn) }}</td>
             <td :class="toneOf(row.cagr)">{{ signedPct(row.cagr) }}</td>
             <td>{{ fmt(row.vol) }}%</td>
             <td>{{ fmt(row.sharpe) }}</td>
+            <td>{{ fmt(row.sortino) }}</td>
+            <td>{{ fmt(row.calmar) }}</td>
+            <td>{{ fmt(row.profitFactor) }}</td>
+            <td>{{ fmt(row.winRate, 1) }}%</td>
             <td class="tone-down">{{ fmt(row.maxDrawdown) }}%</td>
             <td>{{ row.trades }}</td>
             <td>{{ fmt(row.exposure, 0) }}%</td>
@@ -56,7 +64,11 @@ const chart = shallowRef(null);
 let unmounted = false;
 let resizeObserver = null;
 
-const rows = computed(() => ['trend', 'score', 'buyHold'].map((key) => ({ key, ...props.backtest.strategies[key] })));
+const STRATEGY_ORDER = ['trend', 'trendFiltered', 'score', 'bollRsi', 'premiumArb', 'buyHold'];
+const rows = computed(() => {
+  const strats = props.backtest?.strategies || {};
+  return STRATEGY_ORDER.filter((k) => strats[k]).map((key) => ({ key, ...strats[key] }));
+});
 const colors = computed(() => chartPalette(props.theme).equity);
 
 const fmt = (v, d = 2) => fmtVal(v, d);
@@ -67,6 +79,50 @@ function buildOption() {
   const pal = chartPalette(props.theme);
   const bt = props.backtest;
   const dates = bt.equity.dates;
+
+  const series = [];
+  STRATEGY_ORDER.forEach((key) => {
+    if (bt.equity?.[key]) {
+      const isDashed = key === 'buyHold';
+      const stratName = bt.strategies?.[key]?.name || key;
+      const color = pal.equity[key] || '#a3a3a3';
+      series.push({
+        name: stratName,
+        type: 'line',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: bt.equity[key],
+        showSymbol: false,
+        lineStyle: { width: isDashed ? 1.4 : 1.7, color, type: isDashed ? 'dashed' : 'solid' },
+        itemStyle: { color },
+      });
+    }
+  });
+
+  if (bt.drawdown?.score) {
+    series.push({
+      name: '综合评分回撤',
+      type: 'line',
+      xAxisIndex: 1,
+      yAxisIndex: 1,
+      data: bt.drawdown.score,
+      showSymbol: false,
+      lineStyle: { width: 1, color: pal.equity.score },
+      areaStyle: { color: pal.drawdown },
+    });
+  }
+  if (bt.drawdown?.buyHold) {
+    series.push({
+      name: '买入持有回撤',
+      type: 'line',
+      xAxisIndex: 1,
+      yAxisIndex: 1,
+      data: bt.drawdown.buyHold,
+      showSymbol: false,
+      lineStyle: { width: 1, color: pal.equity.buyHold, type: 'dashed' },
+    });
+  }
+
   return {
     animationDuration: 300,
     grid: [
@@ -108,13 +164,7 @@ function buildOption() {
         axisLabel: { color: pal.muted, fontSize: 11, formatter: (v) => `${v}%` },
       },
     ],
-    series: [
-      { name: 'EMA 趋势', type: 'line', xAxisIndex: 0, yAxisIndex: 0, data: bt.equity.trend, showSymbol: false, lineStyle: { width: 1.6, color: pal.equity.trend }, itemStyle: { color: pal.equity.trend } },
-      { name: '综合评分', type: 'line', xAxisIndex: 0, yAxisIndex: 0, data: bt.equity.score, showSymbol: false, lineStyle: { width: 1.6, color: pal.equity.score }, itemStyle: { color: pal.equity.score } },
-      { name: '买入持有', type: 'line', xAxisIndex: 0, yAxisIndex: 0, data: bt.equity.buyHold, showSymbol: false, lineStyle: { width: 1.4, color: pal.equity.buyHold, type: 'dashed' }, itemStyle: { color: pal.equity.buyHold } },
-      { name: '综合评分回撤', type: 'line', xAxisIndex: 1, yAxisIndex: 1, data: bt.drawdown.score, showSymbol: false, lineStyle: { width: 1, color: pal.equity.score }, areaStyle: { color: pal.drawdown } },
-      { name: '买入持有回撤', type: 'line', xAxisIndex: 1, yAxisIndex: 1, data: bt.drawdown.buyHold, showSymbol: false, lineStyle: { width: 1, color: pal.equity.buyHold, type: 'dashed' } },
-    ],
+    series,
     dataZoom: [{ type: 'inside', xAxisIndex: [0, 1], zoomOnMouseWheel: false, moveOnMouseWheel: false }],
   };
 }

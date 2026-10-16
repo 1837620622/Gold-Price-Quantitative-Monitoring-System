@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sma, ema, macd, rsi, bollinger, atr, realizedVol, drawdownSeries, stdev, median } from '../src/quant/indicators.js';
+import { sma, ema, macd, rsi, bollinger, atr, realizedVol, drawdownSeries, stdev, median, kdj, obv, computePivotPoints, advancedMetrics } from '../src/quant/indicators.js';
 
 const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
@@ -102,3 +102,56 @@ test('样本标准差与中位数', () => {
   assert.equal(median([3, 1, 2]), 2);
   assert.equal(median([4, 1, 3, 2]), 2.5);
 });
+
+test('KDJ(9,3,3)：前8根为null，之后按经典公式递归', () => {
+  const bars = Array.from({ length: 15 }, (_, i) => ({
+    open: 100 + i,
+    high: 105 + i,
+    low: 95 + i,
+    close: 102 + i,
+  }));
+  const res = kdj(bars, 9, 3, 3);
+  assert.equal(res.k[7], null);
+  assert.ok(typeof res.k[8] === 'number');
+  assert.ok(typeof res.d[8] === 'number');
+  assert.ok(typeof res.j[8] === 'number');
+  close(res.j[8], 3 * res.k[8] - 2 * res.d[8], 1e-6);
+});
+
+test('OBV：价涨累加成交量，价跌扣减，持平不变', () => {
+  const bars = [
+    { close: 10, volume: 100 },
+    { close: 12, volume: 200 },
+    { close: 11, volume: 150 },
+    { close: 11, volume: 80 },
+  ];
+  const out = obv(bars);
+  assert.deepEqual(out, [0, 200, 50, 50]);
+});
+
+test('枢轴点：经典与斐波那契支撑阻力位结构正确', () => {
+  const p = computePivotPoints(100, 90, 95);
+  assert.equal(p.pivot, 95);
+  assert.equal(p.classic.pivot, 95);
+  assert.equal(p.classic.r1, 100); // 2*95 - 90
+  assert.equal(p.classic.s1, 90);  // 2*95 - 100
+  assert.ok(p.fibonacci.r1 > 95 && p.fibonacci.r2 > p.fibonacci.r1);
+  assert.ok(p.fibonacci.s1 < 95 && p.fibonacci.s2 < p.fibonacci.s1);
+});
+
+test('专业回测指标：包含索提诺、卡玛、盈亏比等', () => {
+  const m = advancedMetrics({
+    eq: [100, 105, 110],
+    rets: [0.05, 0.0476],
+    trades: 1,
+    exposure: 1,
+    inMarket: 2,
+    wins: 2,
+    periodsPerYear: 252,
+  });
+  assert.equal(m.totalReturn, 10);
+  assert.ok(m.sortino >= 0);
+  assert.ok(m.calmar >= 0);
+  assert.equal(m.winRate, 100);
+});
+

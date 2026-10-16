@@ -162,3 +162,147 @@ export function drawdownSeries(values) {
     return v / peak - 1;
   });
 }
+
+// KDJ 指标（中国期货/贵金属经典参数 9, 3, 3）
+export function kdj(bars, n = 9, m1 = 3, m2 = 3) {
+  const k = new Array(bars.length).fill(null);
+  const d = new Array(bars.length).fill(null);
+  const j = new Array(bars.length).fill(null);
+  if (bars.length < n) return { k, d, j };
+
+  let prevK = 50;
+  let prevD = 50;
+
+  for (let i = 0; i < bars.length; i++) {
+    if (i < n - 1) continue;
+    const window = bars.slice(i - n + 1, i + 1);
+    const lowN = Math.min(...window.map((b) => b.low));
+    const highN = Math.max(...window.map((b) => b.high));
+    const close = bars[i].close;
+    const rsv = highN === lowN ? 50 : Math.max(0, Math.min(100, ((close - lowN) / (highN - lowN)) * 100));
+
+    const currentK = (rsv + (m1 - 1) * prevK) / m1;
+    const currentD = (currentK + (m2 - 1) * prevD) / m2;
+    const currentJ = 3 * currentK - 2 * currentD;
+
+    k[i] = currentK;
+    d[i] = currentD;
+    j[i] = currentJ;
+
+    prevK = currentK;
+    prevD = currentD;
+  }
+  return { k, d, j };
+}
+
+// 能量潮 OBV
+export function obv(bars) {
+  const out = new Array(bars.length).fill(0);
+  let sum = 0;
+  for (let i = 0; i < bars.length; i++) {
+    if (i > 0) {
+      const diff = bars[i].close - bars[i - 1].close;
+      const v = bars[i].volume || 0;
+      if (diff > 0) sum += v;
+      else if (diff < 0) sum -= v;
+    }
+    out[i] = sum;
+  }
+  return out;
+}
+
+// 枢轴点计算（经典、斐波那契、卡玛利拉支撑阻力）
+export function computePivotPoints(high, low, close) {
+  if (!isNum(high) || !isNum(low) || !isNum(close)) return null;
+  const p = (high + low + close) / 3;
+  const diff = high - low;
+  const r2 = (v) => Math.round(v * 100) / 100;
+
+  return {
+    pivot: r2(p),
+    classic: {
+      r3: r2(high + 2 * (p - low)),
+      r2: r2(p + diff),
+      r1: r2(2 * p - low),
+      pivot: r2(p),
+      s1: r2(2 * p - high),
+      s2: r2(p - diff),
+      s3: r2(low - 2 * (high - p)),
+    },
+    fibonacci: {
+      r3: r2(p + 1.0 * diff),
+      r2: r2(p + 0.618 * diff),
+      r1: r2(p + 0.382 * diff),
+      pivot: r2(p),
+      s1: r2(p - 0.382 * diff),
+      s2: r2(p - 0.618 * diff),
+      s3: r2(p - 1.0 * diff),
+    },
+    camarilla: {
+      r4: r2(close + (diff * 1.1) / 2),
+      r3: r2(close + (diff * 1.1) / 4),
+      s3: r2(close - (diff * 1.1) / 4),
+      s4: r2(close - (diff * 1.1) / 2),
+    },
+  };
+}
+
+// 专业回测指标（包含索提诺、卡玛、盈亏比、最大连亏等）
+export function advancedMetrics({ eq, rets, trades, exposure, inMarket, wins, periodsPerYear = 252 }) {
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const total = eq[eq.length - 1] / eq[0] - 1;
+  const years = rets.length / periodsPerYear;
+  const cagr = years > 0 ? (1 + total) ** (1 / years) - 1 : 0;
+  const sd = stdev(rets);
+  const m = mean(rets) || 0;
+
+  let peak = -Infinity;
+  let maxDd = 0;
+  for (const v of eq) {
+    peak = Math.max(peak, v);
+    maxDd = Math.min(maxDd, v / peak - 1);
+  }
+
+  // 索提诺比率（仅对下行波动率惩罚）
+  const downReturns = rets.filter((r) => r < 0);
+  const downSd = downReturns.length > 1
+    ? Math.sqrt(downReturns.reduce((s, r) => s + r ** 2, 0) / (downReturns.length - 1))
+    : sd;
+  const sortino = downSd > 0 ? (m / downSd) * Math.sqrt(periodsPerYear) : 0;
+
+  // 卡玛比率（CAGR / |MaxDrawdown|）
+  const calmar = Math.abs(maxDd) > 0.001 ? cagr / Math.abs(maxDd) : 0;
+
+  // 盈亏比（总盈利额 / 总亏损额）
+  const grossProfit = rets.filter((r) => r > 0).reduce((s, r) => s + r, 0);
+  const grossLoss = Math.abs(rets.filter((r) => r < 0).reduce((s, r) => s + r, 0));
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? 99.9 : 1.0);
+
+  // 最大连续亏损次数
+  let maxConsecLosses = 0;
+  let currentLosses = 0;
+  for (const r of rets) {
+    if (r < 0) {
+      currentLosses++;
+      if (currentLosses > maxConsecLosses) maxConsecLosses = currentLosses;
+    } else if (r > 0) {
+      currentLosses = 0;
+    }
+  }
+
+  return {
+    totalReturn: r2(total * 100),
+    cagr: r2(cagr * 100),
+    vol: r2(sd * Math.sqrt(periodsPerYear) * 100),
+    sharpe: sd > 0 ? r2((m / sd) * Math.sqrt(periodsPerYear)) : 0,
+    sortino: r2(sortino),
+    calmar: r2(calmar),
+    profitFactor: r2(profitFactor),
+    maxDrawdown: r2(maxDd * 100),
+    trades,
+    exposure: r2(exposure * 100),
+    winRate: inMarket ? r2((wins / inMarket) * 100) : 0,
+    maxConsecutiveLosses: maxConsecLosses,
+  };
+}
+

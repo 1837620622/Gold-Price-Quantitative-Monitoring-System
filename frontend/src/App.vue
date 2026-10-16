@@ -9,6 +9,8 @@
       :now="now"
       :sources-ok="sourcesOk"
       :sources-total="sourcesTotal"
+      :snapshot="snapshot"
+      :quant="cnQuant"
       @refresh="refreshAll"
       @toggle-theme="toggle"
       @subscribe="showSubscribe = true"

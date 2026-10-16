@@ -13,7 +13,7 @@ import { ALERT, DEFAULT_DAYS, MAX_DAYS, QUANT_DAYS } from './config.js';
 import { clampDays, safeEqual } from './lib/util.js';
 import { getState } from './lib/cache.js';
 import { listSources } from './lib/sources.js';
-import { getSnapshot, getDomesticKline, getQuant, getPremium } from './market.js';
+import { getSnapshot, getDomesticKline, getQuant, getPremium, getGoldSilverRatio, getSignals } from './market.js';
 import { getAnalysis } from './ai.js';
 import { executePush, runMonitorCycle, isScheduledPushDue, readPushStatus } from './push.js';
 
@@ -124,8 +124,9 @@ app.get('/api/price/domestic', async (c) => {
 
 app.get('/api/price/all', async (c) => {
   const snapshot = await getSnapshot();
+  const ratio = await getGoldSilverRatio().catch(() => null);
   const ok = Boolean(snapshot.domestic || snapshot.international);
-  return c.json({ success: ok, ...snapshot, sources: listSources() }, ok ? 200 : 503);
+  return c.json({ success: ok, ...snapshot, ratio: ratio?.available ? ratio : null, sources: listSources() }, ok ? 200 : 503);
 });
 
 app.get('/api/sources', (c) => {
@@ -166,6 +167,27 @@ app.get('/api/premium', async (c) => {
     return c.json({ success: premium.available, premium, timestamp: new Date().toISOString() });
   } catch (error) {
     return unavailable(c, '溢价数据获取失败', error);
+  }
+});
+
+app.get('/api/ratio', async (c) => {
+  const days = clampDays(c.req.query('days'), 60, MAX_DAYS);
+  try {
+    const ratio = await getGoldSilverRatio(days);
+    return c.json({ success: ratio.available, ...ratio });
+  } catch (error) {
+    return unavailable(c, '金银比获取失败', error);
+  }
+});
+
+app.get('/api/signals', async (c) => {
+  const market = c.req.query('market') || 'cn';
+  const days = clampDays(c.req.query('days'), QUANT_DAYS, MAX_DAYS);
+  try {
+    const signals = await getSignals(market, days);
+    return c.json({ success: signals.available, ...signals });
+  } catch (error) {
+    return unavailable(c, '量化信号获取失败', error);
   }
 });
 

@@ -180,3 +180,27 @@ test('未知路由返回 JSON 404', async () => {
   assert.equal(r.status, 404);
   assert.equal((await r.json()).success, false);
 });
+
+test('金银比接口：返回实时比率与区间研判', async () => {
+  useUpstream();
+  const r = await call('/api/ratio');
+  const body = await r.json();
+  assert.equal(r.status, 200);
+  assert.equal(body.success, true);
+  assert.ok(typeof body.current === 'number');
+  assert.ok(body.goldPrice > 0);
+  assert.ok(body.silverPrice > 0);
+  assert.ok(typeof body.regime === 'string');
+});
+
+test('量化信号总览：聚合趋势、动能、枢轴点与策略总结', async () => {
+  useUpstream();
+  const r = await call('/api/signals?market=cn');
+  const body = await r.json();
+  assert.equal(r.status, 200);
+  assert.equal(body.success, true);
+  assert.ok(body.signal?.label);
+  assert.ok(body.pivots?.classic?.pivot > 0);
+  assert.ok(body.strategiesSummary?.trend);
+});
+

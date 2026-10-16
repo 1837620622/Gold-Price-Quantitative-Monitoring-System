@@ -13,6 +13,8 @@ export const SOURCE_URLS = {
   frankfurter: 'https://api.frankfurter.app',
   eastmoneyQuote: 'https://push2.eastmoney.com/api/qt/stock/get',
   eastmoneyKline: 'https://push2his.eastmoney.com/api/qt/stock/kline/get',
+  sinaHq: 'https://hq.sinajs.cn/list=',
+  swissquote: 'https://forex-data-feed.swissquote.com/public-quotes/bboquotes/instrument',
   pushplus: 'https://www.pushplus.plus/send',
   modelscope: 'https://api-inference.modelscope.cn/v1/chat/completions',
 };
@@ -58,6 +60,9 @@ export const QUANT = {
   emaSlow: 26,
   macdSignal: 9,
   rsiPeriod: 14,
+  kdjN: 9,
+  kdjM1: 3,
+  kdjM2: 3,
   bollPeriod: 20,
   bollMultiplier: 2,
   atrPeriod: 14,

@@ -82,6 +82,32 @@ const macdState = computed(() => {
 const atrPercent = computed(() => props.quant.levels?.atrPercent ?? null);
 const premium = computed(() => (props.quant.premium?.available ? props.quant.premium : null));
 
+const kdj = computed(() => {
+  const kObj = lastValue(ind.value.kdj?.k);
+  const dObj = lastValue(ind.value.kdj?.d);
+  const jObj = lastValue(ind.value.kdj?.j);
+  if (!kObj || !dObj || !jObj) return null;
+  const k = kObj.value;
+  const d = dObj.value;
+  const j = jObj.value;
+  let status = '震荡区间';
+  let tone = 'tone-flat';
+  if (k >= 80 || d >= 80) {
+    status = '超买区警戒';
+    tone = 'tone-up';
+  } else if (k <= 20 || d <= 20) {
+    status = '超卖区蓄势';
+    tone = 'tone-down';
+  } else if (k > d) {
+    status = '多头金叉';
+    tone = 'tone-up';
+  } else {
+    status = '空头死叉';
+    tone = 'tone-down';
+  }
+  return { k, d, j, status, tone };
+});
+
 // 近 60 个交易日的量化评分走势
 const scoreSeries = computed(() => (ind.value.score || []).filter((v) => v !== null && v !== undefined).slice(-60));
 const scoreNow = computed(() => (scoreSeries.value.length ? scoreSeries.value[scoreSeries.value.length - 1] : null));
@@ -106,6 +132,17 @@ const tiles = computed(() => {
     sub: m ? `DIF-DEA ${fmtSigned(m.diff, 3)}，自 ${m.since} 起` : '数据不足',
     tone: m ? (m.bullish ? 'tone-up' : 'tone-down') : 'tone-flat',
   });
+
+  if (kdj.value) {
+    const k = kdj.value;
+    list.push({
+      label: 'KDJ(9,3,3)',
+      value: `${dash(k.k, 1)} / ${dash(k.d, 1)}`,
+      sub: `J ${dash(k.j, 1)} · ${k.status}`,
+      tone: k.tone,
+      gauge: clampPct(k.k),
+    });
+  }
 
   const b = pctB.value;
   list.push({

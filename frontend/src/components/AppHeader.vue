@@ -25,6 +25,23 @@
         <button
           type="button"
           class="icon-btn"
+          :class="{ 'copied-btn': copied }"
+          :title="copied ? '快报已复制到剪贴板！' : '一键复制行情快报'"
+          :aria-label="copied ? '快报已复制到剪贴板！' : '一键复制行情快报'"
+          @click="copySnapshot"
+        >
+          <svg v-if="!copied" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--down)">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          class="icon-btn"
           :aria-label="themeLabel"
           :title="themeLabel"
           @click="$emit('toggle-theme')"
@@ -65,8 +82,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { fmtClock, fmtAgo } from '../format';
+import { ref, computed } from 'vue';
+import { fmtClock, fmtAgo, fmtDateTime, fmtNumber, fmtSigned } from '../format';
 
 const props = defineProps({
   status: { type: String, default: 'loading' },
@@ -75,9 +92,41 @@ const props = defineProps({
   now: { type: Number, default: () => Date.now() },
   sourcesOk: { type: Number, default: 0 },
   sourcesTotal: { type: Number, default: 0 },
+  snapshot: { type: Object, default: null },
+  quant: { type: Object, default: null },
 });
 
 defineEmits(['refresh', 'subscribe', 'toggle-theme', 'sources']);
+
+const copied = ref(false);
+
+function copySnapshot() {
+  const dom = props.snapshot?.domestic;
+  const intl = props.snapshot?.international;
+  const prem = props.snapshot?.premiumPercent;
+  const ratio = props.snapshot?.ratio?.current || (intl?.price && intl?.silverPrice ? (intl.price / intl.silverPrice).toFixed(1) : null);
+  const sig = props.quant?.signal;
+  const time = fmtDateTime(props.now);
+
+  const lines = [
+    `【黄金量化监控快报】`,
+    `⏰ 时间: ${time}`,
+    dom ? `🇨🇳 国内 AU9999: ¥${fmtNumber(dom.price)} (${fmtSigned(dom.changePercent)}%)` : null,
+    intl ? `🌍 国际 XAU/USD: $${fmtNumber(intl.price)} (${fmtSigned(intl.changePercent)}%)` : null,
+    intl?.silverPrice ? `🪙 国际白银 XAG: $${fmtNumber(intl.silverPrice)}` : null,
+    prem != null ? `⚖️ 国内溢价: ${fmtSigned(prem)}%` : null,
+    ratio ? `📈 金银比率: ${ratio}` : null,
+    sig ? `🎯 量化信号: ${sig.label} (评分 ${sig.score > 0 ? '+' : ''}${sig.score?.toFixed(1)}, 置信度 ${sig.confidence}%)` : null,
+    `🔗 监控终端: https://gold.chuankangkk.top`,
+  ].filter(Boolean);
+
+  if (navigator?.clipboard?.writeText) {
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      copied.value = true;
+      setTimeout(() => { copied.value = false; }, 2500);
+    });
+  }
+}
 
 const LABELS = {
   loading: '连接中',

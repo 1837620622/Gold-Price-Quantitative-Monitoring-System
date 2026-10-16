@@ -160,6 +160,28 @@ export function makeUpstream({ intl, domestic, fx, fail = {}, pushOk = true, aiO
       });
     }
 
+    if (u.includes('hq.sinajs.cn')) {
+      if (fail.sina || fail.domestic) return text('err', 500);
+      const last = domestic.at(-1);
+      const prev = domestic.at(-2);
+      const lastIntl = intl.at(-1);
+      const lastFx = fx.at(-1);
+      return text([
+        `var hq_str_gds_AU9999="${last.close},0,${last.close},${last.close},${last.high},${last.low},00:00:00,${prev.close},${last.open},1000,0,0,${last.date}";`,
+        `var hq_str_gds_AUTD="${last.close},0,${last.close},${last.close},${last.high},${last.low},00:00:00,${prev.close},${last.open},1000,0,0,${last.date}";`,
+        `var hq_str_hf_XAU="${lastIntl.close},${lastIntl.close},${lastIntl.close},0,${lastIntl.high},${lastIntl.low},00:00:00,${lastIntl.close},${lastIntl.open},0,0,0,${lastIntl.date}";`,
+        `var hq_str_hf_XAG="50.2,50.2,50.2,0,51,49,00:00:00,50.2,50.2,0,0,0,${lastIntl.date}";`,
+        `var hq_str_fx_susdcny="00:00:00,${lastFx.close},${lastFx.close},${lastFx.close},0,0,0,0,0,0,0,0,0,0,0,0,,${lastFx.date}";`,
+      ].join('\n'));
+    }
+
+    if (u.includes('swissquote.com')) {
+      if (fail.swissquote) return text('err', 500);
+      const isXag = u.includes('XAG');
+      const p = isXag ? 50.2 : intl.at(-1).close;
+      return json([{ spreadProfilePrices: [{ bid: p - 0.5, ask: p + 0.5 }], ts: Date.now() }]);
+    }
+
     if (u.includes('pushplus.plus')) {
       return json({ code: pushOk ? 200 : 500, msg: pushOk ? 'ok' : '限流', data: null });
     }
