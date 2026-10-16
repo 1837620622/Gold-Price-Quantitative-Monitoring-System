@@ -224,9 +224,9 @@ function fillStyle(value) {
   flex: 1;
 }
 
-.zone-down { background: linear-gradient(90deg, rgba(52, 211, 153, 0.85), rgba(52, 211, 153, 0.35)); }
+.zone-down { background: linear-gradient(90deg, rgba(16, 185, 129, 0.85), rgba(16, 185, 129, 0.35)); }
 .zone-mid { background: var(--surface-2); flex: 0.8; }
-.zone-up { background: linear-gradient(90deg, rgba(255, 91, 95, 0.35), rgba(255, 91, 95, 0.85)); }
+.zone-up { background: linear-gradient(90deg, rgba(239, 68, 68, 0.35), rgba(239, 68, 68, 0.85)); }
 
 .meter-marker {
   position: absolute;

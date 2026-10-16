@@ -10,10 +10,11 @@
           <span class="status-item">延迟: {{ latency || 68 }}ms</span>
         </div>
         <div class="status-center">
-          Gold Monitor v2.0 | Powered by Cloudflare Workers AI & DeepSeek
+          Gold Monitor v3.2 | Powered by Cloudflare Workers AI & DeepSeek-R1
         </div>
         <div class="status-right">
           <span>Vx: 1837620622</span>
+          <span>万能程序员</span>
         </div>
       </div>
 
@@ -33,7 +34,7 @@
     <!-- 全屏防伪水印 -->
     <div class="watermark-container" aria-hidden="true">
       <div class="watermark-content">
-        <div class="watermark-item" v-for="n in 12" :key="n">
+        <div class="watermark-item" v-for="n in 16" :key="n">
           <span>GitHub: 万能程序员</span>
           <span>github.com/1837620622</span>
           <span>官网: www.chuankangkk.top</span>
@@ -66,13 +67,13 @@ defineProps({
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 10px 18px;
   margin-bottom: 20px;
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-2);
   border: 1px solid var(--border);
   font-size: 12px;
-  font-family: 'SF Mono', 'Roboto Mono', monospace;
+  font-family: var(--mono);
 }
 
 .status-left,
@@ -85,7 +86,7 @@ defineProps({
 .status-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   color: var(--text-2);
 }
 
@@ -94,12 +95,13 @@ defineProps({
   height: 7px;
   border-radius: 50%;
   background: var(--down);
-  box-shadow: 0 0 6px var(--down);
+  animation: pulse-ring 2s infinite;
 }
 
 .status-center {
   color: var(--gold);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .app-footer p {
@@ -127,33 +129,35 @@ defineProps({
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 0;
   overflow: hidden;
-  opacity: 0.04;
+  opacity: 0.035;
 }
 
 .watermark-content {
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -40%;
+  left: -40%;
+  width: 180%;
+  height: 180%;
   display: flex;
   flex-wrap: wrap;
-  transform: rotate(-30deg);
+  transform: rotate(-25deg);
+  justify-content: space-around;
+  align-content: space-around;
 }
 
 .watermark-item {
-  width: 320px;
-  height: 220px;
+  width: 280px;
+  height: 180px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-family: 'SF Mono', monospace;
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 12px;
   color: var(--gold);
-  font-weight: 600;
+  font-weight: 700;
   gap: 4px;
 }
 </style>

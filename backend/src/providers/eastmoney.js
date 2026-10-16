@@ -17,10 +17,14 @@ const scaled = (v) => {
   return Number.isFinite(n) ? round(n / 100, 2) : null;
 };
 
-export function fetchAU9999Quote() {
+export function fetchAU9999Quote(options = {}) {
   return track(NAME, 'quote', async () => {
     const fields = 'f43,f44,f45,f46,f47,f48,f51,f52,f57,f58,f60,f169,f170';
-    const result = await fetchJson(`${SOURCE_URLS.eastmoneyQuote}?secid=118.AU9999&fields=${fields}`, { headers: REFERER });
+    const result = await fetchJson(`${SOURCE_URLS.eastmoneyQuote}?secid=118.AU9999&fields=${fields}`, {
+      headers: REFERER,
+      timeoutMs: options.timeoutMs || 1500,
+      ...options,
+    });
     const d = result?.data;
     if (result?.rc !== 0 || !d) throw new Error('东方财富返回数据异常');
 

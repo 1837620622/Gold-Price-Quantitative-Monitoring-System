@@ -24,7 +24,14 @@ const MODELS = [
   { model: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5-72B', options: { temperature: 0.5, max_tokens: 1800 } },
 ];
 
-const SYSTEM_PROMPT = '你是一位兼具华尔街宏观对冲基金经理与资深量化交易员视角的黄金市场首席分析师。请用专业、严谨、客观的中文回复，严格基于用户提供的程序量化数据，不编造数值。';
+const SYSTEM_PROMPT = `你是一位拥有20年华尔街顶级宏观对冲基金与量化交易经验的贵金属首席策略师兼量化投研总监。
+你的任务是根据经过严格程序计算的多源真实行情与量化因子数据，输出一份逻辑严密、数据确凿、具备实操指导价值的《黄金资产量化研判与实战策略报告》。
+
+【核心原则】
+1. 严禁空洞套话：所有多空研判必须紧扣给定的具体数值（如评分分量、均线排列、RSI/KDJ读数、布林带%B、枢轴点、ATR、金银比、溢价率Z分数等），严禁无数据依据的臆测。
+2. 矛盾点深度推演：若趋势指标（如EMA/MA60）与动能指标（如RSI/KDJ）出现背离，或内外盘溢价与国际走势分化，必须作为重点博弈场景深入剖析。
+3. 实操可落地性：明确给出操作定调（偏多/偏空/震荡观望）、建议仓位区间、关键入场防御点位及止损止盈纪律。
+4. 语言风格：专业、严谨、客观、精炼，符合机构级金融研报与专业交易终端排版标准。`;
 
 const fmtStrategy = (st) =>
   `${st.name}：总收益 ${signedPercent(st.totalReturn)}，年化 ${signedPercent(st.cagr)}，夏普 ${fmt(st.sharpe)}，索提诺 ${fmt(st.sortino)}，卡玛 ${fmt(st.calmar)}，盈亏比 ${fmt(st.profitFactor)}，胜率 ${fmt(st.winRate)}%，最大回撤 ${fmt(st.maxDrawdown)}%`;
@@ -65,34 +72,59 @@ function buildPrompt(snapshot, quant) {
   const intl = snapshot.international;
   const dom = snapshot.domestic;
   const ratio = intl?.price && intl?.silverPrice ? (intl.price / intl.silverPrice).toFixed(2) : '--';
-  return `请基于以下经过严格程序计算的黄金多源数据撰写一份专业量化分析报告。
-要求：
-1. 严格基于数据展开，杜绝空泛套话；若趋势、动量与溢价分量出现背离或矛盾，必须重点指出；
-2. 结合枢轴点与 ATR 提供清晰的多空情景预案（如放量突破第一阻力位的跟进空间，或跌破关键支撑位的防守止损点）；
-3. 结合金银比与内外盘溢价给出跨市协同与宏观情绪评估；
-4. 结尾必须包含明确的风险警示与投资免责声明。
+  const usdCny = snapshot.fx?.usdCny ? fmt(snapshot.fx.usdCny, 4) : '--';
+  const premium = snapshot.premiumPercent != null ? signedPercent(snapshot.premiumPercent) : '--';
 
-【实时市场快照】
-- 国内现货 AU9999：${fmt(dom.price)} 元/克${dom.estimated ? '（注：东方财富接口故障，由汇率估算）' : ''}，涨跌幅 ${signedPercent(dom.changePercent)}
-- 国际现货 XAU/USD：${fmt(intl?.price)} 美元/盎司，涨跌幅 ${signedPercent(intl?.changePercent)}
-- 现货白银 XAG/USD：${fmt(intl?.silverPrice)} 美元/盎司；实时金银比：${ratio}
-- 美元兑人民币汇率：${fmt(snapshot.fx?.usdCny, 4)}；国内相对国际折算溢价：${signedPercent(snapshot.premiumPercent)}
+  return `请根据以下权威程序计算的黄金多源量化数据，生成一份结构完整、详实严谨的专业量化研判报告。
 
-【量化指标与回测矩阵】
+═══════════════════════════════════════════════════════
+【一、 市场实时基准与跨市对冲数据】
+═══════════════════════════════════════════════════════
+- 国内现货 (AU9999)：${fmt(dom?.price)} 元/克${dom?.estimated ? '（注：国内交易所接口临时受限，此价格由国际现货经离岸汇率理论折算）' : ''}，日内涨跌幅 ${signedPercent(dom?.changePercent)}
+  · 开盘: ${fmt(dom?.open)} | 最高: ${fmt(dom?.high)} | 最低: ${fmt(dom?.low)} | 昨收: ${fmt(dom?.previousClose)} | 成交量: ${dom?.volume ? dom.volume + ' 手' : '--'}
+- 国际现货 (XAU/USD)：${fmt(intl?.price)} 美元/盎司，日内涨跌幅 ${signedPercent(intl?.changePercent)}，昨收: ${fmt(intl?.previousClose)} 美元
+- 国际白银现货 (XAG/USD)：${fmt(intl?.silverPrice)} 美元/盎司
+- 核心衍生比率与溢价：
+  · 实时金银比 (Gold/Silver Ratio)：${ratio}
+  · 美元兑人民币 (USD/CNY)：${usdCny}
+  · 国内相对国际折算实际溢价率：${premium}
+
+═══════════════════════════════════════════════════════
+【二、 核心量化指标系统与多因子评分矩阵】
+═══════════════════════════════════════════════════════
 ${quantBlock(quant)}
 
-请按以下专业结构输出格式清晰规范的 Markdown 报告：
-## 黄金量化研判报告
-### 1. 多因子信号与市场状态研判
-（解读综合评分、EMA/MA60趋势形态、KDJ/MACD动量状态，指出主要共振点或潜在背离）
-### 2. 关键点位与多空博弈场景
-（基于经典枢轴点 R1/R2/R3、S1/S2/S3 以及 ATR 动态通道，推演多头向上突破与空头破位的触发条件）
-### 3. 宏观对冲与跨市溢价分析
-（结合当前金银比、内外盘溢价 Z 分数，评估估值高低与跨市套利/均值回归概率）
-### 4. 量化策略回测绩效启示
-（分析趋势跟踪与多因子评分策略的夏普比率、索提诺比率、卡玛比率与最大回撤表现，提示交易成本磨损）
-### 5. 风险控制与免责声明
-（标明关键风控阈值与免责说明）`;
+═══════════════════════════════════════════════════════
+【撰写输出规范】
+请严格按照以下专业标准 Markdown 框架输出详细完整的研报，语言精炼紧凑，各章节充实落地：
+
+## 黄金量化研判：宏观脉络与多因子实战策略
+
+### 1. 宏观环境与跨市协同研判
+- 【金银比与估值锚】：结合当前金银比 ${ratio}（历史均衡区间 65-75），深入剖析当前是黄金避险属性溢价主导，还是白银具备均值回归补涨弹性，推演金银共振或套利机会。
+- 【内外盘溢价与汇率机制】：结合当前国内溢价率 ${premium} 及历史 Z 分数，分析内外盘价差所反映的国内实际需求偏好与汇率隐形折价，提示跨市场套利可行性。
+
+### 2. 多周期技术形态与量化因子共振
+- 【多因子评分定调】：解读综合评分得分及主要得分分量归因，剖析趋势、动能、波动与溢价因子的协同度。
+- 【均线与通道系统】：结合短中长期均线（MA5/MA20/MA60）排列格局与 EMA 趋势，研判多头波段结构或破位风险；结合布林带通道宽度与 %B 指标研判突破可能性。
+- 【动量与超买超卖】：交叉比对 RSI(14) 强弱读数与 KDJ(9,3,3) 曲线位置，指出是否存在高位顶背离钝化或低位底背离超卖信号。
+
+### 3. 日内与波段关键博弈点位推演
+- 【日内枢轴体系】：列出经典与斐波那契枢轴点位（Pivot / R1 / R2 / S1 / S2），推演日内多空分水岭。
+- 【ATR 动态波幅防护】：基于当前 ATR(14) 真实波动幅度，计算日内防御缓冲空间（向上突破追单阈值与向下破位防守红线）。
+
+### 4. 历史回测绩效启示与实盘仓位指引
+- 【策略回测对比】：对比 EMA 趋势策略、综合多因子评分策略与买入持有基准在样本期内的夏普比率、卡玛比率与最大回撤，总结当前行情下趋势跟踪策略的适用度与换仓磨损。
+- 【实盘操作策略】：
+  · 方向定调：【偏多 / 偏空 / 震荡中性 / 防御观望】
+  · 仓位配置参考：明确建议仓位比例（例如：30%-50% 逢低分批吸筹 / 建议空仓轻仓观望）
+  · 入场价格区间参考
+  · 动态止损与防守底线（严格引用量化止损参考价）
+  · 分批止盈目标位（第一阻力位与第二阻力位）
+
+### 5. 极端行情预案与投资免责声明
+- 提示黑天鹅地缘事件或突发重大经济数据公布时的动态止损应对原则。
+- 完整包含投资风险警示与免责声明。`;
 }
 
 function ruleBased(snapshot, quant) {
@@ -235,77 +267,82 @@ async function callSiliconFlow(apiKey, prompt) {
   });
 }
 
-// Cloudflare Workers AI 内置大模型矩阵（分级调用与用量保护）
-async function callWorkersAi(aiBinding, prompt) {
+// Cloudflare Workers AI 内置大模型矩阵（支持指定模型优先 + 智能容灾降级）
+async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
   if (!aiBinding || typeof aiBinding.run !== 'function') throw new Error('Workers AI 未绑定');
 
-  // 模型分级列表：按质量与神经元配额动态降级
-  const tiers = [
-    // 第一梯队：旗舰级深度推理（适度限制 max_tokens 控制用量）
-    {
-      models: [
-        '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-        '@cf/qwen/qwen2.5-72b-instruct',
-        '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-      ],
-      maxTokens: 1200,
-      tierName: '深度研报',
-    },
-    // 第二梯队：均衡省流高性价比（神经元开销仅为 72B 的 1/4，质量出色）
-    {
-      models: [
-        '@cf/qwen/qwen2.5-14b-instruct',
-      ],
-      maxTokens: 1000,
-      tierName: '均衡分析',
-    },
-    // 第三梯队：极速超低消耗兜底（毫秒级响应，几乎不耗额度）
-    {
-      models: [
-        '@cf/qwen/qwen2.5-7b-instruct',
-        '@cf/meta/llama-3.1-8b-instruct',
-        '@cf/mistral/mistral-7b-instruct-v0.2',
-      ],
-      maxTokens: 800,
-      tierName: '极速快报',
-    },
+  const MODEL_MAP = {
+    'deepseek-r1': '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+    'qwen-72b': '@cf/qwen/qwen2.5-72b-instruct',
+    'llama-70b': '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+    'qwen-14b': '@cf/qwen/qwen2.5-14b-instruct',
+    'qwen-7b': '@cf/qwen/qwen2.5-7b-instruct',
+  };
+
+  const candidateModel = MODEL_MAP[requestedModel] || (requestedModel?.startsWith('@cf/') ? requestedModel : null);
+
+  // 1. 若用户指定了模型，优先调用该模型
+  if (candidateModel) {
+    try {
+      const response = await aiBinding.run(candidateModel, {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 1600,
+        temperature: 0.6,
+      });
+      const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
+      if (text && typeof text === 'string' && text.trim().length > 20) {
+        const shortName = candidateModel.split('/').pop();
+        return { content: text.trim(), modelName: `Workers AI · ${shortName}` };
+      }
+    } catch (e) {
+      console.warn(`指定的 Workers AI 模型 ${candidateModel} 失败，启用兜底梯队:`, e.message);
+    }
+  }
+
+  // 2. 兜底梯队（按质量与配额平滑降级）
+  const fallbackList = [
+    { model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'deepseek-r1-distill-qwen-32b (深度推理)', maxTokens: 1600 },
+    { model: '@cf/qwen/qwen2.5-72b-instruct', name: 'qwen2.5-72b-instruct (全能旗舰)', maxTokens: 1400 },
+    { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'llama-3.3-70b (顶尖研报)', maxTokens: 1400 },
+    { model: '@cf/qwen/qwen2.5-14b-instruct', name: 'qwen2.5-14b-instruct (均衡低耗)', maxTokens: 1200 },
+    { model: '@cf/qwen/qwen2.5-7b-instruct', name: 'qwen2.5-7b-instruct (极速兜底)', maxTokens: 1000 },
   ];
 
-  for (const tier of tiers) {
-    for (const model of tier.models) {
-      try {
-        const response = await aiBinding.run(model, {
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: prompt },
-          ],
-          max_tokens: tier.maxTokens,
-          temperature: 0.6,
-        });
-        const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
-        if (text && typeof text === 'string' && text.trim().length > 20) {
-          const shortName = model.split('/').pop();
-          return { content: text.trim(), modelName: `Workers AI · ${shortName} (${tier.tierName})` };
-        }
-      } catch (e) {
-        console.warn(`Workers AI 模型 ${model} 调用失败:`, e.message);
-        // 如果是达到每日配额限制，直接跳到下一梯队或外部
-        if (/quota|rate|limit|exceeded|10000|429/i.test(e.message)) {
-          break;
-        }
+  for (const item of fallbackList) {
+    if (item.model === candidateModel) continue; // 避免重复尝试已失败的模型
+    try {
+      const response = await aiBinding.run(item.model, {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: item.maxTokens,
+        temperature: 0.6,
+      });
+      const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
+      if (text && typeof text === 'string' && text.trim().length > 20) {
+        return { content: text.trim(), modelName: `Workers AI · ${item.name}` };
+      }
+    } catch (e) {
+      console.warn(`Workers AI 兜底模型 ${item.model} 失败:`, e.message);
+      if (/quota|rate|limit|exceeded|10000|429/i.test(e.message)) {
+        continue;
       }
     }
   }
   throw new Error('Workers AI 所有模型均未能成功响应');
 }
 
-export async function generateAnalysis(env, snapshot, quant) {
+export async function generateAnalysis(env, snapshot, quant, requestedModel = 'auto') {
   const prompt = buildPrompt(snapshot, quant);
 
   // 1. 首选：Cloudflare Workers AI 原生内置大模型（免 Key、零外部延迟、分级省流）
   if (env?.AI) {
     try {
-      const result = await callWorkersAi(env.AI, prompt);
+      const result = await callWorkersAi(env.AI, prompt, requestedModel);
       return { success: true, analysis: result.content, model: result.modelName, timestamp: new Date().toISOString() };
     } catch (error) {
       console.warn('Cloudflare Workers AI 尝试后转入备用模型:', error.message);
@@ -377,11 +414,11 @@ function summarizeQuant(quant) {
 }
 
 // ------------------------------------------------------------
-// 分析入口：结果缓存 15 分钟（仅缓存真正调用了模型的结果），并发请求合并
+// 分析入口：支持指定模型与按模型缓存，并发请求合并
 // ------------------------------------------------------------
 let inflight = null;
 
-async function buildAnalysis(env) {
+async function buildAnalysis(env, { requestedModel = 'auto' } = {}) {
   const snapshot = await getSnapshot();
   if (!snapshot.domestic) {
     return { success: false, message: '行情暂不可用，请稍后重试', priceData: snapshot, timestamp: new Date().toISOString() };
@@ -390,7 +427,7 @@ async function buildAnalysis(env) {
     console.error('量化计算失败:', error.message);
     return null;
   });
-  const analysis = await generateAnalysis(env, snapshot, quant);
+  const analysis = await generateAnalysis(env, snapshot, quant, requestedModel);
   const payload = {
     success: true,
     priceData: snapshot,
@@ -399,18 +436,21 @@ async function buildAnalysis(env) {
     timestamp: new Date().toISOString(),
   };
   if (analysis.model !== 'auto-analysis') {
+    const cacheKey = `analysisCache:${requestedModel || 'auto'}`;
+    await setState(env, cacheKey, { at: Date.now(), payload });
     await setState(env, 'analysisCache', { at: Date.now(), payload });
   }
   return payload;
 }
 
-export async function getAnalysis(env) {
-  const cached = await getState(env, 'analysisCache');
-  if (cached && Date.now() - cached.at < TTL.analysis) {
+export async function getAnalysis(env, { requestedModel = 'auto', force = false } = {}) {
+  const cacheKey = `analysisCache:${requestedModel || 'auto'}`;
+  const cached = await getState(env, cacheKey) || await getState(env, 'analysisCache');
+  if (!force && cached && Date.now() - cached.at < TTL.analysis) {
     return { ...cached.payload, cached: true };
   }
   if (!inflight) {
-    inflight = buildAnalysis(env).finally(() => {
+    inflight = buildAnalysis(env, { requestedModel }).finally(() => {
       inflight = null;
     });
   }

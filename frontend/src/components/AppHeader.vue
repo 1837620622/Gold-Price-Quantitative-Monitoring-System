@@ -1,76 +1,102 @@
 <template>
-  <header class="app-header">
+  <header class="top-header">
     <div class="container header-inner">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">Au</span>
-        <div class="brand-text">
-          <strong>Gold Monitor</strong>
-          <span class="brand-sub">量化监控终端</span>
+      <!-- 左侧：品牌 Logo + 实时状态 -->
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-symbol">Au</span>
+          <div class="logo-info">
+            <span class="logo-text">GOLD MONITOR</span>
+            <span class="logo-sub">专业金融量化终端</span>
+          </div>
+        </div>
+
+        <div class="market-status" :class="`status-${status}`">
+          <span class="status-dot"></span>
+          <span class="status-text">{{ label }}</span>
         </div>
       </div>
 
-      <div class="status" :class="`status-${status}`" role="status" aria-live="polite">
-        <span class="dot" aria-hidden="true"></span>
-        <span class="status-label">{{ label }}</span>
-        <span class="status-clock">{{ clock }}</span>
-        <span v-if="ageText" class="status-age">{{ ageText }}</span>
+      <!-- 中间：高精度数字终端时钟 -->
+      <div class="header-center">
+        <div class="clock-display">
+          <svg class="clock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span class="clock-time">{{ clock }}</span>
+          <span v-if="ageText" class="clock-age">{{ ageText }}</span>
+        </div>
       </div>
 
-      <div class="header-actions">
-        <button type="button" class="sources-btn" :class="sourcesHealthy ? 'ok' : 'warn'" @click="$emit('sources')">
-          <span class="dot" aria-hidden="true"></span>
-          <span class="sources-prefix">数据源 </span><span class="sources-count">{{ sourcesOk }}/{{ sourcesTotal }}</span>
+      <!-- 右侧：快捷操作区 -->
+      <div class="header-right">
+        <!-- 数据源健康度 -->
+        <button
+          type="button"
+          class="sources-pill"
+          :class="sourcesHealthy ? 'ok' : 'warn'"
+          title="查看数据源连接与交叉校验"
+          @click="$emit('sources')"
+        >
+          <span class="sources-dot"></span>
+          <span class="sources-text">数据源 {{ sourcesOk }}/{{ sourcesTotal }}</span>
         </button>
 
+        <!-- 一键复制快报 -->
         <button
           type="button"
           class="icon-btn"
-          :class="{ 'copied-btn': copied }"
-          :title="copied ? '快报已复制到剪贴板！' : '一键复制行情快报'"
-          :aria-label="copied ? '快报已复制到剪贴板！' : '一键复制行情快报'"
+          :class="{ copied }"
+          :title="copied ? '快报已复制到剪贴板！' : '一键复制行情与信号快报'"
           @click="copySnapshot"
         >
-          <svg v-if="!copied" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg v-if="!copied" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
-          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--down)">
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--down)">
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </button>
 
+        <!-- 主题切换 -->
         <button
           type="button"
           class="icon-btn"
-          :aria-label="themeLabel"
-          :title="themeLabel"
+          :title="theme === 'dark' ? '切换为浅色模式' : '切换为深色模式'"
           @click="$emit('toggle-theme')"
         >
-          <svg v-if="theme === 'dark'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <svg v-if="theme === 'dark'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
           </svg>
-          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
           </svg>
         </button>
 
+        <!-- 刷新数据 -->
         <button
           type="button"
-          class="icon-btn"
+          class="icon-btn refresh-btn"
           :class="{ spinning: status === 'loading' }"
-          aria-label="刷新数据"
-          title="刷新数据"
+          title="立即刷新行情数据"
           @click="$emit('refresh')"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12a9 9 0 1 1-2.6-6.4" />
             <path d="M21 4v5h-5" />
           </svg>
         </button>
 
-        <button type="button" class="btn btn-primary btn-sm subscribe" @click="$emit('subscribe')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <!-- 订阅推送主按钮 -->
+        <button
+          type="button"
+          class="btn btn-primary btn-sm subscribe-btn"
+          @click="$emit('subscribe')"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.7 21a2 2 0 0 1-3.4 0" />
           </svg>
@@ -129,209 +155,231 @@ function copySnapshot() {
 }
 
 const LABELS = {
-  loading: '连接中',
-  live: '实时',
-  partial: '部分数据',
+  loading: '连接中…',
+  live: '实时行情',
+  partial: '部分在线',
   stale: '数据延迟',
-  error: '暂不可用',
+  error: '接口故障',
 };
 
-const label = computed(() => LABELS[props.status] ?? '未知');
+const label = computed(() => LABELS[props.status] ?? '实时行情');
 const clock = computed(() => fmtClock(props.now));
 const ageText = computed(() => fmtAgo(props.ageSeconds));
-const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模式' : '切换为深色模式'));
 const sourcesHealthy = computed(() => props.sourcesTotal > 0 && props.sourcesOk === props.sourcesTotal);
 </script>
 
 <style scoped>
-.app-header {
+.top-header {
   position: sticky;
   top: 0;
-  z-index: 20;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  z-index: 40;
+  background: rgba(10, 12, 18, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
   height: 64px;
+  gap: 16px;
 }
 
-.brand {
+/* 左侧 Logo */
+.header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.brand-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--gold-ink);
-  background: linear-gradient(135deg, var(--gold-2), var(--gold));
-  box-shadow: 0 6px 16px -8px var(--gold);
+  gap: 16px;
   flex-shrink: 0;
 }
 
-.brand-text {
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logo-symbol {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, #fef08a 0%, #fbbf24 50%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.4));
+  font-family: var(--mono);
+}
+
+.logo-info {
   display: flex;
   flex-direction: column;
+}
+
+.logo-text {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 2px;
   line-height: 1.2;
-  min-width: 0;
 }
 
-.brand-text strong {
-  font-size: 15px;
-  letter-spacing: 0.01em;
-}
-
-.brand-sub {
-  font-size: 12px;
+.logo-sub {
+  font-size: 11px;
   color: var(--text-3);
+  letter-spacing: 0.5px;
 }
 
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 13px;
-  color: var(--text-2);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--flat);
-  flex-shrink: 0;
-}
-
-.status-live .dot { background: var(--down); animation: pulse 2s infinite; }
-.status-loading .dot { background: var(--info); }
-.status-partial .dot,
-.status-stale .dot { background: var(--warn); }
-.status-error .dot { background: var(--danger); }
-
-.status-label {
-  font-weight: 600;
-  color: var(--text);
-}
-
-.status-clock,
-.status-age {
-  color: var(--text-3);
-}
-
-.status-clock::before,
-.status-age::before {
-  content: '·';
-  margin-right: 8px;
-}
-
-.header-actions {
+.market-status {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--down);
 }
 
-.sources-btn {
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--down);
+  animation: pulse-ring 2s infinite;
+}
+
+.market-status.status-loading {
+  background: rgba(96, 165, 250, 0.08);
+  border-color: rgba(96, 165, 250, 0.25);
+  color: var(--info);
+}
+.market-status.status-loading .status-dot { background: var(--info); }
+
+.market-status.status-partial,
+.market-status.status-stale {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: var(--warn);
+}
+.market-status.status-partial .status-dot,
+.market-status.status-stale .status-dot { background: var(--warn); }
+
+.market-status.status-error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--danger);
+}
+.market-status.status-error .status-dot { background: var(--danger); }
+
+/* 中间时钟 */
+.header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clock-display {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  font: inherit;
+  padding: 5px 14px;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  font-family: var(--mono);
   font-size: 13px;
+  color: var(--gold);
+}
+
+.clock-icon {
+  color: var(--gold);
+  opacity: 0.85;
+}
+
+.clock-age {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.clock-age::before {
+  content: '·';
+  margin-right: 6px;
+}
+
+/* 右侧操作区 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sources-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-family: var(--mono);
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.sources-btn:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
+.sources-pill:hover {
+  border-color: var(--gold);
+  color: #fff;
 }
 
-.sources-btn.ok .dot { background: var(--down); }
-.sources-btn.warn .dot { background: var(--warn); }
+.sources-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--down);
+}
 
-.subscribe span {
-  white-space: nowrap;
+.sources-pill.warn .sources-dot {
+  background: var(--warn);
+}
+
+.subscribe-btn {
+  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.35);
 }
 
 .spinning svg {
-  animation: spin 0.9s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--down) 55%, transparent); }
-  70% { box-shadow: 0 0 0 6px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 900px) {
-  .brand-sub {
+@media (max-width: 960px) {
+  .logo-sub {
     display: none;
   }
 }
 
-@media (max-width: 767px) {
-  .header-inner {
-    height: auto;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    flex-wrap: wrap;
-  }
-
-  .brand-sub,
-  .status-clock,
-  .status-clock::before,
-  .status-age::before {
-    display: none;
-  }
-
-  .status {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .header-actions {
-    margin-left: auto;
-  }
-
-  .sources-prefix {
+@media (max-width: 820px) {
+  .header-center {
     display: none;
   }
 }
 
-@media (max-width: 480px) {
-  .subscribe span {
+@media (max-width: 640px) {
+  .market-status {
     display: none;
+  }
+  .subscribe-btn span {
+    display: none;
+  }
+  .subscribe-btn {
+    padding: 0 10px;
   }
 }
 </style>

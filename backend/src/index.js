@@ -111,6 +111,7 @@ app.get('/api/price/international', async (c) => {
   if (!snapshot.international) {
     return c.json({ success: false, message: '国际金价暂不可用', errors: snapshot.errors }, 503);
   }
+  c.header('Cache-Control', 'public, max-age=5, s-maxage=10');
   return c.json(snapshot.international);
 });
 
@@ -119,6 +120,7 @@ app.get('/api/price/domestic', async (c) => {
   if (!snapshot.domestic) {
     return c.json({ success: false, message: '国内金价暂不可用', errors: snapshot.errors }, 503);
   }
+  c.header('Cache-Control', 'public, max-age=5, s-maxage=10');
   return c.json(snapshot.domestic);
 });
 
@@ -126,10 +128,12 @@ app.get('/api/price/all', async (c) => {
   const snapshot = await getSnapshot();
   const ratio = await getGoldSilverRatio().catch(() => null);
   const ok = Boolean(snapshot.domestic || snapshot.international);
+  c.header('Cache-Control', 'public, max-age=5, s-maxage=10');
   return c.json({ success: ok, ...snapshot, ratio: ratio?.available ? ratio : null, sources: listSources() }, ok ? 200 : 503);
 });
 
 app.get('/api/sources', (c) => {
+  c.header('Cache-Control', 'public, max-age=10, s-maxage=10');
   return c.json({ success: true, sources: listSources(), timestamp: new Date().toISOString() });
 });
 
@@ -140,6 +144,7 @@ app.get('/api/kline', async (c) => {
   const days = clampDays(c.req.query('days'), DEFAULT_DAYS, MAX_DAYS);
   try {
     const data = await getDomesticKline(days);
+    c.header('Cache-Control', 'public, max-age=60, s-maxage=180');
     return c.json({ success: true, period: `${days}天`, data, timestamp: new Date().toISOString() });
   } catch (error) {
     return unavailable(c, 'K线数据获取失败', error);
@@ -154,6 +159,7 @@ app.get('/api/quant/:market', async (c) => {
   const days = clampDays(c.req.query('days'), QUANT_DAYS, MAX_DAYS);
   try {
     const result = await getQuant(market, days);
+    c.header('Cache-Control', 'public, max-age=60, s-maxage=120');
     return c.json({ success: result.available, ...result, timestamp: new Date().toISOString() });
   } catch (error) {
     return unavailable(c, '量化数据获取失败', error);
@@ -164,7 +170,8 @@ app.get('/api/premium', async (c) => {
   const days = clampDays(c.req.query('days'), QUANT_DAYS, MAX_DAYS);
   try {
     const premium = await getPremium(days);
-    return c.json({ success: premium.available, premium, timestamp: new Date().toISOString() });
+    c.header('Cache-Control', 'public, max-age=60, s-maxage=120');
+    return c.json({ success: Boolean(premium?.available), premium, timestamp: new Date().toISOString() });
   } catch (error) {
     return unavailable(c, '溢价数据获取失败', error);
   }
@@ -191,10 +198,16 @@ app.get('/api/signals', async (c) => {
   }
 });
 
-// AI 分析：公开接口，结果缓存 15 分钟以控制模型调用成本
+// AI 分析：公开接口，支持指定模型或智能调度，结果缓存以控制模型调用成本
 app.post('/api/analyze', async (c) => {
   try {
-    const result = await getAnalysis(c.env);
+    let body = {};
+    try {
+      body = await c.req.json();
+    } catch {}
+    const requestedModel = body?.model || 'auto';
+    const force = Boolean(body?.force);
+    const result = await getAnalysis(c.env, { requestedModel, force });
     return c.json(result, result.success ? 200 : 503);
   } catch (error) {
     return serverError(c, 'AI 分析失败', error);

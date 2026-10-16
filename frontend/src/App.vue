@@ -219,12 +219,12 @@ const analysis = ref({
   quant: null,
 });
 
-async function runAnalysis() {
+async function runAnalysis(requestedModel) {
   if (analysis.value.state === 'loading') return;
   analysis.value = { ...analysis.value, state: 'loading', error: '' };
 
   try {
-    const data = await requestAnalysis();
+    const data = await requestAnalysis({ model: requestedModel || 'deepseek-r1', force: true });
     if (data.success && data.analysis?.analysis) {
       analysis.value = {
         state: 'done',
@@ -263,24 +263,28 @@ async function runAnalysis() {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--text-2);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  text-transform: uppercase;
 }
 
 .section-title span {
   display: inline-grid;
   place-items: center;
-  min-width: 26px;
+  min-width: 28px;
   height: 22px;
   padding: 0 6px;
   border-radius: 6px;
   font-size: 11px;
+  font-weight: 800;
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
-  color: var(--gold);
-  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  color: #000000;
+  background: linear-gradient(135deg, var(--gold-3), var(--gold));
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.35);
 }
 
 .hero-grid {
@@ -349,7 +353,7 @@ async function runAnalysis() {
 
 @media (min-width: 1024px) {
   .hero-cn {
-    grid-column: span 5;
+    grid-column: span 4;
   }
 
   .hero-intl {
@@ -357,7 +361,7 @@ async function runAnalysis() {
   }
 
   .hero-ai {
-    grid-column: span 3;
+    grid-column: span 4;
   }
 
   .an-signal {

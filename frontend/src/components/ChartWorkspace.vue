@@ -136,8 +136,8 @@ const props = defineProps({
 });
 
 const TABS = [
-  { key: 'tradingview', label: 'TradingView 走势' },
   { key: 'cn', label: '国内 AU9999' },
+  { key: 'tradingview', label: 'TradingView 走势' },
   { key: 'intl', label: '国际 XAU/USD' },
   { key: 'ratio', label: '金银比率' },
   { key: 'premium', label: '国内溢价' },
@@ -358,5 +358,29 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   font-size: 12px;
   color: var(--text-3);
   line-height: 1.6;
+}
+
+.tradingview-container {
+  height: 520px;
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #08090e;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.chart-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .tradingview-container {
+    height: 420px;
+  }
 }
 </style>

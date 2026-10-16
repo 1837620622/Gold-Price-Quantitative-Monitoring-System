@@ -1,35 +1,71 @@
 <template>
   <section class="card report" aria-labelledby="report-title">
     <header class="card-head">
-      <div>
-        <h2 id="report-title" class="card-title">AI 智能分析报告</h2>
-        <p class="card-sub">模型基于程序计算的量化结果撰写，仅供参考，不构成投资建议</p>
+      <div class="head-info">
+        <div class="title-with-badge">
+          <h2 id="report-title" class="card-title">AI 智能量化研报</h2>
+          <span class="report-badge">深度推演</span>
+        </div>
+        <p class="card-sub">多因子程序量化计算 + 大模型深度场景推演，提供实盘博弈参考</p>
       </div>
-      <ul v-if="state === 'done'" class="meta">
-        <li v-if="signalChip" class="chip chip-signal" :class="signalTone">{{ signalChip }}</li>
-        <li class="chip">{{ modelLabel }}</li>
-        <li v-if="cached" class="chip">缓存结果</li>
-        <li v-if="timeText" class="chip chip-muted">{{ timeText }}</li>
-      </ul>
+
+      <div class="head-actions">
+        <ul v-if="state === 'done'" class="meta">
+          <li v-if="signalChip" class="chip chip-signal" :class="signalTone">{{ signalChip }}</li>
+          <li class="chip chip-gold">{{ modelLabel }}</li>
+          <li v-if="cached" class="chip chip-muted">缓存数据</li>
+          <li v-if="timeText" class="chip chip-muted">{{ timeText }}</li>
+        </ul>
+
+        <button
+          v-if="state === 'done'"
+          type="button"
+          class="btn btn-ghost btn-sm copy-btn"
+          :class="{ copied }"
+          @click="copyReport"
+        >
+          <svg v-if="!copied" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--down)">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>{{ copied ? '已复制' : '复制研报' }}</span>
+        </button>
+      </div>
     </header>
 
     <div v-if="state === 'loading'" class="skeleton-block" aria-label="分析生成中">
+      <div class="loading-animation">
+        <div class="loading-wave">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <p class="loading-title">正在调用大模型进行多因子与日K线推理计算…</p>
+        <span class="loading-sub">解析趋势动量、金银比偏离、内外盘溢价与关键阻力支撑位</span>
+      </div>
       <span class="skeleton skeleton-title"></span>
       <span class="skeleton skeleton-line"></span>
       <span class="skeleton skeleton-line short"></span>
       <span class="skeleton skeleton-line"></span>
       <span class="skeleton skeleton-line short"></span>
-      <p class="loading-hint">正在汇总行情、量化指标与回测结果，请稍候…</p>
     </div>
 
     <div v-else-if="state === 'error'" class="report-error" role="alert">
-      {{ error || '分析失败，请稍后重试' }}
+      <div class="error-icon">⚠️</div>
+      <div class="error-body">
+        <p class="error-title">量化分析生成遇到异常</p>
+        <p class="error-desc">{{ error || '请检查网络连接或稍后重试' }}</p>
+      </div>
     </div>
 
-    <div v-else-if="state === 'done'">
+    <div v-else-if="state === 'done'" class="report-content">
       <div class="md" :class="{ clamped: isLong && !expanded }" v-html="html"></div>
-      <button v-if="isLong" type="button" class="btn btn-ghost btn-sm expand" @click="expanded = !expanded">
-        {{ expanded ? '收起' : '展开全文' }}
+      <button v-if="isLong" type="button" class="btn btn-ghost btn-sm expand-btn" @click="expanded = !expanded">
+        <span>{{ expanded ? '收起部分内容' : '展开阅读完整研报' }}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" :style="{ transform: expanded ? 'rotate(180deg)' : 'none' }">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
       </button>
     </div>
   </section>
@@ -50,48 +86,86 @@ const props = defineProps({
   quant: { type: Object, default: null },
 });
 
-const expanded = ref(false);
-const LONG_TEXT = 1200;
+const expanded = ref(true);
+const LONG_TEXT = 3500;
+const copied = ref(false);
 
 const html = computed(() => renderMarkdown(props.text));
 const isLong = computed(() => props.text.length > LONG_TEXT);
 const timeText = computed(() => fmtDateTime(props.timestamp));
 
-const MODEL_LABELS = { 'auto-analysis': '规则摘要（未启用AI）' };
-const modelLabel = computed(() => MODEL_LABELS[props.model] ?? props.model ?? 'AI');
+const MODEL_LABELS = { 'auto-analysis': '规则摘要（程序量化）' };
+const modelLabel = computed(() => MODEL_LABELS[props.model] ?? props.model ?? 'Workers AI');
 
 const signalChip = computed(() => {
   const s = props.quant?.signal;
   if (!s?.available) return '';
-  return `量化信号 ${s.label} ${s.score >= 0 ? '+' : ''}${s.score}`;
+  return `量化评分 ${s.label} (${s.score >= 0 ? '+' : ''}${s.score})`;
 });
 const signalTone = computed(() => (props.quant?.signal?.score >= 0 ? 'tone-up' : 'tone-down'));
+
+function copyReport() {
+  if (!props.text) return;
+  if (navigator?.clipboard?.writeText) {
+    navigator.clipboard.writeText(props.text).then(() => {
+      copied.value = true;
+      setTimeout(() => { copied.value = false; }, 2500);
+    });
+  }
+}
 </script>
 
 <style scoped>
 .report {
   scroll-margin-top: 80px;
+  background: linear-gradient(145deg, rgba(22, 26, 40, 0.95) 0%, rgba(13, 16, 25, 0.98) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.22);
 }
 
 .card-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px 16px;
+  gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .card-title {
-  margin: 0;
-  font-size: 17px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.report-badge {
+  font-size: 10px;
   font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--gold-3), var(--gold));
+  color: #000;
 }
 
 .card-sub {
-  margin: 4px 0 0;
-  font-size: 13px;
+  margin-top: 4px;
+  font-size: 12.5px;
   color: var(--text-2);
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .meta {
@@ -103,20 +177,78 @@ const signalTone = computed(() => (props.quant?.signal?.score >= 0 ? 'tone-up' :
   padding: 0;
 }
 
-.chip-signal.tone-up { color: var(--up); }
-.chip-signal.tone-down { color: var(--down); }
+.chip-signal.tone-up { color: var(--up); border-color: rgba(239, 68, 68, 0.3); }
+.chip-signal.tone-down { color: var(--down); border-color: rgba(16, 185, 129, 0.3); }
 
 .chip-muted {
   color: var(--text-3);
 }
 
+.copy-btn {
+  height: 32px;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* 载入状态波形动画 */
 .skeleton-block {
   display: grid;
   gap: 12px;
+  padding: 10px 0;
+}
+
+.loading-animation {
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.04);
+  border: 1px dashed rgba(251, 191, 36, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.loading-wave {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+}
+
+.loading-wave span {
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--gold);
+  animation: wave 1.2s ease-in-out infinite;
+}
+
+.loading-wave span:nth-child(1) { animation-delay: 0.1s; }
+.loading-wave span:nth-child(2) { animation-delay: 0.2s; }
+.loading-wave span:nth-child(3) { animation-delay: 0.3s; }
+.loading-wave span:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes wave {
+  0%, 100% { height: 6px; }
+  50% { height: 24px; }
+}
+
+.loading-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.loading-sub {
+  font-size: 12px;
+  color: var(--text-3);
 }
 
 .skeleton-title {
-  width: 40%;
+  width: 35%;
   height: 22px;
 }
 
@@ -126,31 +258,43 @@ const signalTone = computed(() => (props.quant?.signal?.score >= 0 ? 'tone-up' :
 }
 
 .skeleton-line.short {
-  width: 65%;
-}
-
-.loading-hint {
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: var(--text-2);
+  width: 60%;
 }
 
 .report-error {
-  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
   border-radius: var(--radius);
   background: var(--danger-bg);
+  border: 1px solid rgba(248, 113, 113, 0.3);
   color: var(--danger);
+}
+
+.error-icon {
+  font-size: 24px;
+}
+
+.error-title {
+  font-weight: 700;
   font-size: 14px;
 }
 
-.expand {
-  margin-top: 12px;
+.error-desc {
+  font-size: 12.5px;
+  opacity: 0.85;
+}
+
+.expand-btn {
+  margin-top: 16px;
+  width: 100%;
 }
 
 .md.clamped {
-  max-height: 340px;
+  max-height: 500px;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
-  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
 }
 </style>

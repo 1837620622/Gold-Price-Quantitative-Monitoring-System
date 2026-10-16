@@ -1,130 +1,110 @@
 /* ============================================================
-   Gold Monitor · 设计系统
-   - 颜色全部通过 CSS 变量定义，深浅主题只替换变量
-   - 默认跟随系统主题；用户手动切换后写入 data-theme
-   - 涨跌采用国内习惯：红涨绿跌
+   Gold Monitor · 专业金融量化终端设计系统
+   - 风格：黑金科技 / 机构级金融交易终端 (Dark Luxury Cyber Terminal)
+   - 涨跌：中国金融市场惯例（红涨绿跌）
+   - 排版：专业等宽字体对齐、微交互光晕、硬件加速流畅动画
    ============================================================ */
 
-/* ---------- 深色主题（默认） ---------- */
+/* ---------- 深色主题（机构级黑金终端，默认） ---------- */
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #0a0c10;
+  --bg: #08090e;
   --bg-grad:
-    radial-gradient(1100px 520px at 0% -12%, rgba(231, 183, 91, 0.1), transparent 60%),
-    radial-gradient(900px 480px at 110% -8%, rgba(96, 165, 250, 0.07), transparent 60%);
-  --surface: #12151c;
-  --surface-2: #181c25;
-  --surface-hover: #1d2230;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.13);
+    radial-gradient(1200px 560px at 50% -12%, rgba(245, 158, 11, 0.12), transparent 70%),
+    radial-gradient(900px 480px at 92% 10%, rgba(59, 130, 246, 0.05), transparent 60%),
+    radial-gradient(800px 400px at 8% 25%, rgba(239, 68, 68, 0.04), transparent 60%);
+  --surface: #10121a;
+  --surface-card: linear-gradient(145deg, rgba(22, 26, 38, 0.95) 0%, rgba(13, 16, 24, 0.98) 100%);
+  --surface-2: #161a26;
+  --surface-hover: #1c2234;
+  --border: rgba(251, 191, 36, 0.14);
+  --border-strong: rgba(251, 191, 36, 0.28);
+  --border-hover: rgba(251, 191, 36, 0.45);
 
-  --text: #eceef3;
-  --text-2: #a4acbd;
-  --text-3: #6f788b;
+  --text: #f3f4f6;
+  --text-2: #9ca3af;
+  --text-3: #6b7280;
 
-  --gold: #e7b75b;
-  --gold-2: #f3d18a;
-  --gold-btn: #e7b75b;
-  --gold-btn-hover: #f0c775;
-  --gold-btn-ink: #1a1305;
-  --gold-ink: #1a1305;
+  --gold: #fbbf24;
+  --gold-2: #f59e0b;
+  --gold-3: #fcd34d;
+  --gold-glow: 0 0 20px rgba(251, 191, 36, 0.25);
+  --gold-btn: linear-gradient(135deg, #fcd34d 0%, #fbbf24 50%, #f59e0b 100%);
+  --gold-btn-hover: linear-gradient(135deg, #fef08a 0%, #fcd34d 50%, #fbbf24 100%);
+  --gold-btn-ink: #000000;
+  --gold-ink: #000000;
 
-  --up: #ff5b5f;
-  --down: #34d399;
-  --flat: #a4acbd;
+  --up: #ef4444;
+  --up-bg: rgba(239, 68, 68, 0.14);
+  --up-glow: 0 0 16px rgba(239, 68, 68, 0.25);
+  --down: #10b981;
+  --down-bg: rgba(16, 185, 129, 0.14);
+  --down-glow: 0 0 16px rgba(16, 185, 129, 0.25);
+  --flat: #94a3b8;
   --info: #60a5fa;
   --warn: #f59e0b;
-  --warn-bg: rgba(245, 158, 11, 0.12);
+  --warn-bg: rgba(245, 158, 11, 0.14);
   --danger: #f87171;
-  --danger-bg: rgba(248, 113, 113, 0.12);
+  --danger-bg: rgba(248, 113, 113, 0.14);
 
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 18px 40px -26px rgba(0, 0, 0, 0.7);
-  --radius-lg: 20px;
-  --radius: 14px;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -8px rgba(0, 0, 0, 0.7);
+  --shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 18px 40px -10px rgba(0, 0, 0, 0.85), 0 0 24px rgba(251, 191, 36, 0.14);
+  --radius-lg: 18px;
+  --radius: 12px;
 
-  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    "Noto Sans CJK SC", "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", Roboto, sans-serif;
+  --mono: 'SF Mono', 'Roboto Mono', 'JetBrains Mono', Consolas, ui-monospace, Menlo, monospace;
 }
 
-/* ---------- 浅色主题：跟随系统 ---------- */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    color-scheme: light;
-
-    --bg: #f4f1ea;
-    --bg-grad:
-      radial-gradient(1000px 500px at 0% -12%, rgba(183, 121, 31, 0.1), transparent 60%),
-      radial-gradient(900px 480px at 110% -8%, rgba(37, 99, 235, 0.06), transparent 60%);
-    --surface: #ffffff;
-    --surface-2: #faf8f4;
-    --surface-hover: #f5f2ec;
-    --border: rgba(20, 24, 38, 0.08);
-    --border-strong: rgba(20, 24, 38, 0.15);
-
-    --text: #151821;
-    --text-2: #5a6172;
-    --text-3: #8b92a3;
-
-    --gold: #b7791f;
-    --gold-2: #d69e2e;
-    --gold-btn: #a86b14;
-    --gold-btn-hover: #8f5a10;
-    --gold-btn-ink: #ffffff;
-    --gold-ink: #ffffff;
-
-    --up: #e0343c;
-    --down: #0f9d58;
-    --flat: #5a6172;
-    --info: #2563eb;
-    --warn: #b45309;
-    --warn-bg: rgba(180, 83, 9, 0.09);
-    --danger: #dc2626;
-    --danger-bg: rgba(220, 38, 38, 0.08);
-
-    --shadow: 0 1px 2px rgba(20, 24, 38, 0.04), 0 18px 40px -28px rgba(20, 24, 38, 0.28);
-  }
-}
-
+/* ---------- 浅色主题：极简白金 ---------- */
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #f4f1ea;
+  --bg: #f5f4ef;
   --bg-grad:
-    radial-gradient(1000px 500px at 0% -12%, rgba(183, 121, 31, 0.1), transparent 60%),
-    radial-gradient(900px 480px at 110% -8%, rgba(37, 99, 235, 0.06), transparent 60%);
+    radial-gradient(1100px 520px at 50% -12%, rgba(217, 119, 6, 0.1), transparent 60%),
+    radial-gradient(900px 480px at 90% -8%, rgba(37, 99, 235, 0.05), transparent 60%);
   --surface: #ffffff;
-  --surface-2: #faf8f4;
-  --surface-hover: #f5f2ec;
-  --border: rgba(20, 24, 38, 0.08);
-  --border-strong: rgba(20, 24, 38, 0.15);
+  --surface-card: #ffffff;
+  --surface-2: #f8f7f2;
+  --surface-hover: #f1efe8;
+  --border: rgba(217, 119, 6, 0.18);
+  --border-strong: rgba(217, 119, 6, 0.35);
+  --border-hover: rgba(217, 119, 6, 0.5);
 
-  --text: #151821;
-  --text-2: #5a6172;
-  --text-3: #8b92a3;
+  --text: #111827;
+  --text-2: #4b5563;
+  --text-3: #9ca3af;
 
-  --gold: #b7791f;
-  --gold-2: #d69e2e;
-  --gold-btn: #a86b14;
-  --gold-btn-hover: #8f5a10;
+  --gold: #d97706;
+  --gold-2: #b45309;
+  --gold-3: #f59e0b;
+  --gold-glow: 0 0 16px rgba(217, 119, 6, 0.2);
+  --gold-btn: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gold-btn-hover: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   --gold-btn-ink: #ffffff;
   --gold-ink: #ffffff;
 
-  --up: #e0343c;
-  --down: #0f9d58;
-  --flat: #5a6172;
+  --up: #dc2626;
+  --up-bg: rgba(220, 38, 38, 0.1);
+  --up-glow: 0 0 12px rgba(220, 38, 38, 0.2);
+  --down: #059669;
+  --down-bg: rgba(5, 150, 105, 0.1);
+  --down-glow: 0 0 12px rgba(5, 150, 105, 0.2);
+  --flat: #4b5563;
   --info: #2563eb;
-  --warn: #b45309;
-  --warn-bg: rgba(180, 83, 9, 0.09);
+  --warn: #d97706;
+  --warn-bg: rgba(217, 119, 6, 0.1);
   --danger: #dc2626;
-  --danger-bg: rgba(220, 38, 38, 0.08);
+  --danger-bg: rgba(220, 38, 38, 0.1);
 
-  --shadow: 0 1px 2px rgba(20, 24, 38, 0.04), 0 18px 40px -28px rgba(20, 24, 38, 0.28);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 24px -10px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.06), 0 16px 32px -10px rgba(217, 119, 6, 0.15);
 }
 
-/* ---------- 基础 ---------- */
+/* ---------- 基础设置 ---------- */
 *,
 *::before,
 *::after {
@@ -140,7 +120,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--text);
   background-color: var(--bg);
@@ -158,6 +138,7 @@ img {
 h1,
 h2,
 h3,
+h4,
 p {
   margin: 0;
 }
@@ -172,6 +153,7 @@ p {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .main {
@@ -181,7 +163,7 @@ p {
 
 .container {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -202,98 +184,128 @@ p {
   left: 16px;
 }
 
-/* ---------- 卡片 ---------- */
+/* ---------- 卡片容器 (黑金科技高质感) ---------- */
 .card {
   position: relative;
-  background: var(--surface);
+  background: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: 22px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.28s ease,
+              box-shadow 0.28s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-hover);
 }
 
 @media (max-width: 767px) {
   .container {
-    padding: 0 16px;
+    padding: 0 14px;
   }
 
   .card {
-    padding: 18px;
-    border-radius: 18px;
+    padding: 16px;
+    border-radius: 14px;
   }
 }
 
-/* ---------- 行情颜色 ---------- */
-.tone-up { color: var(--up); }
-.tone-down { color: var(--down); }
-.tone-flat { color: var(--flat); }
+/* ---------- 涨跌色彩体系 (红涨绿跌) ---------- */
+.tone-up {
+  color: var(--up);
+}
 
-/* ---------- 标签 ---------- */
+.tone-down {
+  color: var(--down);
+}
+
+.tone-flat {
+  color: var(--flat);
+}
+
+/* ---------- 标签与徽章 ---------- */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
   color: var(--text-2);
   background: var(--surface-2);
   border: 1px solid var(--border);
+  font-family: var(--mono);
+}
+
+.chip-gold {
+  color: #000;
+  background: linear-gradient(135deg, var(--gold-3), var(--gold));
+  border-color: transparent;
+  font-weight: 700;
 }
 
 .chip-warn {
   color: var(--warn);
   background: var(--warn-bg);
-  border-color: transparent;
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
-/* ---------- 按钮 ---------- */
+/* ---------- 按钮系统 ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   height: 42px;
-  padding: 0 18px;
+  padding: 0 20px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 10px;
   font: inherit;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.99);
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none !important;
 }
 
 .btn-sm {
   height: 36px;
   padding: 0 14px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 13px;
 }
 
 .btn-primary {
   background: var(--gold-btn);
   color: var(--gold-btn-ink);
-  box-shadow: 0 10px 24px -14px var(--gold-btn);
+  box-shadow: 0 6px 20px -4px rgba(251, 191, 36, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--gold-btn-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -2px rgba(251, 191, 36, 0.5);
 }
 
 .btn-ghost {
@@ -304,6 +316,7 @@ p {
 
 .btn-ghost:hover:not(:disabled) {
   background: var(--surface-hover);
+  border-color: var(--gold);
 }
 
 .icon-btn {
@@ -313,51 +326,57 @@ p {
   place-items: center;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text-2);
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  transition: all 0.22s ease;
 }
 
 .icon-btn:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
+  color: var(--gold);
+  border-color: var(--gold);
   background: var(--surface-hover);
+  transform: translateY(-1px);
 }
 
-/* ---------- 分段控件（周期、页签） ---------- */
+.icon-btn:active {
+  transform: translateY(1px);
+}
+
+/* ---------- 分段控件 (页签与周期切换) ---------- */
 .seg {
   display: inline-flex;
   padding: 3px;
-  gap: 2px;
-  border-radius: 12px;
+  gap: 3px;
+  border-radius: 10px;
   background: var(--surface-2);
   border: 1px solid var(--border);
 }
 
 .seg button {
   border: 0;
-  padding: 7px 14px;
-  border-radius: 9px;
+  padding: 7px 15px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-2);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: all 0.22s ease;
 }
 
 .seg button:hover {
-  color: var(--text);
+  color: #ffffff;
 }
 
 .seg button.active,
 .seg button[aria-selected="true"] {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  color: #000000;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.35);
 }
 
 .seg-sm button {
@@ -365,39 +384,69 @@ p {
   font-size: 12px;
 }
 
-/* ---------- 骨架屏 / 加载 ---------- */
+/* ---------- 骨架屏与载入动画 ---------- */
 .skeleton {
   display: inline-block;
-  border-radius: 8px;
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-hover) 50%, var(--surface-2) 75%);
-  background-size: 220% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-2) 20%, var(--surface-hover) 50%, var(--surface-2) 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes shimmer {
-  from { background-position: 120% 0; }
-  to { background-position: -120% 0; }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .spinner {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid var(--border-strong);
-  border-top-color: var(--gold);
-  animation: spin 0.9s linear infinite;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: currentColor;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* ---------- 错误 / 状态横幅 ---------- */
-.alert {
-  border-radius: var(--radius);
+/* 呼吸光环动画 */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
 
-/* ---------- AI 报告 Markdown 排版（v-html 内容，需全局定义） ---------- */
+/* 价格跳动闪烁 */
+@keyframes flash-up {
+  0% { background-color: rgba(239, 68, 68, 0.35); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flash-down {
+  0% { background-color: rgba(16, 185, 129, 0.35); }
+  100% { background-color: transparent; }
+}
+
+/* ---------- 状态通知横幅 ---------- */
+.alert {
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  font-size: 14px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- AI 研报 Markdown 排版 ---------- */
 .md {
   font-size: 15px;
   line-height: 1.85;
@@ -415,9 +464,13 @@ p {
 
 .md h1,
 .md h2 {
-  margin: 1.3em 0 0.5em;
+  margin: 1.4em 0 0.5em;
   font-size: 19px;
   color: var(--gold);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .md h3 {
@@ -426,50 +479,55 @@ p {
   border-left: 3px solid var(--gold);
   font-size: 16px;
   font-weight: 700;
+  color: #fff;
 }
 
 .md p {
-  margin: 0.6em 0;
+  margin: 0.7em 0;
 }
 
 .md ul,
 .md ol {
-  margin: 0.6em 0;
+  margin: 0.7em 0;
   padding-left: 1.4em;
 }
 
 .md li {
-  margin: 0.3em 0;
+  margin: 0.35em 0;
 }
 
 .md strong {
-  color: var(--text);
+  color: var(--gold-3);
   font-weight: 700;
 }
 
 .md a {
   color: var(--info);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .md code {
-  padding: 1px 6px;
+  padding: 2px 6px;
   border-radius: 6px;
   background: var(--surface-2);
+  border: 1px solid var(--border);
   font-family: var(--mono);
   font-size: 0.9em;
+  color: var(--gold);
 }
 
 .md blockquote {
-  margin: 0.8em 0;
-  padding: 0.6em 1em;
-  border-left: 3px solid var(--border-strong);
+  margin: 1em 0;
+  padding: 0.8em 1.2em;
+  border-left: 4px solid var(--gold);
   border-radius: 0 10px 10px 0;
-  background: var(--surface-2);
-  color: var(--text-2);
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, transparent 100%);
+  color: var(--text);
 }
 
 .md hr {
-  margin: 1.2em 0;
+  margin: 1.4em 0;
   border: 0;
   border-top: 1px solid var(--border);
 }
@@ -479,24 +537,24 @@ p {
   width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
+  margin: 1em 0;
   font-size: 14px;
 }
 
 .md th,
 .md td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  border: 1px solid var(--border);
   text-align: left;
 }
 
-/* ---------- 页面通用布局 ---------- */
-.hero-grid > * {
-  min-width: 0;
+.md th {
+  background: var(--surface-2);
+  color: var(--gold);
+  font-weight: 700;
 }
 
-/* ---------- 弹窗（Teleport 到 body，需全局滚动锁定样式已在组件内） ---------- */
-
-/* ---------- 动效偏好 ---------- */
+/* 动效偏好适配 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

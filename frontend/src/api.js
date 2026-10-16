@@ -32,8 +32,8 @@ export async function fetchSignals(market = 'cn', days = 60) {
   return data;
 }
 
-export async function requestAnalysis() {
-  // AI 分析需要 1-2 分钟，单独放宽超时
-  const { data } = await http.post('/api/analyze', null, { timeout: 120000 });
+export async function requestAnalysis(options = {}) {
+  // AI 分析放宽超时至 120 秒
+  const { data } = await http.post('/api/analyze', options, { timeout: 120000 });
   return data;
 }

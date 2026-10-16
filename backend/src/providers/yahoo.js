@@ -20,9 +20,12 @@ function chartResult(json) {
 
 // 现价取 meta.regularMarketPrice；昨收取"倒数第二个有效日收盘"。
 // 注意：meta.chartPreviousClose 是请求区间起点之前的收盘，不能当作昨收使用。
-export async function fetchYahooSpot() {
+export async function fetchYahooSpot(options = {}) {
   return track(NAME, 'spot', async () => {
-    const json = await fetchJson(`${SOURCE_URLS.yahooChart}${encodeURIComponent(SYMBOL)}?interval=1d&range=5d`);
+    const json = await fetchJson(`${SOURCE_URLS.yahooChart}${encodeURIComponent(SYMBOL)}?interval=1d&range=5d`, {
+      timeoutMs: options.timeoutMs || 1500,
+      ...options,
+    });
     const result = chartResult(json);
     const price = Number(result.meta?.regularMarketPrice);
     if (!inRange(price, SANE.intlUsdPerOz)) throw new Error('Yahoo 报价异常');

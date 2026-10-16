@@ -34,8 +34,11 @@ const settle = (result, label, errors) => {
 // 国际现货：多源链式获取与交叉校验
 // ------------------------------------------------------------
 async function loadIntlQuote() {
-  const [spotR, yahooR] = await Promise.allSettled([fetchGoldSpot(), fetchYahooSpot()]);
   const errors = [];
+  const [spotR, yahooR] = await Promise.allSettled([
+    fetchGoldSpot(),
+    fetchYahooSpot({ timeoutMs: 1500 }),
+  ]);
   let spot = settle(spotR, '国际金价(gold-api)', errors);
   let yahoo = settle(yahooR, '国际金价(Yahoo)', errors);
 
@@ -43,18 +46,7 @@ async function loadIntlQuote() {
   let source = spot ? 'gold-api.com' : (yahoo ? 'Yahoo Finance' : null);
   let silverPrice = spot?.silverPrice ?? null;
 
-  // 兜底一：瑞讯银行 Swissquote
-  if (price === null) {
-    try {
-      const sq = await fetchSwissquoteSpot('XAU');
-      price = sq.price;
-      source = 'Swissquote';
-    } catch (sqErr) {
-      errors.push(`国际金价(Swissquote): ${sqErr.message}`);
-    }
-  }
-
-  // 兜底二：新浪财经
+  // 兜底一：新浪国际现货（50ms极速稳定）
   if (price === null) {
     try {
       const sina = await fetchSinaSpot();
@@ -65,16 +57,27 @@ async function loadIntlQuote() {
     }
   }
 
+  // 兜底二：瑞讯银行 Swissquote
+  if (price === null) {
+    try {
+      const sq = await fetchSwissquoteSpot('XAU');
+      price = sq.price;
+      source = 'Swissquote';
+    } catch (sqErr) {
+      errors.push(`国际金价(Swissquote): ${sqErr.message}`);
+    }
+  }
+
   if (price === null) return { quote: null, errors };
 
-  // 白银现货价格兜底（若主源未包含白银数据）
+  // 白银现货价格兜底（优先新浪，次选 Swissquote）
   if (silverPrice === null) {
     try {
-      const sqSilver = await fetchSwissquoteSpot('XAG');
-      silverPrice = sqSilver.price;
+      silverPrice = await fetchSinaSilverSpot();
     } catch {
       try {
-        silverPrice = await fetchSinaSilverSpot();
+        const sqSilver = await fetchSwissquoteSpot('XAG');
+        silverPrice = sqSilver.price;
       } catch {}
     }
   }
@@ -144,22 +147,32 @@ function theoreticalPremium(domesticPrice, intlPrice, usdCny) {
 // 行情快照：多路并行，失败逐级降级；返回交叉校验结果
 // ------------------------------------------------------------
 async function loadSnapshot() {
-  const [intlR, domR, fxR] = await Promise.allSettled([getIntlQuote(), fetchAU9999Quote(), fetchUsdCnyLatest()]);
   const errors = [];
+
+  // 国内行情：并行尝试东财与新浪（新浪50ms极速返回，东财超时800ms自动放弃）
+  const fetchDomestic = async () => {
+    try {
+      return await Promise.any([
+        fetchAU9999Quote({ timeoutMs: 800 }),
+        fetchSinaDomesticQuote(),
+      ]);
+    } catch (allErr) {
+      errors.push(`国内金价: ${allErr.message || '双源不可用'}`);
+      return null;
+    }
+  };
+
+  const [intlR, domR, fxR] = await Promise.allSettled([
+    getIntlQuote(),
+    fetchDomestic(),
+    fetchUsdCnyLatest(),
+  ]);
 
   const intlPack = intlR.status === 'fulfilled' ? intlR.value : { quote: null, errors: [intlR.reason?.message ?? '未知错误'] };
   errors.push(...intlPack.errors);
   const international = intlPack.quote;
 
   let domestic = settle(domR, '国内金价', errors);
-  // 国内金价备用兜底：东方财富故障时，尝试新浪财经
-  if (!domestic) {
-    try {
-      domestic = await fetchSinaDomesticQuote();
-    } catch (sinaErr) {
-      errors.push(`国内金价(新浪备用): ${sinaErr.message}`);
-    }
-  }
 
   let fx = settle(fxR, '汇率', errors);
   // 汇率备用兜底：open.er-api 故障时，尝试新浪外汇

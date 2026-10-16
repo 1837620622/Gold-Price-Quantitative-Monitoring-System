@@ -31,11 +31,10 @@ crons = ["*/30 * * * *"]
 #   npx wrangler secret put PUSHPLUS_TOPIC     # PushPlus 群组编码（可选）
 #   npx wrangler secret put MODELSCOPE_API_KEY # AI 分析（可选，未设置则使用规则摘要）
 
-# 可选：绑定 KV 以持久化推送/预警状态（未绑定时状态只存在内存，实例回收后会丢失）
-# 创建：npx wrangler kv namespace create GOLD_KV，然后取消下面的注释并填入返回的 id
-# [[kv_namespaces]]
-# binding = "GOLD_KV"
-# id = "your-kv-namespace-id"
+# 绑定 KV 以持久化推送/预警状态与量化研报跨实例缓存
+[[kv_namespaces]]
+binding = "GOLD_KV"
+id = "514ff87490444a1ca4a0fa01d92f3442"
 
 # ============================================================
 # Cloudflare Workers AI 绑定（免费内置大模型支持，无需额外 API Key）
