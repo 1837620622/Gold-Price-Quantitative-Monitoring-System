@@ -226,7 +226,9 @@ echo "MODELSCOPE_API_KEY=你的密钥" > .dev.vars
 
 # 部署到Cloudflare
 npx wrangler login
-npx wrangler secret put MODELSCOPE_API_KEY
+npx wrangler secret put ADMIN_TOKEN            # 管理接口（推送/监控）的 Bearer Token，必须设置
+npx wrangler secret put PUSHPLUS_TOKEN         # PushPlus 微信推送
+npx wrangler secret put MODELSCOPE_API_KEY     # AI 分析（可选）
 npm run deploy
 
 # ========== 前端部署 ==========
@@ -255,7 +257,9 @@ npm install
 
 # 部署到Cloudflare
 npx wrangler login
-npx wrangler secret put MODELSCOPE_API_KEY
+npx wrangler secret put ADMIN_TOKEN            # 管理接口（推送/监控）的 Bearer Token，必须设置
+npx wrangler secret put PUSHPLUS_TOKEN         # PushPlus 微信推送
+npx wrangler secret put MODELSCOPE_API_KEY     # AI 分析（可选）
 npm run deploy
 
 # ========== 前端部署 ==========
@@ -268,6 +272,9 @@ npm install
 npm run build
 npx wrangler pages deploy dist --project-name=gold-monitor
 ```
+
+> 前端安全响应头与 CSP 位于 `frontend/public/_headers`，构建后随 `dist/` 发布；Cloudflare Pages 与 Netlify 均支持该文件。若使用 Netlify，仓库内的 `frontend/netlify.toml` 已配置构建命令与发布目录（Base directory 设为 `frontend`）。
+> 管理接口未配置 `ADMIN_TOKEN` 时会返回 503（禁用），这是预期行为。
 
 ---
 

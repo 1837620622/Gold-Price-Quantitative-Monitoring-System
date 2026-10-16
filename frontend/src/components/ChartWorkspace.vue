@@ -39,7 +39,7 @@
             class="toggle"
             :class="{ on: toggles[g.key] }"
             :aria-pressed="toggles[g.key]"
-            @click="toggles[g.key] = !toggles[g.key]"
+            @click="toggleIndicator(g.key)"
           >{{ g.label }}</button>
         </div>
       </div>
@@ -129,6 +129,11 @@ const toggles = ref(
     ? { ma: true, boll: false, vol: false, score: true, macd: false, rsi: false }
     : { ma: true, boll: false, vol: true, score: true, macd: true, rsi: false }
 );
+
+// 整体替换状态对象（而非原地修改），使 KlineChart 的 watch 能感知到变化
+function toggleIndicator(key) {
+  toggles.value = { ...toggles.value, [key]: !toggles.value[key] };
+}
 
 const activeQuant = computed(() => (tab.value === 'intl' ? props.intl : props.cn));
 const activeError = computed(() => {
