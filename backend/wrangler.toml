@@ -25,8 +25,17 @@ crons = ["*/30 * * * *"]
 # 环境变量配置
 # ============================================================
 [vars]
-# 生产环境请使用 wrangler secret 设置敏感信息
-# MODELSCOPE_API_KEY = "your-api-key"
+# 敏感信息一律使用 wrangler secret 设置，不要写在这里：
+#   npx wrangler secret put ADMIN_TOKEN        # 推送/监控接口的 Bearer Token（未设置则这些接口禁用）
+#   npx wrangler secret put PUSHPLUS_TOKEN     # PushPlus Token
+#   npx wrangler secret put PUSHPLUS_TOPIC     # PushPlus 群组编码（可选）
+#   npx wrangler secret put MODELSCOPE_API_KEY # AI 分析（可选，未设置则使用规则摘要）
+
+# 可选：绑定 KV 以持久化推送/预警状态（未绑定时状态只存在内存，实例回收后会丢失）
+# 创建：npx wrangler kv namespace create GOLD_KV，然后取消下面的注释并填入返回的 id
+# [[kv_namespaces]]
+# binding = "GOLD_KV"
+# id = "your-kv-namespace-id"
 
 # ============================================================
 # 开发环境配置

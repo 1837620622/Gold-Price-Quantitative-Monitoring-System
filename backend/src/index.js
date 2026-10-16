@@ -2,291 +2,403 @@
  * ============================================================
  * 黄金价格检测系统 - Cloudflare Workers 后端服务
  * ============================================================
- * 功能：
- * - 获取国际黄金价格数据（goldprice.org）
- * - 获取国内AU9999价格数据（东方财富）
- * - DeepSeek AI 量化分析
- * - PushPlus 微信推送通知（群组推送）
+ * 数据源（均为免费公共接口，无需 API Key）：
+ * - 国际金价 XAU/USD：api.gold-api.com
+ * - 美元兑人民币汇率：open.er-api.com（仅在国内金价获取失败时用于估算）
+ * - 国内 AU9999 实时行情 / 日K线：东方财富 push2 / push2his
+ *
+ * 可选：
+ * - AI 分析：ModelScope（配置 MODELSCOPE_API_KEY 后启用，否则使用规则摘要）
+ * - 推送：PushPlus 微信推送
+ *
+ * 环境变量（用 wrangler secret 设置，切勿写入代码）：
+ *   ADMIN_TOKEN          管理接口 Bearer Token；未配置则推送/监控接口全部禁用
+ *   PUSHPLUS_TOKEN       PushPlus Token
+ *   PUSHPLUS_TOPIC       PushPlus 群组编码（可选）
+ *   MODELSCOPE_API_KEY   ModelScope API Key（可选）
+ * 可选绑定：
+ *   GOLD_KV              KV 命名空间，持久化推送/预警状态（未绑定时状态只存在内存）
  * ============================================================
  */
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { secureHeaders } from 'hono/secure-headers';
 
 const app = new Hono();
 
 // ============================================================
-// PushPlus 推送配置（从环境变量读取，保护敏感信息）
-// 官方文档：https://www.pushplus.plus/doc/guide/api.html
-// 环境变量配置：
-//   - PUSHPLUS_TOKEN: 用户Token
-//   - PUSHPLUS_OPTION: 企业微信应用编码（用于cp渠道群组推送）
+// 常量配置
 // ============================================================
 const PUSHPLUS_API_URL = 'https://www.pushplus.plus/send';
+const GOLD_API_URL = 'https://api.gold-api.com/price';
+const FX_API_URL = 'https://open.er-api.com/v6/latest/USD';
+const EASTMONEY_QUOTE_URL = 'https://push2.eastmoney.com/api/qt/stock/get';
+const EASTMONEY_KLINE_URL = 'https://push2his.eastmoney.com/api/qt/stock/kline/get';
+const MODELSCOPE_URL = 'https://api-inference.modelscope.cn/v1/chat/completions';
+
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+const FETCH_TIMEOUT_MS = 8000;
+const AI_TIMEOUT_MS = 30000;
+const OZ_TO_GRAM = 31.1035;
+const MAX_KLINE_DAYS = 250;
+
+// 合理性校验范围：超出即视为数据异常（如单位错误），拒绝使用
+const SANE_INTL_RANGE = [100, 100000];   // 美元/盎司
+const SANE_DOMESTIC_RANGE = [100, 5000]; // 元/克
+
+// 预警参数
+const ALERT_THRESHOLD_PERCENT = 1;       // 涨跌幅达到 1% 即预警（不设上限）
+const ALERT_REPEAT_MOVE_PERCENT = 0.5;   // 同方向再次预警需价格相对上次预警价再变动 0.5%
+// 定时推送间隔 30 分钟；Cron 实际触发有少量抖动，留 2 分钟容差避免漏推
+const SCHEDULED_MIN_GAP_MS = 28 * 60 * 1000;
+const ANALYSIS_CACHE_MS = 15 * 60 * 1000;
 
 // ============================================================
-// 价格监控状态（用于检测涨跌幅变化）
+// 工具函数：基础
 // ============================================================
-let lastPushPrice = null;        // 上次推送时的国内金价
-let lastPushTime = null;         // 上次推送时间
-let lastScheduledPush = null;    // 上次定时推送时间
+const round2 = (v) => Math.round(v * 100) / 100;
+const isFiniteNumber = (v) => typeof v === 'number' && Number.isFinite(v);
+const inRange = (v, [min, max]) => isFiniteNumber(v) && v >= min && v <= max;
+const fmt = (v, digits = 2) => (isFiniteNumber(v) ? v.toFixed(digits) : '--');
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// 恒定时间比较，避免通过响应时间侧信道猜测 Token
+function safeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function clampDays(value, fallback = 30) {
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(n, 1), MAX_KLINE_DAYS);
+}
+
+// 上海时区日期（YYYY-MM-DD），用于判断"同一天"
+function shanghaiDate(ts) {
+  return new Date(ts + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+async function fetchJson(url, { headers = {}, timeoutMs = FETCH_TIMEOUT_MS, ...init } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json', ...headers },
+    });
+    if (!res.ok) throw new Error(`请求失败 HTTP ${res.status}: ${url}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 // ============================================================
-// 中间件配置
+// 状态存储：优先使用 KV（持久化），未绑定时退回内存
+// 注意：内存状态在 Worker 实例回收后会丢失，建议绑定 GOLD_KV
 // ============================================================
-app.use('*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-}));
+const memoryState = {};
+
+async function getState(env, key) {
+  try {
+    if (env?.GOLD_KV) return (await env.GOLD_KV.get(`state:${key}`, 'json')) ?? null;
+  } catch (error) {
+    console.error(`读取状态失败 [${key}]:`, error.message);
+  }
+  return memoryState[key] ?? null;
+}
+
+async function setState(env, key, value) {
+  memoryState[key] = value;
+  try {
+    if (env?.GOLD_KV) await env.GOLD_KV.put(`state:${key}`, JSON.stringify(value));
+  } catch (error) {
+    console.error(`写入状态失败 [${key}]:`, error.message);
+  }
+}
 
 // ============================================================
-// 工具函数：获取国际黄金价格（goldprice.org API）
+// 行情：国际金价（gold-api.com，免费无需 Key）
 // ============================================================
 async function fetchInternationalGoldPrice() {
+  const data = await fetchJson(`${GOLD_API_URL}/XAU`);
+  const price = Number(data?.price);
+  if (!inRange(price, SANE_INTL_RANGE)) throw new Error(`国际金价数据异常: ${data?.price}`);
+
+  // 白银为辅助信息，失败不影响主数据
+  let silverPrice = null;
   try {
-    // 使用 goldprice.org 的实时数据接口
-    const response = await fetch('https://data-asg.goldprice.org/dbXRates/USD', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-      },
-    });
-    
-    if (!response.ok) throw new Error('获取国际金价失败');
-    const data = await response.json();
-    
-    // 解析返回数据：xauPrice 是每盎司美元价格
-    const item = data.items?.[0];
-    if (item) {
-      return {
-        success: true,
-        source: 'goldprice.org',
-        currency: 'USD',
-        unit: '盎司',
-        price: item.xauPrice,
-        change: item.chgXau,
-        changePercent: item.pcXau,
-        previousClose: item.xauClose,
-        silverPrice: item.xagPrice,
-        timestamp: data.date || new Date().toISOString(),
-      };
-    }
-    throw new Error('数据格式错误');
+    const silver = await fetchJson(`${GOLD_API_URL}/XAG`);
+    const s = Number(silver?.price);
+    if (isFiniteNumber(s) && s > 0) silverPrice = round2(s);
   } catch (error) {
-    // 备用方案：使用模拟数据
-    return {
-      success: true,
-      source: 'simulated',
-      currency: 'USD',
-      unit: '盎司',
-      price: 2650 + Math.random() * 50,
-      change: 15 + Math.random() * 30,
-      changePercent: 0.5 + Math.random() * 1,
-      timestamp: new Date().toISOString(),
-    };
+    console.error('白银价格获取失败:', error.message);
   }
+
+  return {
+    success: true,
+    source: 'gold-api.com',
+    currency: 'USD',
+    unit: '盎司',
+    price: round2(price),
+    // 该接口不提供涨跌幅与昨收，返回 null 而不是伪造数值
+    change: null,
+    changePercent: null,
+    previousClose: null,
+    silverPrice,
+    timestamp: data.updatedAt || new Date().toISOString(),
+  };
 }
 
 // ============================================================
-// 工具函数：获取国内AU9999价格（东方财富API）
+// 行情：美元兑人民币（open.er-api.com，免费无需 Key）
 // ============================================================
-async function fetchDomesticGoldPrice() {
-  try {
-    // 东方财富 AU9999 实时行情接口
-    const response = await fetch(
-      'https://push2.eastmoney.com/api/qt/stock/get?secid=118.AU9999&fields=f43,f44,f45,f46,f47,f48,f49,f50,f51,f52,f55,f57,f58,f60,f116,f117,f162,f168,f169,f170,f171',
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'https://quote.eastmoney.com/',
-        },
+async function fetchUsdCnyRate() {
+  const data = await fetchJson(FX_API_URL);
+  const rate = Number(data?.rates?.CNY);
+  if (!isFiniteNumber(rate) || rate <= 0) throw new Error('汇率数据异常');
+  return rate;
+}
+
+// ============================================================
+// 行情：国内 AU9999 实时行情（东方财富，免费无需 Key）
+// 东方财富价格字段为"放大100倍"的整数，需除以 100
+// ============================================================
+async function fetchEastmoneyAU9999() {
+  const fields = 'f43,f44,f45,f46,f47,f48,f51,f52,f57,f58,f60,f169,f170';
+  const result = await fetchJson(`${EASTMONEY_QUOTE_URL}?secid=118.AU9999&fields=${fields}`, {
+    headers: { Referer: 'https://quote.eastmoney.com/' },
+  });
+  const d = result?.data;
+  if (result?.rc !== 0 || !d) throw new Error('东方财富返回数据异常');
+
+  const scaled = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? round2(n / 100) : null;
+  };
+
+  const price = scaled(d.f43);
+  if (!inRange(price, SANE_DOMESTIC_RANGE)) throw new Error(`AU9999 最新价异常: ${d.f43}`);
+
+  return {
+    success: true,
+    source: 'eastmoney',
+    estimated: false,
+    code: d.f57,
+    name: d.f58,
+    currency: 'CNY',
+    unit: '克',
+    price,
+    open: scaled(d.f46),
+    high: scaled(d.f44),
+    low: scaled(d.f45),
+    previousClose: scaled(d.f60),
+    change: scaled(d.f169),
+    changePercent: scaled(d.f170), // 涨跌幅（%）
+    volume: Number(d.f47) || null, // 成交量（手）
+    amount: Number(d.f48) || null, // 成交额（元）
+    limitUp: scaled(d.f51),
+    limitDown: scaled(d.f52),
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// 国内行情不可用时：由国际金价 × 汇率 ÷ 31.1035 估算。
+// 估算价不含国内溢价，且没有真实涨跌幅，因此标记 estimated，预警逻辑会忽略它。
+function estimateDomesticPrice(intl, usdCny) {
+  const price = round2((intl.price * usdCny) / OZ_TO_GRAM);
+  return {
+    success: true,
+    source: 'estimated',
+    estimated: true,
+    code: 'AU9999',
+    name: '黄金9999（估算）',
+    currency: 'CNY',
+    unit: '克',
+    price,
+    open: null,
+    high: null,
+    low: null,
+    previousClose: null,
+    change: null,
+    changePercent: null,
+    volume: null,
+    amount: null,
+    exchangeRate: usdCny,
+    basePrice: intl.price,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// ============================================================
+// 行情快照：国际 + 国内并行获取，失败的一方返回 null，不伪造数据
+// ============================================================
+async function getMarketSnapshot() {
+  const errors = [];
+  const [intlResult, domResult] = await Promise.allSettled([
+    fetchInternationalGoldPrice(),
+    fetchEastmoneyAU9999(),
+  ]);
+
+  const international = intlResult.status === 'fulfilled' ? intlResult.value : null;
+  if (!international) {
+    errors.push(`国际金价: ${intlResult.reason?.message}`);
+    console.error('国际金价获取失败:', intlResult.reason?.message);
+  }
+
+  let domestic = domResult.status === 'fulfilled' ? domResult.value : null;
+  if (!domestic) {
+    errors.push(`国内金价: ${domResult.reason?.message}`);
+    console.error('国内金价获取失败:', domResult.reason?.message);
+    if (international) {
+      try {
+        const rate = await fetchUsdCnyRate();
+        domestic = estimateDomesticPrice(international, rate);
+      } catch (error) {
+        errors.push(`汇率: ${error.message}`);
+        console.error('汇率获取失败:', error.message);
       }
-    );
-    
-    if (!response.ok) throw new Error('获取AU9999价格失败');
-    const result = await response.json();
-    
-    if (result.rc === 0 && result.data) {
-      const d = result.data;
-      // 东方财富价格单位是分，需要除以100转换为元
-      return {
-        success: true,
-        source: 'eastmoney',
-        code: d.f57,
-        name: d.f58,
-        currency: 'CNY',
-        unit: '克',
-        price: d.f43 / 100,           // 最新价
-        open: d.f46 / 100,            // 开盘价
-        high: d.f44 / 100,            // 最高价
-        low: d.f45 / 100,             // 最低价
-        previousClose: d.f60 / 100,   // 昨收价
-        change: d.f169 / 100,         // 涨跌额
-        changePercent: d.f170 / 100,  // 涨跌幅
-        volume: d.f47,                // 成交量（手）
-        amount: d.f48,                // 成交额
-        limitUp: d.f51 / 100,         // 涨停价
-        limitDown: d.f52 / 100,       // 跌停价
-        timestamp: new Date().toISOString(),
-      };
     }
-    throw new Error('数据格式错误');
-  } catch (error) {
-    // 备用方案：基于国际金价换算
-    const intlPrice = await fetchInternationalGoldPrice();
-    const exchangeRate = 7.25;
-    const ozToGram = 31.1035;
-    const domesticPrice = (intlPrice.price * exchangeRate) / ozToGram;
+  }
 
+  return { international, domestic, errors, timestamp: new Date().toISOString() };
+}
+
+// ============================================================
+// 行情：国内 AU9999 日K线（东方财富，真实历史数据）
+// 返回字段顺序：日期,开盘,收盘,最高,最低,成交量
+// ============================================================
+async function fetchDailyKline(days = 30) {
+  const limit = clampDays(days);
+  const result = await fetchJson(
+    `${EASTMONEY_KLINE_URL}?secid=118.AU9999&fields1=f1,f2,f3,f4,f5,f6` +
+      `&fields2=f51,f52,f53,f54,f55,f56&klt=101&fqt=0&end=20500101&lmt=${limit}`,
+    { headers: { Referer: 'https://quote.eastmoney.com/' } }
+  );
+  const lines = result?.data?.klines;
+  if (!Array.isArray(lines) || lines.length === 0) throw new Error('K线数据为空');
+
+  return lines
+    .map((line) => {
+      const [date, open, close, high, low, volume] = String(line).split(',');
+      return {
+        timestamp: Date.parse(`${date}T00:00:00+08:00`),
+        date,
+        open: Number(open),
+        close: Number(close),
+        high: Number(high),
+        low: Number(low),
+        volume: Number(volume) || 0,
+      };
+    })
+    .filter((k) => [k.open, k.close, k.high, k.low].every(isFiniteNumber));
+}
+
+// ============================================================
+// 工具函数：DeepSeek（ModelScope）量化分析
+// ============================================================
+function buildRuleBasedAnalysis(snapshot, weekChange) {
+  const intl = snapshot.international;
+  const dom = snapshot.domestic;
+  const pct = dom.changePercent ?? 0;
+  const trend = pct >= 0 ? '上涨' : '下跌';
+  const suggestion = Math.abs(pct) > 1 ? '波动较大，建议观望' : '波动平稳，可适量配置';
+
+  return `【自动分析报告】
+
+当前市场状态：${trend}
+国际金价：${intl ? `${fmt(intl.price)} 美元/盎司` : '暂无数据'}
+国内AU9999：${fmt(dom.price)} 元/克${dom.estimated ? '（估算价）' : ''}
+
+技术面分析：
+- 今日涨跌幅：${dom.changePercent == null ? 'N/A' : `${fmt(dom.changePercent)}%`}
+- 近7日涨跌幅：${weekChange == null ? 'N/A' : `${fmt(weekChange)}%`}
+- 今日区间：${dom.low == null || dom.high == null ? 'N/A' : `${fmt(dom.low)} - ${fmt(dom.high)} 元`}
+
+投资建议：${suggestion}
+风险提示：黄金投资有风险，以上分析仅供参考，不构成投资建议。`;
+}
+
+async function callModelScope(apiKey, model, messages, options) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  try {
+    const res = await fetch(MODELSCOPE_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages, ...options }),
+    });
+    if (!res.ok) throw new Error(`${model} HTTP ${res.status}`);
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error(`${model} 返回内容为空`);
+    return content;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function analyzeWithDeepSeek(env, snapshot, klineData) {
+  const dom = snapshot.domestic;
+  const intl = snapshot.international;
+  const apiKey = env.MODELSCOPE_API_KEY;
+
+  const recent = klineData.slice(-7);
+  const weekChange = recent.length >= 2
+    ? round2(((recent[recent.length - 1].close - recent[0].open) / recent[0].open) * 100)
+    : null;
+
+  if (!apiKey) {
     return {
       success: true,
-      source: 'calculated',
-      code: 'AU9999',
-      name: '黄金9999',
-      currency: 'CNY',
-      unit: '克',
-      price: Math.round(domesticPrice * 100) / 100,
-      exchangeRate: exchangeRate,
-      basePrice: intlPrice.price,
+      analysis: buildRuleBasedAnalysis(snapshot, weekChange),
+      model: 'auto-analysis',
       timestamp: new Date().toISOString(),
     };
   }
-}
 
-// ============================================================
-// 工具函数：生成基于真实价格的K线数据
-// ============================================================
-function generateKlineData(days = 30, currentRealPrice = 980) {
-  const klineData = [];
-  const now = Date.now();
-  
-  // 使用种子确保同一天的数据一致
-  const today = new Date().toISOString().split('T')[0];
-  const seed = hashCode(today);
-  
-  // 基于当前真实价格反推历史价格
-  // 黄金价格年化波动率约15-20%，日波动率约1%
-  const dailyVolatility = 0.008;
-  
-  // 从当前价格开始，反向生成历史数据
-  let prices = [currentRealPrice];
-  for (let i = 1; i <= days; i++) {
-    // 使用确定性随机数
-    const randomValue = seededRandom(seed + i);
-    const change = (randomValue - 0.5) * 2 * dailyVolatility * prices[0];
-    prices.unshift(prices[0] - change);
-  }
-  
-  // 生成K线数据
-  for (let i = 0; i <= days; i++) {
-    const timestamp = now - (days - i) * 24 * 60 * 60 * 1000;
-    const basePrice = prices[i];
-    
-    // 日内波动
-    const intraRandom1 = seededRandom(seed + i * 100);
-    const intraRandom2 = seededRandom(seed + i * 200);
-    const intraRandom3 = seededRandom(seed + i * 300);
-    const intraRandom4 = seededRandom(seed + i * 400);
-    
-    const dailyRange = basePrice * 0.012; // 日内波动约1.2%
-    const open = basePrice + (intraRandom1 - 0.5) * dailyRange * 0.3;
-    const close = i < days ? prices[i + 1] : currentRealPrice;
-    const high = Math.max(open, close) + intraRandom2 * dailyRange * 0.4;
-    const low = Math.min(open, close) - intraRandom3 * dailyRange * 0.4;
-    
-    // 成交量基于价格变化
-    const priceChange = Math.abs(close - open);
-    const baseVolume = 80000 + intraRandom4 * 40000;
-    const volume = Math.floor(baseVolume * (1 + priceChange / basePrice * 10));
+  const estimateNote = dom.estimated
+    ? '\n注意：国内价为根据国际金价与汇率估算，并非交易所实时价，请据此谨慎判断。'
+    : '';
 
-    klineData.push({
-      timestamp: timestamp,
-      date: new Date(timestamp).toISOString().split('T')[0],
-      open: Math.round(open * 100) / 100,
-      high: Math.round(high * 100) / 100,
-      low: Math.round(low * 100) / 100,
-      close: Math.round(close * 100) / 100,
-      volume: volume,
-    });
-  }
-
-  return klineData;
-}
-
-// 字符串哈希函数
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash);
-}
-
-// 确定性随机数生成器
-function seededRandom(seed) {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
-
-// ============================================================
-// 工具函数：调用 DeepSeek API 进行量化分析
-// ============================================================
-async function analyzeWithDeepSeek(env, priceData, klineData) {
-  const deepseekKey = env.DEEPSEEK_API_KEY;
-  const modelScopeKey = env.MODELSCOPE_API_KEY;
-  
-  // 准备分析数据摘要
-  const recentKline = klineData.slice(-7);
-  const priceChange = ((recentKline[recentKline.length - 1].close - recentKline[0].open) / recentKline[0].open * 100).toFixed(2);
-  const avgVolume = Math.floor(recentKline.reduce((sum, k) => sum + k.volume, 0) / recentKline.length);
-  
-  // 构建详细的分析提示词
-  const intl = priceData.international;
-  const dom = priceData.domestic;
-  
-  // 计算更多技术指标
-  const todayRange = dom.high && dom.low ? (dom.high - dom.low).toFixed(2) : 'N/A';
-  const totalVolume = dom.volume || 0;
-  const volumeRatio = avgVolume > 0 ? (totalVolume / avgVolume).toFixed(2) : 'N/A';
-  
   const prompt = `作为专业的黄金量化分析师，请根据以下【实时数据】提供专业的量化分析报告。
 
-═══════════════════════════════════════
-【实时行情数据】（数据时间：${new Date().toLocaleString('zh-CN')}）
-═══════════════════════════════════════
+【实时行情数据】（数据时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}）
 
 ▶ 国际金价 XAU/USD
-  • 最新价格：${intl.price} 美元/盎司
-  • 涨跌额：${intl.change || 0} 美元
-  • 涨跌幅：${intl.changePercent || 0}%
-  • 昨收价：${intl.previousClose || 'N/A'} 美元
-  • 数据来源：${intl.source}
+  • 最新价格：${intl ? fmt(intl.price) : 'N/A'} 美元/盎司
+  • 数据来源：${intl?.source || 'N/A'}
 
-▶ 国内AU9999（上海黄金交易所）
-  • 最新价格：${dom.price} 元/克
-  • 今日开盘：${dom.open || 'N/A'} 元/克
-  • 最高价：${dom.high || 'N/A'} 元/克
-  • 最低价：${dom.low || 'N/A'} 元/克
-  • 昨收价：${dom.previousClose || 'N/A'} 元/克
-  • 涨跌额：${dom.change || 0} 元
-  • 涨跌幅：${dom.changePercent || 0}%
-  • 今日振幅：${todayRange} 元
-  • 成交量：${totalVolume} 手
-  • 量比：${volumeRatio}（相对7日均量）
+▶ 国内AU9999
+  • 最新价格：${fmt(dom.price)} 元/克${dom.estimated ? '（估算）' : ''}
+  • 今日开盘：${fmt(dom.open)} 元/克
+  • 最高价：${fmt(dom.high)} 元/克
+  • 最低价：${fmt(dom.low)} 元/克
+  • 昨收价：${fmt(dom.previousClose)} 元/克
+  • 涨跌额：${fmt(dom.change)} 元
+  • 涨跌幅：${fmt(dom.changePercent)}%
   • 数据来源：${dom.source}
+${estimateNote}
 
-▶ 近7日走势统计
-  • 7日累计涨跌幅：${priceChange}%
-  • 7日平均成交量：${avgVolume} 手
+▶ 近7日走势（真实日K线）
+  • 7日累计涨跌幅：${weekChange == null ? 'N/A' : `${fmt(weekChange)}%`}
 
 ═══════════════════════════════════════
-【分析要求】
-═══════════════════════════════════════
-
-请按以下格式输出专业分析报告：
+请按以下格式输出专业分析报告，仅基于上述数据，不要编造未提供的数据：
 
 ## 黄金量化分析报告
 
@@ -294,147 +406,85 @@ async function analyzeWithDeepSeek(env, priceData, klineData) {
 （明确给出：看涨/看跌/震荡，并说明判断依据）
 
 ### 2. 关键支撑位与压力位
-- 国际金价压力位：
-- 国际金价支撑位：
 - 国内金价压力位：
 - 国内金价支撑位：
 
 ### 3. 技术指标信号
-（分析动量指标、波动率、价量关系等）
+（基于日内振幅与近7日走势分析动量与波动）
 
 ### 4. 短线操作建议（1-5个交易日）
-（给出具体的操作策略、入场点位、止损止盈建议）
 
 ### 5. 中长期投资建议（1-3个月）
-（分析中长期趋势，给出配置建议）
 
 ### 6. 风险提示
-（列出主要风险因素）
+`;
 
----
-请确保分析基于上述实时数据，数据准确，建议专业可操作。`;
+  const system = '你是一位专业的黄金市场量化分析师，擅长技术分析和投资建议。请用中文回复。';
+  const candidates = [
+    { model: 'deepseek-ai/DeepSeek-V3.2', name: 'DeepSeek-V3.2', options: { temperature: 1.0, top_p: 0.95, max_tokens: 2000 } },
+    { model: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5-72B', options: { temperature: 0.7, max_tokens: 1500 } },
+  ];
 
-  try {
-    // 方案1：优先使用 ModelScope 的 DeepSeek-V3.2 最新模型
-    const dsResponse = await fetch('https://api-inference.modelscope.cn/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${modelScopeKey}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-ai/DeepSeek-V3.2',
-        messages: [
-          { role: 'system', content: '你是一位专业的黄金市场量化分析师，擅长技术分析和投资建议。请用中文回复。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 1.0,
-        top_p: 0.95,
-        max_tokens: 2000,
-      }),
-    });
-
-    if (dsResponse.ok) {
-      const dsResult = await dsResponse.json();
-      return {
-        success: true,
-        analysis: dsResult.choices[0].message.content,
-        model: 'DeepSeek-V3.2',
-        timestamp: new Date().toISOString(),
-      };
+  for (const candidate of candidates) {
+    try {
+      const content = await callModelScope(
+        apiKey,
+        candidate.model,
+        [{ role: 'system', content: system }, { role: 'user', content: prompt }],
+        candidate.options
+      );
+      return { success: true, analysis: content, model: candidate.name, timestamp: new Date().toISOString() };
+    } catch (error) {
+      console.error('AI 模型调用失败:', error.message);
     }
-
-    // 方案2：备用 Qwen2.5-72B
-    const qwenResponse = await fetch('https://api-inference.modelscope.cn/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${modelScopeKey}`,
-      },
-      body: JSON.stringify({
-        model: 'Qwen/Qwen2.5-72B-Instruct',
-        messages: [
-          { role: 'system', content: '你是一位专业的黄金市场量化分析师，擅长技术分析和投资建议。请用中文回复。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1500,
-      }),
-    });
-    
-    if (qwenResponse.ok) {
-      const qwenResult = await qwenResponse.json();
-      return {
-        success: true,
-        analysis: qwenResult.choices[0].message.content,
-        model: 'Qwen2.5-72B',
-        timestamp: new Date().toISOString(),
-      };
-    }
-
-    throw new Error('所有API调用均失败');
-  } catch (error) {
-    // 最终备用：返回基于数据的简单分析
-    const trend = priceData.domestic.changePercent > 0 ? '上涨' : '下跌';
-    const suggestion = priceData.domestic.changePercent > 1 ? '建议观望' : '可适量配置';
-    
-    return {
-      success: true,
-      analysis: `【自动分析报告】
-
-当前市场状态：${trend}趋势
-国际金价：${intl.price} 美元/盎司
-国内AU9999：${dom.price} 元/克
-
-技术面分析：
-- 今日涨跌幅：${dom.changePercent || 0}%
-- 7日趋势：${priceChange}%
-- 支撑位参考：${(dom.low || dom.price * 0.98).toFixed(2)} 元
-- 压力位参考：${(dom.high || dom.price * 1.02).toFixed(2)} 元
-
-投资建议：${suggestion}
-风险提示：黄金投资有风险，以上分析仅供参考，不构成投资建议。`,
-      model: 'auto-analysis',
-      timestamp: new Date().toISOString(),
-    };
   }
+
+  return {
+    success: true,
+    analysis: buildRuleBasedAnalysis(snapshot, weekChange),
+    model: 'auto-analysis',
+    timestamp: new Date().toISOString(),
+  };
 }
 
 // ============================================================
-// 工具函数：生成美观的 HTML 推送模板
+// 工具函数：推送 HTML 模板
 // ============================================================
-function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
-  const intl = priceData.international;
-  const dom = priceData.domestic;
-  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-  
-  // 判断涨跌状态
-  const domChangePercent = dom.changePercent || 0;
-  const intlChangePercent = intl.changePercent || 0;
-  const domTrend = domChangePercent >= 0 ? 'up' : 'down';
-  const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
-  
-  // 生成推送标题（不使用 emoji 避免乱码）
-  const pushTypeTitle = pushType === 'alert' 
-    ? `金价波动 涨跌${Math.abs(domChangePercent).toFixed(2)}%` 
-    : `实时金价 AU9999 ${dom.price?.toFixed(2)}元`;
-  const pushTypeDesc = pushType === 'alert' 
-    ? `触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
-    : '每30分钟自动推送 - 实时行情';
 
-  // 简化AI分析内容（移除markdown格式，添加换行，限制长度）
-  const cleanAnalysis = analysisText
+// AI 输出是不可信内容：先截断原文，再转义，最后做有限的排版替换
+function toPushSummary(analysisText) {
+  const raw = String(analysisText || '');
+  const truncated = raw.length > 600;
+  const text = escapeHtml(raw.slice(0, 600))
     .replace(/#{1,6}\s*/g, '')
     .replace(/\*\*/g, '')
     .replace(/\*/g, '')
-    .replace(/---/g, '<br><br>')
     .replace(/═+/g, '')
     .replace(/▶/g, '')
     .replace(/•/g, '-')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>')
-    .replace(/(\d+\.\s)/g, '<br><br>$1')
-    .substring(0, 600) + '...';
+    .replace(/-{3,}/g, '<br><br>')
+    .replace(/\r?\n\s*\r?\n/g, '<br><br>')
+    .replace(/\r?\n/g, '<br>')
+    .replace(/(\d+\.\s)/g, '<br><br>$1');
+  return truncated ? `${text}...` : text;
+}
+
+function generatePushHtml(snapshot, analysisText, pushType = 'scheduled') {
+  const intl = snapshot.international || {};
+  const dom = snapshot.domestic;
+  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+
+  const domChangePercent = dom.changePercent ?? 0;
+  const intlChangePercent = intl.changePercent ?? 0;
+  const domTrend = domChangePercent >= 0 ? 'up' : 'down';
+  const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
+
+  const pushTypeTitle = pushType === 'alert'
+    ? `金价波动 涨跌${Math.abs(domChangePercent).toFixed(2)}%`
+    : `实时金价 AU9999 ${fmt(dom.price)}元`;
+  const pushTypeDesc = pushType === 'alert'
+    ? `触发预警：国内金价涨跌幅达 ${Math.abs(domChangePercent).toFixed(2)}%`
+    : '每30分钟自动推送 - 实时行情';
 
   return `
 <!DOCTYPE html>
@@ -478,39 +528,39 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
   <div class="container">
     <div class="header">
       <div class="type-badge">${pushTypeDesc}</div>
-      <h1>${pushTypeTitle}</h1>
+      <h1>${escapeHtml(pushTypeTitle)}</h1>
       <div class="time">更新时间：${now}</div>
     </div>
-    
+
     <div class="price-section">
       <div class="price-card dom">
-        <div class="price-label">[国内] AU9999 上海黄金交易所</div>
-        <div class="price-value ${domTrend}">¥${dom.price?.toFixed(2) || '--'}</div>
-        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '▲ +' : '▼ '}${domChangePercent.toFixed(2)}%（${domChangePercent >= 0 ? '+' : ''}${(dom.change || 0).toFixed(2)}元）</div>
+        <div class="price-label">[国内] AU9999 ${dom.estimated ? '（估算价）' : '上海黄金交易所'}</div>
+        <div class="price-value ${domTrend}">¥${fmt(dom.price)}</div>
+        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '▲ +' : '▼ '}${domChangePercent.toFixed(2)}%（${domChangePercent >= 0 ? '+' : ''}${fmt(dom.change ?? 0)}元）</div>
         <div class="detail-grid">
-          <div class="detail-item"><span class="label">开盘</span><span class="value">¥${dom.open?.toFixed(2) || '--'}</span></div>
-          <div class="detail-item"><span class="label">最高</span><span class="value" style="color:#4ade80">¥${dom.high?.toFixed(2) || '--'}</span></div>
-          <div class="detail-item"><span class="label">最低</span><span class="value" style="color:#f87171">¥${dom.low?.toFixed(2) || '--'}</span></div>
+          <div class="detail-item"><span class="label">开盘</span><span class="value">¥${fmt(dom.open)}</span></div>
+          <div class="detail-item"><span class="label">最高</span><span class="value" style="color:#4ade80">¥${fmt(dom.high)}</span></div>
+          <div class="detail-item"><span class="label">最低</span><span class="value" style="color:#f87171">¥${fmt(dom.low)}</span></div>
         </div>
       </div>
-      
+
       <div class="price-card intl">
-        <div class="price-label">[国际] XAU/USD 伦敦现货</div>
-        <div class="price-value ${intlTrend}">$${intl.price?.toFixed(2) || '--'}</div>
+        <div class="price-label">[国际] XAU/USD 现货</div>
+        <div class="price-value ${intlTrend}">$${fmt(intl.price)}</div>
         <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '▲ +' : '▼ '}${intlChangePercent.toFixed(2)}%</div>
         <div class="detail-grid">
-          <div class="detail-item"><span class="label">昨收</span><span class="value">$${intl.previousClose?.toFixed(2) || '--'}</span></div>
-          <div class="detail-item"><span class="label">白银</span><span class="value">$${intl.silverPrice?.toFixed(2) || '--'}</span></div>
-          <div class="detail-item"><span class="label">来源</span><span class="value">${intl.source || '--'}</span></div>
+          <div class="detail-item"><span class="label">昨收</span><span class="value">$${fmt(intl.previousClose)}</span></div>
+          <div class="detail-item"><span class="label">白银</span><span class="value">$${fmt(intl.silverPrice)}</span></div>
+          <div class="detail-item"><span class="label">来源</span><span class="value">${escapeHtml(intl.source || '--')}</span></div>
         </div>
       </div>
     </div>
-    
+
     <div class="analysis-section">
       <div class="analysis-title">AI 智能分析摘要</div>
-      <div class="analysis-content">${cleanAnalysis}</div>
+      <div class="analysis-content">${toPushSummary(analysisText)}</div>
     </div>
-    
+
     <div class="footer">
       <div class="brand">Gold Monitor - 黄金价格智能监控</div>
       <div class="contact">Vx: 1837620622 | 邮箱: 2040168455@qq.com</div>
@@ -521,108 +571,18 @@ function generatePushHtml(priceData, analysisText, pushType = 'scheduled') {
 </html>`;
 }
 
-// ============================================================
-// 工具函数：发送 PushPlus 推送（群组推送）
-// ============================================================
-async function sendPushPlusNotification(env, title, content, template = 'html') {
-  try {
-    // 从环境变量读取配置
-    const token = env.PUSHPLUS_TOKEN;
-    const topic = env.PUSHPLUS_TOPIC;  // 群组编码（用于一对多推送）
-    
-    if (!token) {
-      console.error('PushPlus Token 未配置');
-      return { success: false, msg: 'PUSHPLUS_TOKEN 环境变量未配置' };
-    }
-    
-    // 根据 PushPlus 官方文档构建请求
-    // 使用微信公众号渠道，如果配置了 topic 则推送给群组成员
-    const requestBody = {
-      token: token,                          // 用户Token（从环境变量读取）
-      title: title,                          // 消息标题
-      content: content,                      // 消息内容
-      template: template,                    // 发送模板（html/txt/json/markdown）
-      channel: 'wechat',                     // 发送渠道：微信公众号
-    };
-    
-    // 如果配置了群组编码，则推送给群组所有成员
-    if (topic) {
-      requestBody.topic = topic;
-    }
-    
-    const response = await fetch(PUSHPLUS_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    const result = await response.json();
-    
-    if (result.code === 200) {
-      console.log('PushPlus 推送成功:', result.msg);
-      return { success: true, msg: result.msg, data: result.data };
-    } else {
-      console.error('PushPlus 推送失败:', result.msg);
-      return { success: false, msg: result.msg };
-    }
-  } catch (error) {
-    console.error('PushPlus 推送异常:', error.message);
-    return { success: false, msg: error.message };
-  }
-}
-
-// ============================================================
-// 工具函数：检查是否需要触发涨跌预警推送
-// ============================================================
-function shouldTriggerPriceAlert(currentPrice, changePercent) {
-  const absChange = Math.abs(changePercent || 0);
-  
-  // 涨跌幅在 1% - 2% 之间触发预警
-  if (absChange >= 1 && absChange <= 2) {
-    // 检查是否已经推送过（避免重复推送）
-    if (lastPushPrice !== null) {
-      const priceChangeFromLast = Math.abs((currentPrice - lastPushPrice) / lastPushPrice * 100);
-      // 如果距离上次推送价格变化不足 0.5%，不重复推送
-      if (priceChangeFromLast < 0.5) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
-}
-
-// ============================================================
-// 工具函数：检查是否需要定时推送（每半小时）
-// ============================================================
-function shouldScheduledPush() {
-  const now = Date.now();
-  const halfHour = 30 * 60 * 1000; // 30分钟
-  
-  if (lastScheduledPush === null || (now - lastScheduledPush) >= halfHour) {
-    return true;
-  }
-  return false;
-}
-
-// ============================================================
-// 工具函数：生成纯价格推送 HTML（不含AI分析，快速推送）
-// ============================================================
-function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
-  const intl = priceData.international;
-  const dom = priceData.domestic;
+function generateQuickPriceHtml(snapshot, pushType = 'scheduled') {
+  const intl = snapshot.international || {};
+  const dom = snapshot.domestic;
   const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-  const domChangePercent = dom.changePercent || 0;
-  const intlChangePercent = intl.changePercent || 0;
+  const domChangePercent = dom.changePercent ?? 0;
+  const intlChangePercent = intl.changePercent ?? 0;
   const domTrend = domChangePercent >= 0 ? 'up' : 'down';
   const intlTrend = intlChangePercent >= 0 ? 'up' : 'down';
-  // 生成更专业的标题
   const changeDir = domChangePercent >= 0 ? '上涨' : '下跌';
-  const pushTypeTitle = pushType === 'alert' 
-    ? `黄金价格${changeDir} ${Math.abs(domChangePercent).toFixed(2)}%` 
-    : `黄金实时行情`;
+  const pushTypeTitle = pushType === 'alert'
+    ? `黄金价格${changeDir} ${Math.abs(domChangePercent).toFixed(2)}%`
+    : '黄金实时行情';
 
   return `
 <!DOCTYPE html>
@@ -660,28 +620,28 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
 <body>
   <div class="container">
     <div class="header">
-      <h1>${pushTypeTitle}</h1>
+      <h1>${escapeHtml(pushTypeTitle)}</h1>
       <div class="subtitle">${now} | Gold Monitor</div>
     </div>
     <div class="price-section">
       <div class="price-card">
         <div class="price-header">
           <span class="price-label">国内AU9999</span>
-          <span class="price-badge">上海黄金</span>
+          <span class="price-badge">${dom.estimated ? '估算价' : '上海黄金'}</span>
         </div>
         <div class="price-main">
-          <span class="price-value ${domTrend}">${dom.price?.toFixed(2) || '--'}</span>
+          <span class="price-value ${domTrend}">${fmt(dom.price)}</span>
           <span class="price-unit">元/克</span>
         </div>
-        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '+' : ''}${domChangePercent.toFixed(2)}% ${domChangePercent >= 0 ? '上涨' : '下跌'}</div>
+        <div class="price-change ${domTrend}">${domChangePercent >= 0 ? '+' : ''}${domChangePercent.toFixed(2)}% ${changeDir}</div>
       </div>
       <div class="price-card intl">
         <div class="price-header">
           <span class="price-label">国际XAU/USD</span>
-          <span class="price-badge intl">伦敦现货</span>
+          <span class="price-badge intl">现货</span>
         </div>
         <div class="price-main">
-          <span class="price-value ${intlTrend}">${intl.price?.toFixed(2) || '--'}</span>
+          <span class="price-value ${intlTrend}">${fmt(intl.price)}</span>
           <span class="price-unit">美元/盎司</span>
         </div>
         <div class="price-change ${intlTrend}">${intlChangePercent >= 0 ? '+' : ''}${intlChangePercent.toFixed(2)}%</div>
@@ -697,58 +657,186 @@ function generateQuickPriceHtml(priceData, pushType = 'scheduled') {
 }
 
 // ============================================================
-// 工具函数：执行推送（先推送价格，再推送AI分析）
-// ctx 参数用于 waitUntil，确保异步任务在响应后继续执行
+// PushPlus 推送（群组推送）
 // ============================================================
-async function executePush(env, priceData, pushType = 'scheduled', ctx = null) {
-  const dom = priceData.domestic;
-  
-  // 第一步：立即推送价格（快速响应）
-  const changeDir = (dom.changePercent || 0) >= 0 ? '上涨' : '下跌';
-  const priceTitle = pushType === 'alert'
-    ? `黄金${changeDir}${Math.abs(dom.changePercent || 0).toFixed(2)}% 触发预警`
-    : `黄金实时行情 ${dom.price?.toFixed(2)}元/克`;
-  
-  const quickHtml = generateQuickPriceHtml(priceData, pushType);
-  const priceResult = await sendPushPlusNotification(env, priceTitle, quickHtml, 'html');
-  
-  // 更新推送状态
-  if (priceResult.success) {
-    lastPushPrice = dom.price;
-    lastPushTime = Date.now();
-    if (pushType === 'scheduled') {
-      lastScheduledPush = Date.now();
-    }
+async function sendPushPlusNotification(env, title, content, template = 'html') {
+  const token = env.PUSHPLUS_TOKEN;
+  if (!token) {
+    console.error('PushPlus Token 未配置');
+    return { success: false, msg: 'PUSHPLUS_TOKEN 未配置' };
   }
-  
-  // 第二步：获取AI分析并推送
-  // 使用 waitUntil 确保异步任务在 Workers 响应后继续执行
-  const aiPushPromise = (async () => {
+
+  const requestBody = { token, title, content, template, channel: 'wechat' };
+  if (env.PUSHPLUS_TOPIC) requestBody.topic = env.PUSHPLUS_TOPIC;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const response = await fetch(PUSHPLUS_API_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    }).finally(() => clearTimeout(timer));
+
+    const result = await response.json();
+    if (result.code === 200) {
+      console.log('PushPlus 推送成功:', result.msg);
+      return { success: true, msg: result.msg, data: result.data };
+    }
+    console.error('PushPlus 推送失败:', result.msg);
+    return { success: false, msg: result.msg };
+  } catch (error) {
+    console.error('PushPlus 推送异常:', error.message);
+    return { success: false, msg: '推送请求异常' };
+  }
+}
+
+// ============================================================
+// 监控判定
+// ============================================================
+
+// 预警：仅对真实行情（非估算）判断。阈值 ≥1%，无上限；
+// 同一天、同方向的重复预警需价格相对上次预警价再移动 0.5%。
+function evaluateAlert(domestic, lastAlert) {
+  if (!domestic || domestic.estimated || !isFiniteNumber(domestic.changePercent)) return false;
+  const pct = domestic.changePercent;
+  if (Math.abs(pct) < ALERT_THRESHOLD_PERCENT) return false;
+
+  const direction = pct >= 0 ? 'up' : 'down';
+  const today = shanghaiDate(Date.now());
+  if (lastAlert && lastAlert.date === today && lastAlert.direction === direction) {
+    const movePercent = Math.abs((domestic.price - lastAlert.price) / lastAlert.price) * 100;
+    if (movePercent < ALERT_REPEAT_MOVE_PERCENT) return false;
+  }
+  return true;
+}
+
+async function isScheduledPushDue(env) {
+  const last = await getState(env, 'lastScheduledPush');
+  return !last || Date.now() - last >= SCHEDULED_MIN_GAP_MS;
+}
+
+async function recordPush(env, dom, pushType) {
+  const now = Date.now();
+  await setState(env, 'lastPush', { price: dom.price, time: now, type: pushType });
+  if (pushType === 'scheduled') {
+    await setState(env, 'lastScheduledPush', now);
+  }
+  if (pushType === 'alert') {
+    await setState(env, 'lastAlert', {
+      price: dom.price,
+      direction: (dom.changePercent ?? 0) >= 0 ? 'up' : 'down',
+      time: now,
+      date: shanghaiDate(now),
+    });
+  }
+}
+
+// ============================================================
+// 执行推送：先发价格，再异步发送 AI 分析
+// waitUntil 可选：HTTP 请求和 Cron 都会传入，保证后台任务不被提前终止
+// ============================================================
+async function executePush(env, snapshot, pushType = 'scheduled', waitUntil = null) {
+  const dom = snapshot.domestic;
+  if (!dom) return { success: false, msg: '国内金价不可用，已跳过推送' };
+
+  const changePercent = dom.changePercent ?? 0;
+  const changeDir = changePercent >= 0 ? '上涨' : '下跌';
+  const priceTitle = pushType === 'alert'
+    ? `黄金${changeDir}${Math.abs(changePercent).toFixed(2)}% 触发预警`
+    : `黄金实时行情 ${fmt(dom.price)}元/克`;
+
+  const priceResult = await sendPushPlusNotification(env, priceTitle, generateQuickPriceHtml(snapshot, pushType), 'html');
+  if (priceResult.success) {
+    await recordPush(env, dom, pushType);
+  }
+
+  const aiTask = (async () => {
     try {
-      const klineData = generateKlineData(30, dom.price);
-      const analysis = await analyzeWithDeepSeek(env, priceData, klineData);
-      const analysisText = analysis.analysis || '暂无分析数据';
-      
-      const analysisTitle = `AI智能分析 ${analysis.model || 'DeepSeek'}`;
-      const analysisHtml = generatePushHtml(priceData, analysisText, pushType);
-      
-      await sendPushPlusNotification(env, analysisTitle, analysisHtml, 'html');
-      console.log('AI分析推送成功');
+      const klineData = await fetchDailyKline(30).catch(() => []);
+      const analysis = await analyzeWithDeepSeek(env, snapshot, klineData);
+      const analysisHtml = generatePushHtml(snapshot, analysis.analysis, pushType);
+      await sendPushPlusNotification(env, `AI智能分析 ${analysis.model}`, analysisHtml, 'html');
+      console.log('AI分析推送完成');
     } catch (error) {
       console.error('AI分析推送失败:', error.message);
     }
   })();
-  
-  // 如果有 ctx（来自 Hono 上下文），使用 waitUntil 保持异步任务运行
-  if (ctx && ctx.executionCtx && ctx.executionCtx.waitUntil) {
-    ctx.executionCtx.waitUntil(aiPushPromise);
+
+  if (waitUntil) {
+    waitUntil(aiTask);
   } else {
-    // 没有 ctx 时直接等待（用于 Cron Trigger）
-    await aiPushPromise;
+    await aiTask;
   }
-  
+
   return priceResult;
 }
+
+// 一次完整的监控周期：判断预警/定时，需要时推送。Cron 与 /api/monitor 共用。
+async function runMonitorCycle(env, waitUntil = null) {
+  const snapshot = await getMarketSnapshot();
+  if (!snapshot.domestic) {
+    return { snapshot, alerts: [], pushTriggered: false, pushResult: null, reason: '行情不可用' };
+  }
+
+  const alerts = [];
+  let pushType = null;
+  if (evaluateAlert(snapshot.domestic, await getState(env, 'lastAlert'))) {
+    pushType = 'alert';
+    alerts.push({
+      type: 'price_alert',
+      message: `国内金价涨跌幅 ${Math.abs(snapshot.domestic.changePercent).toFixed(2)}%，触发预警`,
+      price: snapshot.domestic.price,
+      changePercent: snapshot.domestic.changePercent,
+    });
+  } else if (await isScheduledPushDue(env)) {
+    pushType = 'scheduled';
+    alerts.push({ type: 'scheduled', message: '满足定时推送条件（距上次推送超过30分钟）' });
+  }
+
+  const pushResult = pushType ? await executePush(env, snapshot, pushType, waitUntil) : null;
+  return { snapshot, alerts, pushTriggered: pushType !== null, pushResult, reason: null };
+}
+
+// ============================================================
+// 中间件
+// ============================================================
+app.use('*', secureHeaders());
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// 管理接口鉴权：必须携带 Authorization: Bearer <ADMIN_TOKEN>，未配置时一律拒绝
+async function requireAdmin(c, next) {
+  const token = c.env?.ADMIN_TOKEN;
+  if (!token) {
+    return c.json({ success: false, message: '管理接口未启用（ADMIN_TOKEN 未配置）' }, 503);
+  }
+  const header = c.req.header('Authorization') || '';
+  const provided = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!safeEqual(provided, token)) {
+    return c.json({ success: false, message: '未授权' }, 401);
+  }
+  await next();
+}
+
+// 获取 waitUntil 函数（仅在 Workers HTTP 请求中可用）
+function backgroundRunner(c) {
+  try {
+    const ctx = c.executionCtx;
+    return (promise) => ctx.waitUntil(promise);
+  } catch {
+    return null;
+  }
+}
+
+const serverError = (c, message, error) => {
+  console.error(message, error);
+  return c.json({ success: false, message, timestamp: new Date().toISOString() }, 500);
+};
 
 // ============================================================
 // API 路由：健康检查
@@ -757,581 +845,294 @@ app.get('/', (c) => {
   return c.json({
     status: 'ok',
     service: '黄金价格检测系统 API',
-    version: '2.0.0',
+    version: '2.1.0',
     endpoints: [
       'GET /api/price/international - 获取国际金价',
-      'GET /api/price/domestic - 获取国内积存金价格',
+      'GET /api/price/domestic - 获取国内AU9999价格',
       'GET /api/price/all - 获取所有价格数据',
-      'GET /api/kline?days=30 - 获取K线数据',
-      'POST /api/analyze - DeepSeek量化分析',
-      'POST /api/push/test - 测试推送功能',
-      'POST /api/push/scheduled - 定时推送（每半小时）',
+      'GET /api/kline?days=30 - 获取真实日K线数据',
+      'GET /api/chart/kline?days=30 - 获取K线图配置',
+      'POST /api/analyze - 量化分析（结果缓存15分钟）',
       'GET /api/push/status - 获取推送状态',
-      'GET /api/monitor - 价格监控（自动触发推送）',
+      'POST /api/push/test - 测试推送（需 ADMIN_TOKEN）',
+      'POST /api/push/scheduled - 定时推送（需 ADMIN_TOKEN）',
+      'POST /api/push/force - 强制推送（需 ADMIN_TOKEN）',
+      'GET /api/monitor - 价格监控并按需推送（需 ADMIN_TOKEN）',
     ],
   });
 });
 
 // ============================================================
-// API 路由：获取国际金价
+// API 路由：价格
 // ============================================================
 app.get('/api/price/international', async (c) => {
-  const data = await fetchInternationalGoldPrice();
-  return c.json(data);
+  try {
+    const data = await fetchInternationalGoldPrice();
+    return c.json(data);
+  } catch (error) {
+    return serverError(c, '国际金价获取失败', error);
+  }
 });
 
-// ============================================================
-// API 路由：获取国内积存金价格
-// ============================================================
 app.get('/api/price/domestic', async (c) => {
-  const data = await fetchDomesticGoldPrice();
-  return c.json(data);
+  try {
+    const data = await fetchEastmoneyAU9999().catch(async (error) => {
+      console.error('国内金价获取失败:', error.message);
+      const intl = await fetchInternationalGoldPrice();
+      return estimateDomesticPrice(intl, await fetchUsdCnyRate());
+    });
+    return c.json(data);
+  } catch (error) {
+    return serverError(c, '国内金价获取失败', error);
+  }
 });
 
-// ============================================================
-// API 路由：获取所有价格数据
-// ============================================================
 app.get('/api/price/all', async (c) => {
-  const [international, domestic] = await Promise.all([
-    fetchInternationalGoldPrice(),
-    fetchDomesticGoldPrice(),
-  ]);
-
-  return c.json({
-    success: true,
-    international,
-    domestic,
-    timestamp: new Date().toISOString(),
-  });
+  const snapshot = await getMarketSnapshot();
+  return c.json({ success: Boolean(snapshot.domestic || snapshot.international), ...snapshot });
 });
 
 // ============================================================
-// API 路由：获取K线数据
+// API 路由：真实日K线
 // ============================================================
 app.get('/api/kline', async (c) => {
-  const days = parseInt(c.req.query('days') || '30');
-  const domestic = await fetchDomesticGoldPrice();
-  const klineData = generateKlineData(days, domestic.price);
-
-  return c.json({
-    success: true,
-    period: `${days}天`,
-    data: klineData,
-    timestamp: new Date().toISOString(),
-  });
+  const days = clampDays(c.req.query('days'));
+  try {
+    const data = await fetchDailyKline(days);
+    return c.json({ success: true, period: `${days}天`, data, timestamp: new Date().toISOString() });
+  } catch (error) {
+    return serverError(c, 'K线数据获取失败', error);
+  }
 });
 
-// ============================================================
-// API 路由：K线图配置数据
-// ============================================================
-app.get('/api/chart/kline', async (c) => {
-  const days = parseInt(c.req.query('days')) || 30;
-  const domestic = await fetchDomesticGoldPrice();
-  const klineData = generateKlineData(days, domestic.price);
-  
-  // 转换为ECharts格式
-  const chartData = klineData.map(item => [
-    item.timestamp,
-    item.open,
-    item.close,
-    item.low,
-    item.high,
-    item.volume
-  ]);
-  
-  // ECharts K线图配置
-  const chartOption = {
-    title: {
-      text: '黄金价格K线图',
-      left: 'center',
-      textStyle: {
-        color: '#fff',
-        fontSize: 16
-      }
-    },
+// ECharts K线图配置（基于真实日K线）
+function buildKlineChartOption(klineData) {
+  const dates = klineData.map((k) => k.date);
+  return {
+    title: { text: '黄金价格K线图', left: 'center', textStyle: { color: '#fff', fontSize: 16 } },
     tooltip: {
       trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      },
+      axisPointer: { type: 'cross' },
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
       borderColor: '#fbbf24',
-      textStyle: {
-        color: '#fff'
-      }
+      textStyle: { color: '#fff' },
     },
-    legend: {
-      data: ['K线', '成交量'],
-      textStyle: {
-        color: '#fff'
-      }
-    },
+    legend: { data: ['K线', '成交量'], textStyle: { color: '#fff' } },
     grid: [
-      {
-        left: '10%',
-        right: '8%',
-        height: '60%'
-      },
-      {
-        left: '10%',
-        right: '8%',
-        top: '75%',
-        height: '16%'
-      }
+      { left: '10%', right: '8%', height: '60%' },
+      { left: '10%', right: '8%', top: '75%', height: '16%' },
     ],
     xAxis: [
-      {
-        type: 'category',
-        data: klineData.map(item => new Date(item.timestamp).toLocaleDateString()),
-        scale: true,
-        boundaryGap: false,
-        axisLine: { onZero: false },
-        splitLine: { show: false },
-        min: 'dataMin',
-        max: 'dataMax',
-        axisLabel: {
-          color: '#fff'
-        }
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: klineData.map(item => new Date(item.timestamp).toLocaleDateString()),
-        scale: true,
-        boundaryGap: false,
-        axisLine: { onZero: false },
-        axisTick: { show: false },
-        splitLine: { show: false },
-        axisLabel: { show: false },
-        min: 'dataMin',
-        max: 'dataMax'
-      }
+      { type: 'category', data: dates, scale: true, boundaryGap: false, axisLine: { onZero: false }, splitLine: { show: false }, axisLabel: { color: '#fff' } },
+      { type: 'category', gridIndex: 1, data: dates, scale: true, boundaryGap: false, axisLine: { onZero: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false } },
     ],
     yAxis: [
-      {
-        scale: true,
-        splitArea: {
-          show: true
-        },
-        axisLabel: {
-          color: '#fff'
-        }
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        splitNumber: 2,
-        axisLabel: { show: false },
-        axisLine: { show: false },
-        axisTick: { show: false },
-        splitLine: { show: false }
-      }
+      { scale: true, splitArea: { show: true }, axisLabel: { color: '#fff' } },
+      { scale: true, gridIndex: 1, splitNumber: 2, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false } },
     ],
     dataZoom: [
-      {
-        type: 'inside',
-        xAxisIndex: [0, 1],
-        start: 50,
-        end: 100
-      },
-      {
-        show: true,
-        xAxisIndex: [0, 1],
-        type: 'slider',
-        top: '85%',
-        start: 50,
-        end: 100,
-        textStyle: {
-          color: '#fff'
-        }
-      }
+      { type: 'inside', xAxisIndex: [0, 1], start: 50, end: 100 },
+      { show: true, xAxisIndex: [0, 1], type: 'slider', top: '85%', start: 50, end: 100, textStyle: { color: '#fff' } },
     ],
     series: [
       {
         name: 'K线',
         type: 'candlestick',
-        data: chartData.map(item => [item[1], item[2], item[3], item[4]]),
-        itemStyle: {
-          color: '#ef4444',
-          color0: '#22c55e',
-          borderColor: '#ef4444',
-          borderColor0: '#22c55e'
-        }
+        data: klineData.map((k) => [k.open, k.close, k.low, k.high]),
+        itemStyle: { color: '#ef4444', color0: '#22c55e', borderColor: '#ef4444', borderColor0: '#22c55e' },
       },
       {
         name: '成交量',
         type: 'bar',
         xAxisIndex: 1,
         yAxisIndex: 1,
-        data: chartData.map(item => item[5]),
-        itemStyle: {
-          color: '#fbbf24'
-        }
-      }
-    ]
+        data: klineData.map((k) => k.volume),
+        itemStyle: { color: '#fbbf24' },
+      },
+    ],
   };
+}
 
-  return c.json({
-    success: true,
-    period: `${days}天`,
-    chartOption,
-    rawData: klineData,
-    timestamp: new Date().toISOString(),
-  });
+app.get('/api/chart/kline', async (c) => {
+  const days = clampDays(c.req.query('days'));
+  try {
+    const klineData = await fetchDailyKline(days);
+    return c.json({
+      success: true,
+      period: `${days}天`,
+      chartOption: buildKlineChartOption(klineData),
+      rawData: klineData,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    return serverError(c, 'K线数据获取失败', error);
+  }
 });
 
 // ============================================================
-// API 路由：DeepSeek 量化分析
+// API 路由：AI 量化分析（公开，但结果缓存 15 分钟以控制 AI 调用成本）
 // ============================================================
 app.post('/api/analyze', async (c) => {
-  const [international, domestic] = await Promise.all([
-    fetchInternationalGoldPrice(),
-    fetchDomesticGoldPrice(),
-  ]);
-
-  const klineData = generateKlineData(30, domestic.price);
-  
-  const analysis = await analyzeWithDeepSeek(
-    c.env,
-    { international, domestic },
-    klineData
-  );
-
-  return c.json({
-    success: true,
-    priceData: { international, domestic },
-    analysis,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// ============================================================
-// API 路由：流式量化分析
-// ============================================================
-app.post('/api/analyze/stream', async (c) => {
-  const apiKey = c.env.MODELSCOPE_API_KEY;
-  
-  const [international, domestic] = await Promise.all([
-    fetchInternationalGoldPrice(),
-    fetchDomesticGoldPrice(),
-  ]);
-
-  const klineData = generateKlineData(30, domestic.price);
-  const recentKline = klineData.slice(-7);
-  const priceChange = ((recentKline[recentKline.length - 1].close - recentKline[0].open) / recentKline[0].open * 100).toFixed(2);
-
-  const prompt = `作为专业的黄金量化分析师，请根据以下数据提供投资建议：
-
-当前价格：国际金价 ${international.price} 美元/盎司，国内积存金 ${domestic.price} 元/克
-7日涨跌幅：${priceChange}%
-
-请分析：1.趋势判断 2.支撑压力位 3.投资建议 4.风险提示`;
-
-  const response = await fetch('https://api-inference.modelscope.cn/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-ai/DeepSeek-V3',
-      messages: [
-        { role: 'system', content: '你是专业的黄金量化分析师。' },
-        { role: 'user', content: prompt }
-      ],
-      stream: true,
-      temperature: 0.7,
-    }),
-  });
-
-  return new Response(response.body, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    },
-  });
-});
-
-// ============================================================
-// API 路由：测试推送功能
-// ============================================================
-app.post('/api/push/test', async (c) => {
   try {
-    // 获取当前价格数据
-    const [international, domestic] = await Promise.all([
-      fetchInternationalGoldPrice(),
-      fetchDomesticGoldPrice(),
-    ]);
-    
-    const priceData = { international, domestic };
-    
-    // 执行测试推送（传递 c 以支持 waitUntil）
-    const result = await executePush(c.env, priceData, 'scheduled', c);
-    
+    const cached = await getState(c.env, 'analysisCache');
+    if (cached && Date.now() - cached.at < ANALYSIS_CACHE_MS) {
+      return c.json({ ...cached.payload, cached: true });
+    }
+
+    const snapshot = await getMarketSnapshot();
+    if (!snapshot.domestic) {
+      return c.json({ success: false, message: '行情暂不可用，请稍后重试', priceData: snapshot }, 503);
+    }
+
+    const klineData = await fetchDailyKline(30).catch(() => []);
+    const analysis = await analyzeWithDeepSeek(c.env, snapshot, klineData);
+    const payload = { success: true, priceData: snapshot, analysis, timestamp: new Date().toISOString() };
+    await setState(c.env, 'analysisCache', { at: Date.now(), payload });
+    return c.json({ ...payload, cached: false });
+  } catch (error) {
+    return serverError(c, 'AI 分析失败', error);
+  }
+});
+
+// ============================================================
+// 管理接口：推送
+// ============================================================
+function priceSummary(snapshot) {
+  return {
+    international: snapshot.international && { price: snapshot.international.price, changePercent: snapshot.international.changePercent },
+    domestic: snapshot.domestic && { price: snapshot.domestic.price, changePercent: snapshot.domestic.changePercent, estimated: snapshot.domestic.estimated },
+  };
+}
+
+app.post('/api/push/test', requireAdmin, async (c) => {
+  try {
+    const snapshot = await getMarketSnapshot();
+    const result = await executePush(c.env, snapshot, 'scheduled', backgroundRunner(c));
     return c.json({
       success: result.success,
       message: result.success ? '测试推送成功' : '测试推送失败',
       detail: result.msg,
-      priceData: {
-        international: {
-          price: international.price,
-          changePercent: international.changePercent,
-        },
-        domestic: {
-          price: domestic.price,
-          changePercent: domestic.changePercent,
-        },
-      },
+      priceData: priceSummary(snapshot),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return c.json({
-      success: false,
-      message: '推送异常',
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    }, 500);
+    return serverError(c, '推送异常', error);
   }
 });
 
-// ============================================================
-// API 路由：定时推送（由外部定时器调用，如 Cloudflare Cron）
-// ============================================================
-app.post('/api/push/scheduled', async (c) => {
+app.post('/api/push/scheduled', requireAdmin, async (c) => {
   try {
-    // 检查是否满足定时推送条件
-    if (!shouldScheduledPush()) {
+    if (!(await isScheduledPushDue(c.env))) {
+      const last = await getState(c.env, 'lastScheduledPush');
       return c.json({
         success: false,
         message: '距离上次定时推送不足30分钟',
-        lastPush: lastScheduledPush ? new Date(lastScheduledPush).toISOString() : null,
+        lastPush: last ? new Date(last).toISOString() : null,
         timestamp: new Date().toISOString(),
       });
     }
-    
-    // 获取当前价格数据
-    const [international, domestic] = await Promise.all([
-      fetchInternationalGoldPrice(),
-      fetchDomesticGoldPrice(),
-    ]);
-    
-    const priceData = { international, domestic };
-    
-    // 执行定时推送（传递 c 以支持 waitUntil）
-    const result = await executePush(c.env, priceData, 'scheduled', c);
-    
+    const snapshot = await getMarketSnapshot();
+    const result = await executePush(c.env, snapshot, 'scheduled', backgroundRunner(c));
     return c.json({
       success: result.success,
       message: result.success ? '定时推送成功' : '定时推送失败',
       detail: result.msg,
-      priceData: {
-        international: {
-          price: international.price,
-          changePercent: international.changePercent,
-        },
-        domestic: {
-          price: domestic.price,
-          changePercent: domestic.changePercent,
-        },
-      },
+      priceData: priceSummary(snapshot),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return c.json({
-      success: false,
-      message: '定时推送异常',
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    }, 500);
+    return serverError(c, '定时推送异常', error);
   }
 });
 
-// ============================================================
-// API 路由：获取推送状态
-// ============================================================
-app.get('/api/push/status', (c) => {
-  const now = Date.now();
-  const halfHour = 30 * 60 * 1000;
-  
-  return c.json({
-    success: true,
-    status: {
-      lastPushPrice: lastPushPrice,
-      lastPushTime: lastPushTime ? new Date(lastPushTime).toISOString() : null,
-      lastScheduledPush: lastScheduledPush ? new Date(lastScheduledPush).toISOString() : null,
-      nextScheduledPush: lastScheduledPush 
-        ? new Date(lastScheduledPush + halfHour).toISOString() 
-        : '立即可推送',
-      canScheduledPush: shouldScheduledPush(),
-      timeSinceLastPush: lastPushTime ? Math.floor((now - lastPushTime) / 1000) + '秒' : null,
-    },
-    config: {
-      pushInterval: '30分钟',
-      alertThreshold: '涨跌幅 1%-2%',
-    },
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// ============================================================
-// API 路由：价格监控（检测涨跌幅并自动触发推送）
-// ============================================================
-app.get('/api/monitor', async (c) => {
+app.post('/api/push/force', requireAdmin, async (c) => {
   try {
-    // 获取当前价格数据
-    const [international, domestic] = await Promise.all([
-      fetchInternationalGoldPrice(),
-      fetchDomesticGoldPrice(),
-    ]);
-    
-    const priceData = { international, domestic };
-    const alerts = [];
-    let pushTriggered = false;
-    let pushResult = null;
-    
-    // 检查是否需要触发涨跌预警
-    if (shouldTriggerPriceAlert(domestic.price, domestic.changePercent)) {
-      alerts.push({
-        type: 'price_alert',
-        message: `国内金价涨跌幅达 ${Math.abs(domestic.changePercent).toFixed(2)}%，触发预警`,
-        price: domestic.price,
-        changePercent: domestic.changePercent,
-      });
-      
-      // 执行预警推送（传递 c 以支持 waitUntil）
-      pushResult = await executePush(c.env, priceData, 'alert', c);
-      pushTriggered = true;
-    }
-    
-    // 检查是否需要定时推送
-    if (!pushTriggered && shouldScheduledPush()) {
-      alerts.push({
-        type: 'scheduled',
-        message: '满足定时推送条件（距上次推送超过30分钟）',
-      });
-      
-      // 执行定时推送（传递 c 以支持 waitUntil）
-      pushResult = await executePush(c.env, priceData, 'scheduled', c);
-      pushTriggered = true;
-    }
-    
-    return c.json({
-      success: true,
-      monitoring: {
-        international: {
-          price: international.price,
-          changePercent: international.changePercent,
-          source: international.source,
-        },
-        domestic: {
-          price: domestic.price,
-          changePercent: domestic.changePercent,
-          source: domestic.source,
-        },
-      },
-      alerts: alerts,
-      pushTriggered: pushTriggered,
-      pushResult: pushResult,
-      status: {
-        lastPushPrice: lastPushPrice,
-        lastPushTime: lastPushTime ? new Date(lastPushTime).toISOString() : null,
-        lastScheduledPush: lastScheduledPush ? new Date(lastScheduledPush).toISOString() : null,
-      },
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    return c.json({
-      success: false,
-      message: '监控异常',
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    }, 500);
-  }
-});
-
-// ============================================================
-// API 路由：强制推送（无视时间限制，用于手动触发）
-// ============================================================
-app.post('/api/push/force', async (c) => {
-  try {
-    // 获取请求参数
     const body = await c.req.json().catch(() => ({}));
-    const pushType = body.type || 'scheduled';
-    
-    // 获取当前价格数据
-    const [international, domestic] = await Promise.all([
-      fetchInternationalGoldPrice(),
-      fetchDomesticGoldPrice(),
-    ]);
-    
-    const priceData = { international, domestic };
-    
-    // 强制执行推送（传递 c 以支持 waitUntil）
-    const result = await executePush(c.env, priceData, pushType, c);
-    
+    const pushType = body.type === 'alert' ? 'alert' : 'scheduled';
+    const snapshot = await getMarketSnapshot();
+    const result = await executePush(c.env, snapshot, pushType, backgroundRunner(c));
     return c.json({
       success: result.success,
       message: result.success ? '强制推送成功' : '强制推送失败',
       detail: result.msg,
       type: pushType,
-      priceData: {
-        international: {
-          price: international.price,
-          changePercent: international.changePercent,
-        },
-        domestic: {
-          price: domestic.price,
-          changePercent: domestic.changePercent,
-        },
-      },
+      priceData: priceSummary(snapshot),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return c.json({
-      success: false,
-      message: '强制推送异常',
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    }, 500);
+    return serverError(c, '强制推送异常', error);
   }
 });
 
+app.get('/api/monitor', requireAdmin, async (c) => {
+  try {
+    const result = await runMonitorCycle(c.env, backgroundRunner(c));
+    return c.json({
+      success: result.snapshot.domestic !== null,
+      monitoring: priceSummary(result.snapshot),
+      errors: result.snapshot.errors,
+      alerts: result.alerts,
+      pushTriggered: result.pushTriggered,
+      pushResult: result.pushResult,
+      reason: result.reason,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    return serverError(c, '监控异常', error);
+  }
+});
+
+// 推送状态（只读，公开）
+app.get('/api/push/status', async (c) => {
+  const lastPush = await getState(c.env, 'lastPush');
+  const lastScheduled = await getState(c.env, 'lastScheduledPush');
+  const lastAlert = await getState(c.env, 'lastAlert');
+  const now = Date.now();
+  return c.json({
+    success: true,
+    status: {
+      lastPushPrice: lastPush?.price ?? null,
+      lastPushTime: lastPush ? new Date(lastPush.time).toISOString() : null,
+      lastScheduledPush: lastScheduled ? new Date(lastScheduled).toISOString() : null,
+      lastAlertPrice: lastAlert?.price ?? null,
+      nextScheduledPush: lastScheduled ? new Date(lastScheduled + SCHEDULED_MIN_GAP_MS).toISOString() : '立即可推送',
+      canScheduledPush: !lastScheduled || now - lastScheduled >= SCHEDULED_MIN_GAP_MS,
+      timeSinceLastPush: lastPush ? `${Math.floor((now - lastPush.time) / 1000)}秒` : null,
+    },
+    config: {
+      pushInterval: '30分钟',
+      alertThreshold: `涨跌幅 ≥ ${ALERT_THRESHOLD_PERCENT}%`,
+      stateStorage: c.env?.GOLD_KV ? 'KV' : 'memory',
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ============================================================
-// Cloudflare Cron Trigger 处理器
-// 每30分钟自动触发价格监控和推送
+// 兜底：未知路由与异常
+// ============================================================
+app.notFound((c) => c.json({ success: false, message: '接口不存在' }, 404));
+app.onError((error, c) => serverError(c, '服务器内部错误', error));
+
+// ============================================================
+// Cloudflare 入口：HTTP + Cron Trigger（每30分钟）
 // ============================================================
 export default {
   fetch: app.fetch,
-  
+
   async scheduled(event, env, ctx) {
     console.log('Cron Trigger 触发:', new Date().toISOString());
-    
     try {
-      // 获取当前价格数据
-      const [international, domestic] = await Promise.all([
-        fetchInternationalGoldPrice(),
-        fetchDomesticGoldPrice(),
-      ]);
-      
-      const priceData = { international, domestic };
-      let pushType = 'scheduled';
-      
-      // 优先检查是否需要触发涨跌预警
-      if (shouldTriggerPriceAlert(domestic.price, domestic.changePercent)) {
-        pushType = 'alert';
-        console.log(`金价异动预警: 涨跌幅 ${domestic.changePercent}%`);
-      } else if (!shouldScheduledPush()) {
+      const result = await runMonitorCycle(env, (promise) => ctx.waitUntil(promise));
+      if (result.reason) {
+        console.error('Cron 跳过推送:', result.reason, result.snapshot.errors);
+      } else if (!result.pushTriggered) {
         console.log('未满足推送条件，跳过本次推送');
-        return;
+      } else {
+        console.log('Cron 推送结果:', result.pushResult?.success ? '成功' : '失败', result.pushResult?.msg);
       }
-      
-      // 执行推送
-      const result = await executePush(env, priceData, pushType);
-      console.log('Cron 推送结果:', result.success ? '成功' : '失败', result.msg);
-      
     } catch (error) {
-      console.error('Cron Trigger 执行异常:', error.message);
+      console.error('Cron Trigger 执行异常:', error);
     }
   },
 };

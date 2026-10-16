@@ -1208,6 +1208,28 @@ body {
   background: #22c55e;
 }
 
+.status-indicator.offline {
+  background: #ef4444;
+}
+
+/* 估算价标签（国内行情不可用时由国际价换算） */
+.card-label .badge.estimate {
+  margin-left: 6px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+/* 行情错误横幅 */
+.price-error-banner {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+  font-size: 14px;
+}
+
 .status-center {
   color: #444;
 }

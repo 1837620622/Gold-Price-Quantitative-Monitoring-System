@@ -169,9 +169,9 @@
 │  └── CORS跨域处理                                            │
 ├─────────────────────────────────────────────────────────────┤
 │  Data Sources                                                │
-│  ├── GoldPrice.org (国际金价)                                │
-│  ├── 东方财富 (国内AU9999)                                   │
-│  └── 金投网 (走势图表)                                       │
+│  ├── gold-api.com (国际金价 XAU/USD，免费无需Key)            │
+│  ├── open.er-api.com (USD/CNY 汇率，仅用于估算)               │
+│  └── 东方财富 (国内AU9999 实时行情与日K线)                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -275,13 +275,16 @@ npx wrangler pages deploy dist --project-name=gold-monitor
 | `/api/price/all` | GET | 获取所有价格数据 |
 | `/api/price/international` | GET | 获取国际金价 |
 | `/api/price/domestic` | GET | 获取国内AU9999价格 |
-| `/api/kline?days=30` | GET | 获取K线历史数据 |
-| `/api/analyze` | POST | DeepSeek AI量化分析 |
-| `/api/push/test` | POST | 测试推送功能 |
-| `/api/push/scheduled` | POST | 定时推送（每半小时） |
-| `/api/push/force` | POST | 强制推送（无视时间限制） |
+| `/api/kline?days=30` | GET | 获取真实日K线数据（1-250天） |
+| `/api/chart/kline?days=30` | GET | 获取K线图配置 |
+| `/api/analyze` | POST | AI量化分析（结果缓存15分钟） |
+| `/api/push/test` | POST | 测试推送功能（需 ADMIN_TOKEN） |
+| `/api/push/scheduled` | POST | 定时推送（每半小时，需 ADMIN_TOKEN） |
+| `/api/push/force` | POST | 强制推送（无视时间限制，需 ADMIN_TOKEN） |
 | `/api/push/status` | GET | 获取推送状态 |
-| `/api/monitor` | GET | 价格监控（自动触发推送） |
+| `/api/monitor` | GET | 价格监控（自动触发推送，需 ADMIN_TOKEN） |
+
+> 管理接口需在请求头携带 `Authorization: Bearer <ADMIN_TOKEN>`。未配置 `ADMIN_TOKEN` 时，这些接口全部禁用。
 
 ---
 
@@ -334,10 +337,12 @@ gold-monitor/
 
 | 数据类型 | 来源 | 更新频率 |
 |:--------|:-----|:--------|
-| 国际金价 | GoldPrice.org | 实时 |
-| 国内AU9999 | 东方财富 | 实时 |
+| 国际金价 | gold-api.com（免费，无需Key） | 实时 |
+| 汇率（仅估算用） | open.er-api.com（免费，无需Key） | 每日 |
+| 国内AU9999 | 东方财富（免费，无需Key） | 实时 |
 | 国际图表 | TradingView | 实时 |
-| 国内图表 | 金投网 | 实时 |
+
+> 数据获取失败时页面和接口会显示错误，不会用随机数据冒充行情。国内价若由汇率估算，会标注“估算”，且不触发涨跌预警。
 
 ### 📲 PushPlus 微信推送配置
 

@@ -35,8 +35,11 @@
       </div>
     </header>
 
-    <!-- 主内容区域 - 新布局 -->
+    <!-- 主内容区域 -->
     <main class="main-content-new">
+      <!-- 行情错误提示 -->
+      <div class="price-error-banner" v-if="priceError">{{ priceError }}</div>
+
       <!-- 顶部价格卡片区域 -->
       <section class="price-cards-row">
         <!-- 国际金价卡片 -->
@@ -57,8 +60,8 @@
             </div>
           </div>
           <div class="card-extra">
-            <div class="extra-item"><span>昨收</span><span>{{ priceData.international?.previousClose?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>白银</span><span>{{ priceData.international?.silverPrice?.toFixed(2) || '--' }}</span></div>
+            <div class="extra-item"><span>昨收</span><span>{{ fmtNum(priceData.international?.previousClose) }}</span></div>
+            <div class="extra-item"><span>白银</span><span>{{ fmtNum(priceData.international?.silverPrice) }}</span></div>
           </div>
         </div>
 
@@ -71,7 +74,10 @@
             </svg>
           </div>
           <div class="card-info">
-            <div class="card-label">AU9999 <span class="badge cn">CNY</span></div>
+            <div class="card-label">
+              AU9999 <span class="badge cn">CNY</span>
+              <span class="badge estimate" v-if="priceData.domestic?.estimated">估算</span>
+            </div>
             <div class="card-price" :class="getPriceClass(priceData.domestic?.changePercent)">
               {{ formatPrice(priceData.domestic?.price, 'CNY') }}
             </div>
@@ -80,10 +86,10 @@
             </div>
           </div>
           <div class="card-extra">
-            <div class="extra-item"><span>开盘</span><span>{{ priceData.domestic?.open?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>最高</span><span class="up">{{ priceData.domestic?.high?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>最低</span><span class="down">{{ priceData.domestic?.low?.toFixed(2) || '--' }}</span></div>
-            <div class="extra-item"><span>成交量</span><span>{{ priceData.domestic?.volume || '--' }}</span></div>
+            <div class="extra-item"><span>开盘</span><span>{{ fmtNum(priceData.domestic?.open) }}</span></div>
+            <div class="extra-item"><span>最高</span><span class="up">{{ fmtNum(priceData.domestic?.high) }}</span></div>
+            <div class="extra-item"><span>最低</span><span class="down">{{ fmtNum(priceData.domestic?.low) }}</span></div>
+            <div class="extra-item"><span>成交量</span><span>{{ priceData.domestic?.volume ?? '--' }}</span></div>
           </div>
         </div>
 
@@ -117,7 +123,7 @@
           <span class="chart-source">TradingView</span>
         </div>
         <div class="chart-container tradingview-container">
-          <iframe 
+          <iframe
             src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=1a1a24&studies=[]&theme=dark&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN"
             class="chart-iframe"
             frameborder="0"
@@ -142,7 +148,7 @@
       </section>
 
       <!-- AI分析结果区域 -->
-      <section class="analysis-section" v-if="analysisResult || analyzing">
+      <section class="analysis-section" v-if="analysisResult || analyzing || analysisError">
         <div class="analysis-header">
           <h3>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -160,6 +166,7 @@
             <p class="analyzing-title">DeepSeek 深度分析中...</p>
             <p class="analyzing-hint">大概需要1-2分钟，请耐心等待</p>
           </div>
+          <div v-else-if="analysisError" class="analysis-text">{{ analysisError }}</div>
           <div v-else class="analysis-text markdown-body" v-html="renderedAnalysis"></div>
         </div>
       </section>
@@ -169,10 +176,10 @@
     <footer class="status-bar">
       <div class="status-left">
         <span class="status-item">
-          <span class="status-indicator online"></span>
-          API 已连接
+          <span class="status-indicator" :class="apiOnline ? 'online' : 'offline'"></span>
+          {{ apiOnline ? 'API 已连接' : 'API 连接失败' }}
         </span>
-        <span class="status-item">延迟: {{ latency }}ms</span>
+        <span class="status-item">行情请求耗时: {{ latency }}ms</span>
       </div>
       <div class="status-center">
         Gold Monitor v1.0 | Powered by DeepSeek AI
@@ -236,15 +243,15 @@
 /**
  * ============================================================
  * 黄金价格检测系统 - 主应用逻辑
+ * 注意：页面不再使用任何模拟/随机数据。接口失败时显示错误，而不是假价格。
  * ============================================================
  */
 
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import * as echarts from 'echarts';
 import axios from 'axios';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
-// 配置marked选项
 marked.setOptions({
   breaks: true,
   gfm: true,
@@ -257,66 +264,62 @@ const priceData = ref({
   international: null,
   domestic: null,
 });
-
-const klineData = ref([]);
-const klineChart = ref(null);
-const chartInstance = ref(null);
-
-const periods = [
-  { label: '7D', value: 7 },
-  { label: '30D', value: 30 },
-  { label: '90D', value: 90 },
-];
-const currentPeriod = ref(30);
+const priceError = ref('');
+const apiOnline = ref(true);
+const latency = ref(0);
 
 const analyzing = ref(false);
 const analysisResult = ref('');
+const analysisError = ref('');
 const analysisTimestamp = ref('');
 const analysisModel = ref('');
-const currentTime = ref('');
-const latency = ref(0);
-const showQrModal = ref(false);  // 二维码弹窗显示状态
 
-// 计算属性：渲染Markdown
+const currentTime = ref('');
+const showQrModal = ref(false);
+
+// AI 输出来自外部模型，渲染前必须消毒，防止 XSS
 const renderedAnalysis = computed(() => {
   if (!analysisResult.value) return '';
-  return marked(analysisResult.value);
+  return DOMPurify.sanitize(marked.parse(String(analysisResult.value)));
 });
 
 // API 基础路径
-const API_BASE = import.meta.env.PROD 
-  ? 'https://gold-backend.chuankangkk.top' 
+const API_BASE = import.meta.env.PROD
+  ? 'https://gold-backend.chuankangkk.top'
   : '';
 
 // ============================================================
 // 工具函数
 // ============================================================
 function formatPrice(price, currency) {
-  if (!price) return '--';
+  if (typeof price !== 'number' || !Number.isFinite(price)) return '--';
   const formatted = price.toFixed(2);
   return currency === 'USD' ? `$${formatted}` : `¥${formatted}`;
 }
 
+function fmtNum(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(2) : '--';
+}
+
 function formatChange(change) {
-  if (change === undefined || change === null) return '--';
+  if (typeof change !== 'number' || !Number.isFinite(change)) return '--';
   const sign = change >= 0 ? '+' : '';
   return `${sign}${change.toFixed(2)}`;
 }
 
 function formatPercent(percent) {
-  if (percent === undefined || percent === null) return '--';
+  if (typeof percent !== 'number' || !Number.isFinite(percent)) return '--';
   const sign = percent >= 0 ? '+' : '';
   return `${sign}${percent.toFixed(2)}%`;
 }
 
 function getPriceClass(changePercent) {
-  if (changePercent === undefined || changePercent === null) return '';
+  if (typeof changePercent !== 'number' || !Number.isFinite(changePercent)) return '';
   return changePercent >= 0 ? 'up' : 'down';
 }
 
 function updateTime() {
-  const now = new Date();
-  currentTime.value = now.toLocaleString('zh-CN', {
+  currentTime.value = new Date().toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -328,192 +331,30 @@ function updateTime() {
 
 function refreshAllData() {
   fetchPriceData();
-  fetchKlineData(currentPeriod.value);
-}
-
-function changePeriod(days) {
-  currentPeriod.value = days;
-  fetchKlineData(days);
 }
 
 // ============================================================
 // 获取价格数据
 // ============================================================
 async function fetchPriceData() {
+  const start = Date.now();
   try {
-    const response = await axios.get(`${API_BASE}/api/price/all`);
+    const { data } = await axios.get(`${API_BASE}/api/price/all`, { timeout: 15000 });
+    latency.value = Date.now() - start;
+    apiOnline.value = true;
     priceData.value = {
-      international: response.data.international,
-      domestic: response.data.domestic,
+      international: data.international ?? null,
+      domestic: data.domestic ?? null,
     };
+    priceError.value = data.domestic
+      ? (data.international ? '' : '国际金价暂不可用，仅显示国内行情')
+      : '行情暂不可用，请稍后刷新';
   } catch (error) {
     console.error('获取价格数据失败:', error);
-    // 使用模拟数据
-    priceData.value = {
-      international: { price: 2650 + Math.random() * 50, source: 'simulated' },
-      domestic: { price: 620 + Math.random() * 10, source: 'simulated' },
-    };
+    apiOnline.value = false;
+    priceError.value = '行情接口暂时无法连接，请稍后刷新';
   }
 }
-
-// ============================================================
-// 获取K线数据和图表配置
-// ============================================================
-async function fetchKlineData(days = 30) {
-  try {
-    const response = await axios.get(`${API_BASE}/api/chart/kline?days=${days}`);
-    klineData.value = response.data.rawData;
-    // 直接使用后端返回的图表配置
-    if (chartInstance.value && response.data.chartOption) {
-      chartInstance.value.setOption(response.data.chartOption);
-    }
-  } catch (error) {
-    console.error('获取K线数据失败:', error);
-    // 生成模拟数据
-    generateMockKlineData(days);
-  }
-}
-
-// ============================================================
-// 生成模拟K线数据
-// ============================================================
-function generateMockKlineData(days) {
-  const data = [];
-  let price = 620;
-  const now = Date.now();
-
-  for (let i = days; i >= 0; i--) {
-    const timestamp = now - i * 24 * 60 * 60 * 1000;
-    const change = (Math.random() - 0.5) * 10;
-    const open = price;
-    const close = price + change;
-    const high = Math.max(open, close) + Math.random() * 5;
-    const low = Math.min(open, close) - Math.random() * 5;
-
-    data.push({
-      date: new Date(timestamp).toISOString().split('T')[0],
-      open: Math.round(open * 100) / 100,
-      high: Math.round(high * 100) / 100,
-      low: Math.round(low * 100) / 100,
-      close: Math.round(close * 100) / 100,
-      volume: Math.floor(Math.random() * 100000 + 50000),
-    });
-
-    price = close;
-  }
-
-  klineData.value = data;
-  updateChart();
-}
-
-// ============================================================
-// 初始化图表
-// ============================================================
-function initChart() {
-  // 初始化K线图
-  if (klineChart.value) {
-    chartInstance.value = echarts.init(klineChart.value, 'dark');
-  }
-  
-  window.addEventListener('resize', () => {
-    chartInstance.value?.resize();
-  });
-}
-
-// ============================================================
-// 更新K线图
-// ============================================================
-function updateChart() {
-  if (!chartInstance.value || !klineData.value.length) return;
-
-  const dates = klineData.value.map(item => item.date);
-  const ohlcData = klineData.value.map(item => [item.open, item.close, item.low, item.high]);
-  const volumes = klineData.value.map((item, index) => {
-    const color = item.close >= item.open ? '#26a69a' : '#ef5350';
-    return { value: item.volume, itemStyle: { color } };
-  });
-
-  const option = {
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'cross' },
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      borderColor: '#fbbf24',
-      textStyle: { color: '#fff' },
-    },
-    legend: {
-      data: ['K线', '成交量'],
-      textStyle: { color: '#9ca3af' },
-    },
-    grid: [
-      { left: '10%', right: '8%', top: '10%', height: '55%' },
-      { left: '10%', right: '8%', top: '72%', height: '18%' },
-    ],
-    xAxis: [
-      {
-        type: 'category',
-        data: dates,
-        scale: true,
-        boundaryGap: true,
-        axisLine: { lineStyle: { color: '#4b5563' } },
-        axisLabel: { color: '#9ca3af' },
-        splitLine: { show: false },
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: dates,
-        scale: true,
-        boundaryGap: true,
-        axisLine: { lineStyle: { color: '#4b5563' } },
-        axisLabel: { show: false },
-        splitLine: { show: false },
-      },
-    ],
-    yAxis: [
-      {
-        scale: true,
-        splitArea: { show: false },
-        axisLine: { lineStyle: { color: '#4b5563' } },
-        axisLabel: { color: '#9ca3af' },
-        splitLine: { lineStyle: { color: '#374151', type: 'dashed' } },
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        splitNumber: 2,
-        axisLabel: { show: false },
-        axisLine: { show: false },
-        axisTick: { show: false },
-        splitLine: { show: false },
-      },
-    ],
-    series: [
-      {
-        name: 'K线',
-        type: 'candlestick',
-        data: ohlcData,
-        itemStyle: {
-          color: '#26a69a',
-          color0: '#ef5350',
-          borderColor: '#26a69a',
-          borderColor0: '#ef5350',
-        },
-      },
-      {
-        name: '成交量',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: volumes,
-      },
-    ],
-  };
-
-  chartInstance.value.setOption(option);
-}
-
 
 // ============================================================
 // 运行AI量化分析
@@ -521,24 +362,23 @@ function updateChart() {
 async function runAnalysis() {
   analyzing.value = true;
   analysisResult.value = '';
+  analysisError.value = '';
   analysisTimestamp.value = '';
   analysisModel.value = '';
 
   try {
-    const startTime = Date.now();
-    const response = await axios.post(`${API_BASE}/api/analyze`);
-    latency.value = Date.now() - startTime;
-    
-    if (response.data.success && response.data.analysis) {
-      analysisResult.value = response.data.analysis.analysis || response.data.analysis;
-      analysisModel.value = response.data.analysis.model || 'DeepSeek';
-      analysisTimestamp.value = new Date().toLocaleString('zh-CN');
+    const { data } = await axios.post(`${API_BASE}/api/analyze`, null, { timeout: 120000 });
+
+    if (data.success && data.analysis?.analysis) {
+      analysisResult.value = data.analysis.analysis;
+      analysisModel.value = data.analysis.model || 'DeepSeek';
+      analysisTimestamp.value = new Date(data.timestamp).toLocaleString('zh-CN');
     } else {
-      analysisResult.value = '分析结果获取失败，请稍后重试。';
+      analysisError.value = data.message || '分析结果获取失败，请稍后重试。';
     }
   } catch (error) {
     console.error('AI分析失败:', error);
-    analysisResult.value = `分析请求失败: ${error.message}\n\n请检查后端服务是否正常运行，以及API密钥是否配置正确。`;
+    analysisError.value = '分析请求失败，请稍后重试。';
   } finally {
     analyzing.value = false;
   }
@@ -551,36 +391,16 @@ let priceUpdateInterval = null;
 let timeUpdateInterval = null;
 
 onMounted(() => {
-  // 初始化时间
   updateTime();
   timeUpdateInterval = setInterval(updateTime, 1000);
-  
-  // 初始化图表
-  initChart();
-  
-  // 获取初始数据
-  fetchPriceData();
-  fetchKlineData(currentPeriod.value);
 
-  // 定时更新价格（每30秒）
+  fetchPriceData();
+  // 每30秒刷新行情
   priceUpdateInterval = setInterval(fetchPriceData, 30000);
 });
 
 onUnmounted(() => {
-  // 清理定时器
-  if (priceUpdateInterval) {
-    clearInterval(priceUpdateInterval);
-  }
-  if (timeUpdateInterval) {
-    clearInterval(timeUpdateInterval);
-  }
-  
-  // 销毁图表实例
-  if (chartInstance.value) {
-    chartInstance.value.dispose();
-  }
-  if (intlChartInstance.value) {
-    intlChartInstance.value.dispose();
-  }
+  clearInterval(priceUpdateInterval);
+  clearInterval(timeUpdateInterval);
 });
 </script>
