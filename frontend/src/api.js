@@ -16,8 +16,9 @@ export async function fetchPrices() {
   return data;
 }
 
-export async function fetchKline(days) {
-  const { data } = await http.get('/api/kline', { params: { days } });
+// market: 'cn'（AU9999，含溢价与回测）| 'intl'（XAU/USD）
+export async function fetchQuant(market, days = 250) {
+  const { data } = await http.get(`/api/quant/${market}`, { params: { days }, timeout: 20000 });
   return data;
 }
 

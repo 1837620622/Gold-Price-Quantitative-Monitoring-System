@@ -29,6 +29,8 @@
       <span v-else-if="isNum(price)" class="change-none">暂无涨跌数据</span>
     </div>
 
+    <SparkLine v-if="sparkline.length && !loading" :values="sparkline" :tone="sparkTone" />
+
     <p v-if="note" class="price-note">{{ note }}</p>
 
     <dl class="stats">
@@ -45,6 +47,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import SparkLine from './SparkLine.vue';
 import { isNum, fmtNumber, fmtSigned, fmtPercent, toneOf } from '../format';
 
 const props = defineProps({
@@ -57,6 +60,7 @@ const props = defineProps({
   change: { type: Number, default: null },
   changePercent: { type: Number, default: null },
   stats: { type: Array, default: () => [] },
+  sparkline: { type: Array, default: () => [] },
   accent: { type: String, default: 'gold' },
   estimated: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
@@ -67,6 +71,8 @@ const symbol = computed(() => (props.currency === 'USD' ? '$' : '¥'));
 const priceText = computed(() => (isNum(props.price) ? `${symbol.value}${fmtNumber(props.price)}` : '--'));
 const toneClass = computed(() => `tone-${toneOf(props.changePercent)}`);
 const hasChange = computed(() => isNum(props.change) || isNum(props.changePercent));
+// 迷你走势线颜色跟随当日涨跌，与卡片数字保持一致
+const sparkTone = computed(() => toneOf(props.changePercent));
 
 // 价格变化时用 key 重新挂载元素，触发一次短暂的高亮动画
 const flashKey = ref(0);
@@ -86,7 +92,6 @@ watch(
   flex-direction: column;
 }
 
-/* 顶部细色条区分两类行情 */
 .price-card::before {
   content: '';
   position: absolute;
@@ -95,6 +100,7 @@ watch(
   background: var(--accent-line, var(--gold));
   opacity: 0.85;
 }
+
 .accent-blue { --accent-line: var(--info); }
 
 .price-head {
@@ -131,13 +137,13 @@ watch(
 }
 
 .price-main {
-  margin-top: 18px;
+  margin-top: 16px;
   min-height: 1.2em;
 }
 
 .price-value {
   display: inline-block;
-  font-size: clamp(34px, 4.4vw, 46px);
+  font-size: clamp(34px, 4.2vw, 44px);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -168,6 +174,7 @@ watch(
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  min-height: 1.4em;
 }
 
 .price-change.tone-up { color: var(--up); }
@@ -181,14 +188,14 @@ watch(
 }
 
 .price-note {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: 12px;
   color: var(--text-3);
 }
 
 .stats {
-  margin: 18px 0 0;
-  padding-top: 16px;
+  margin: 16px 0 0;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));

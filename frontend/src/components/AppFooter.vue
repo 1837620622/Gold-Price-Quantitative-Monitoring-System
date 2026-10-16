@@ -2,10 +2,10 @@
   <footer class="app-footer">
     <div class="container">
       <p class="disclaimer">
-        行情仅供参考，AI 分析由模型自动生成，不构成任何投资建议。投资有风险，入市需谨慎。
+        本站为量化研究与行情监控工具，所有信号、回测与 AI 分析均为程序计算或模型生成的参考结果，不构成任何投资建议。投资有风险，入市需谨慎。
       </p>
       <p class="sources">
-        数据来源：国际金价 gold-api.com · 汇率 open.er-api.com · 国内金价与日K线 东方财富 · 国际走势图 TradingView
+        数据来源：国际现货 gold-api.com · 国际报价校验与备用日K Yahoo Finance · 历史日K与汇率 Stooq · 汇率 open.er-api.com / Frankfurter(ECB) · 国内 AU9999 东方财富
       </p>
       <p class="credit">
         开发者：传康KK · 咸鱼 / B站：万能程序员 · Vx：1837620622 ·

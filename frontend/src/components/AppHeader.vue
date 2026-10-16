@@ -5,7 +5,7 @@
         <span class="brand-mark" aria-hidden="true">Au</span>
         <div class="brand-text">
           <strong>Gold Monitor</strong>
-          <span class="brand-sub">黄金价格监控</span>
+          <span class="brand-sub">量化监控终端</span>
         </div>
       </div>
 
@@ -17,6 +17,11 @@
       </div>
 
       <div class="header-actions">
+        <button type="button" class="sources-btn" :class="sourcesHealthy ? 'ok' : 'warn'" @click="$emit('sources')">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="sources-prefix">数据源 </span><span class="sources-count">{{ sourcesOk }}/{{ sourcesTotal }}</span>
+        </button>
+
         <button
           type="button"
           class="icon-btn"
@@ -37,8 +42,8 @@
           type="button"
           class="icon-btn"
           :class="{ spinning: status === 'loading' }"
-          aria-label="刷新行情"
-          title="刷新行情"
+          aria-label="刷新数据"
+          title="刷新数据"
           @click="$emit('refresh')"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -68,9 +73,11 @@ const props = defineProps({
   theme: { type: String, default: 'dark' },
   ageSeconds: { type: Number, default: null },
   now: { type: Number, default: () => Date.now() },
+  sourcesOk: { type: Number, default: 0 },
+  sourcesTotal: { type: Number, default: 0 },
 });
 
-defineEmits(['refresh', 'subscribe', 'toggle-theme']);
+defineEmits(['refresh', 'subscribe', 'toggle-theme', 'sources']);
 
 const LABELS = {
   loading: '连接中',
@@ -84,6 +91,7 @@ const label = computed(() => LABELS[props.status] ?? '未知');
 const clock = computed(() => fmtClock(props.now));
 const ageText = computed(() => fmtAgo(props.ageSeconds));
 const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模式' : '切换为深色模式'));
+const sourcesHealthy = computed(() => props.sourcesTotal > 0 && props.sourcesOk === props.sourcesTotal);
 </script>
 
 <style scoped>
@@ -91,7 +99,7 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
   position: sticky;
   top: 0;
   z-index: 20;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
@@ -101,7 +109,7 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   height: 64px;
 }
 
@@ -162,9 +170,10 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
   height: 8px;
   border-radius: 50%;
   background: var(--flat);
+  flex-shrink: 0;
 }
 
-.status-live .dot { background: var(--down); box-shadow: 0 0 0 0 var(--down); animation: pulse 2s infinite; }
+.status-live .dot { background: var(--down); animation: pulse 2s infinite; }
 .status-loading .dot { background: var(--info); }
 .status-partial .dot,
 .status-stale .dot { background: var(--warn); }
@@ -180,11 +189,7 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
   color: var(--text-3);
 }
 
-.status-clock::before {
-  content: '·';
-  margin-right: 8px;
-}
-
+.status-clock::before,
 .status-age::before {
   content: '·';
   margin-right: 8px;
@@ -195,6 +200,31 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
   align-items: center;
   gap: 8px;
 }
+
+.sources-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sources-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.sources-btn.ok .dot { background: var(--down); }
+.sources-btn.warn .dot { background: var(--warn); }
 
 .subscribe span {
   white-space: nowrap;
@@ -214,6 +244,12 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
   to { transform: rotate(360deg); }
 }
 
+@media (max-width: 900px) {
+  .brand-sub {
+    display: none;
+  }
+}
+
 @media (max-width: 767px) {
   .header-inner {
     height: auto;
@@ -224,8 +260,8 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
 
   .brand-sub,
   .status-clock,
-  .status-age::before,
-  .status-clock::before {
+  .status-clock::before,
+  .status-age::before {
     display: none;
   }
 
@@ -237,6 +273,10 @@ const themeLabel = computed(() => (props.theme === 'dark' ? '切换为浅色模�
 
   .header-actions {
     margin-left: auto;
+  }
+
+  .sources-prefix {
+    display: none;
   }
 }
 
