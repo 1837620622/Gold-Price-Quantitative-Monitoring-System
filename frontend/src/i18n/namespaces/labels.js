@@ -1,0 +1,53 @@
+/**
+ * 后端固定中文标签的英文对照：tLabel() 按 'label.<中文原文>' 查表，缺失时原样显示
+ * 仅收录后端固定返回的信号等级、趋势与波动状态、指标与策略名、回测规则、金银比研判与校验项；
+ * 带数值的句子由后端提供 reasonEn 等英文字段，通过 tField() 读取，不在此处
+ */
+
+export default {
+  zh: {},
+  en: {
+    'label.强势偏多': 'Strong bullish',
+    'label.偏多': 'Bullish',
+    'label.震荡': 'Range-bound',
+    'label.偏空': 'Bearish',
+    'label.强势偏空': 'Strong bearish',
+    'label.上行': 'Uptrend',
+    'label.下行': 'Downtrend',
+    'label.高波动': 'High volatility',
+    'label.低波动': 'Low volatility',
+    'label.常态': 'Normal',
+    'label.数据不足': 'Insufficient data',
+    'label.EMA 趋势': 'EMA trend',
+    'label.MACD 动能': 'MACD momentum',
+    'label.价格 vs MA20': 'Price vs MA20',
+    'label.布林 %B': 'Bollinger %B',
+    'label.溢价 Z 分数': 'Premium Z-score',
+    'label.趋势过滤': 'Trend filter',
+    'label.综合评分': 'Composite score',
+    'label.布林反转': 'Bollinger reversal',
+    'label.买入持有': 'Buy and hold',
+    'label.溢价回归': 'Premium reversion',
+    'label.EMA12 > EMA26 时持有，次日生效': 'Held while EMA12 > EMA26, effective the next session',
+    'label.EMA12 > EMA26 且收盘价站在 MA60 上方': 'EMA12 > EMA26 with the close above MA60',
+    'label.RSI < 38 且 %B < 0.2 时低吸反弹，超买冲高平仓': 'Buys the rebound when RSI < 38 and %B < 0.2, sells into overbought strength',
+    'label.国内溢价 Z ≤ -1.2 低估介入，Z ≥ 0.5 止盈': 'Buys when domestic premium Z ≤ -1.2, takes profit at Z ≥ 0.5',
+    'label.全程持有（基准）': 'Held for the full period (benchmark)',
+    'label.均衡中枢': 'Balanced range',
+    'label.历史极高位（白银极度低估）': 'Historical extreme (silver deeply undervalued)',
+    'label.偏高区间（避险属性主导）': 'Elevated band (safe-haven driven)',
+    'label.偏低区间（工业与通胀驱动）': 'Low band (industrial and inflation driven)',
+    'label.金银比处于历史合理中枢区间（65-75），贵金属整体估值协同良好。': 'The gold/silver ratio sits in its historically reasonable 65–75 band; precious-metal valuations are broadly aligned.',
+    'label.金银比突破85处于历史极高分位，均值回归确定性较高，白银具备更强补涨弹性，可关注多银空金套利或加大白银配置比例。': 'The ratio is above 85, a historically extreme percentile, so mean reversion is more likely. Silver has stronger catch-up potential; consider long silver / short gold or a larger silver allocation.',
+    'label.黄金相对白银走势偏强，宏观地缘避险买盘主导行情，警惕金银比冲高动能衰竭。': 'Gold is outperforming silver, with safe-haven buying driven by macro and geopolitical risk; watch for the ratio’s upside momentum to fade.',
+    'label.金银比处于低位，白银表现显著优于黄金，通常反映强劲的工业需求与通胀预期共振。': 'The ratio is at a low level and silver is clearly outperforming gold, typically reflecting strong industrial demand and aligned inflation expectations.',
+    'label.黄金9999（估算）': 'Gold 9999 (estimated)',
+    'label.国际金价双源校验': 'International gold dual-source check',
+    'label.国内溢价合理性': 'Domestic premium sanity check',
+    'label.国内价来源': 'Domestic price source',
+    'label.交易所接口不可用，国内价由国际金价与汇率估算': 'Exchange API unavailable; domestic price estimated from international gold and FX',
+    'label.仅单一来源，无法交叉校验': 'Single source only; cross-check not possible',
+    'label.双源不可用': 'Both sources unavailable',
+    'label.校验源': 'Check source',
+  },
+};

@@ -6,15 +6,15 @@
         <div class="status-col left">
           <div class="status-indicator">
             <span class="live-pulse-dot"></span>
-            <span class="indicator-title">系统在线</span>
+            <span class="indicator-title">{{ t('appFooter.online') }}</span>
             <span class="indicator-sub">HTTP/2 · TLS 1.3</span>
           </div>
           <div class="status-metric">
-            <span class="metric-label">网关延迟</span>
+            <span class="metric-label">{{ t('appFooter.gateway') }}</span>
             <span class="metric-val">{{ latency || 52 }}ms</span>
           </div>
           <div class="status-metric">
-            <span class="metric-label">边缘节点</span>
+            <span class="metric-label">{{ t('appFooter.edge') }}</span>
             <span class="metric-val">Cloudflare Global Edge</span>
           </div>
         </div>
@@ -22,17 +22,17 @@
         <div class="status-col center">
           <div class="engine-badge">
             <span class="engine-spark">✦</span>
-            <span>Workers AI · DeepSeek-R1 / Qwen 2.5 混合算力引擎</span>
+            <span>{{ t('appFooter.engine') }}</span>
           </div>
         </div>
 
         <div class="status-col right">
           <div class="status-metric">
-            <span class="metric-label">数据持久化</span>
-            <span class="metric-val">Cloudflare KV 边缘同步</span>
+            <span class="metric-label">{{ t('appFooter.persistence') }}</span>
+            <span class="metric-val">{{ t('appFooter.kvSync') }}</span>
           </div>
           <div class="status-metric">
-            <span class="metric-label">终端版本</span>
+            <span class="metric-label">{{ t('appFooter.version') }}</span>
             <span class="metric-val gold">v3.5.0 PRO</span>
           </div>
         </div>
@@ -44,8 +44,8 @@
           <div class="footer-logo">
             <span class="logo-box">Au</span>
             <div>
-              <div class="brand-name">GOLD MONITOR · 黄金量化投研终端</div>
-              <div class="brand-tagline">全天候全球黄金现货、多因子量化推演与跨市套利监控系统</div>
+              <div class="brand-name">{{ t('appFooter.brand') }}</div>
+              <div class="brand-tagline">{{ t('appFooter.tagline') }}</div>
             </div>
           </div>
 
@@ -59,7 +59,7 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
               </svg>
-              <span>GitHub 开源仓库</span>
+              <span>{{ t('appFooter.repo') }}</span>
             </a>
 
             <a
@@ -73,35 +73,35 @@
                 <line x1="2" y1="12" x2="22" y2="12"/>
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
               </svg>
-              <span>官网 chuankangkk.top</span>
+              <span>{{ t('appFooter.site') }}</span>
             </a>
 
             <a
               href="/plume.html"
               target="_blank"
               class="dev-pill"
-              title="查看 PLUME 极简工艺与原生粘性滚动实现"
+              :title="t('appFooter.plumeTitle')"
             >
               <span style="color: var(--gold-3)">✦</span>
-              <span>PLUME 极致工艺</span>
+              <span>{{ t('appFooter.plume') }}</span>
             </a>
 
             <span class="dev-pill static">
-              <span>微信: 1837620622</span>
+              <span>{{ t('appFooter.wechat') }}</span>
             </span>
 
             <span class="dev-pill static">
-              <span>B站 / 咸鱼: 万能程序员</span>
+              <span>{{ t('appFooter.bilibili') }}</span>
             </span>
           </div>
         </div>
 
         <div class="footer-notes">
           <p class="disclaimer">
-            <b>免责声明</b>：本系统基于上海黄金交易所、伦敦金做市商连续报价及欧洲央行基准汇率等公开信源进行程序化量化推演。所有量化信号、多空评分、回测指标及 AI 分析报告仅供量化模型研究与学术交流参考，不构成任何实质性投资建议或操盘指令。贵金属杠杆与现货投资具备高波动性，投资有风险，决策需独立审慎。
+            <b>{{ t('appFooter.disclaimerTitle') }}</b>{{ t('appFooter.disclaimerBody') }}
           </p>
           <div class="sources-list">
-            <span>信源审计：上海黄金交易所 · 东方财富 · 新浪财经 · 瑞士银行 Swissquote · gold-api.com · Frankfurter ECB · Cloudflare Workers AI</span>
+            <span>{{ t('appFooter.sources') }}</span>
           </div>
           <div class="copyright-row">
             <span>© 2026 GOLD MONITOR. All rights reserved. Designed for Institutional Quantitative Research.</span>
@@ -117,7 +117,7 @@
         v-if="showBackTop"
         type="button"
         class="back-to-top-btn"
-        title="返回顶部"
+        :title="t('appFooter.backTop')"
         @click="scrollToTop"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -130,6 +130,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 defineProps({
   latency: { type: Number, default: 52 },
@@ -173,8 +176,8 @@ onUnmounted(() => {
   margin-top: 56px;
   padding: 0 0 48px;
   position: relative;
-  border-top: 1px solid rgba(251, 191, 36, 0.14);
-  background: linear-gradient(180deg, rgba(8, 10, 15, 0.6) 0%, rgba(5, 6, 9, 0.98) 100%);
+  border-top: 1px solid rgba(232, 199, 125, 0.14);
+  background: var(--surface-card);
 }
 
 /* 顶部金融终端系统状态微条 */
@@ -184,7 +187,7 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 10px 18px;
   margin: -1px 0 24px;
-  background: rgba(13, 16, 24, 0.95);
+  background: var(--surface-card);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0 0 12px 12px;
   font-family: var(--mono);
@@ -210,12 +213,11 @@ onUnmounted(() => {
   height: 7px;
   border-radius: 50%;
   background: var(--down);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
   animation: pulse-ring 2s infinite;
 }
 
 .indicator-title {
-  color: #ffffff;
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -249,8 +251,8 @@ onUnmounted(() => {
   gap: 6px;
   padding: 2px 10px;
   border-radius: 999px;
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: rgba(232, 199, 125, 0.08);
+  border: 1px solid rgba(232, 199, 125, 0.25);
   color: var(--gold-3);
   font-size: 11px;
 }
@@ -263,8 +265,8 @@ onUnmounted(() => {
 .footer-main-card {
   padding: 28px;
   border-radius: 16px;
-  background: linear-gradient(165deg, rgba(18, 22, 32, 0.7) 0%, rgba(10, 12, 18, 0.9) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.15);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.15);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 }
 
@@ -294,15 +296,14 @@ onUnmounted(() => {
   font-family: var(--mono);
   font-weight: 900;
   font-size: 17px;
-  color: #000000;
-  background: linear-gradient(135deg, var(--gold-3) 0%, var(--gold-2) 100%);
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
+  color: var(--gold-ink);
+  background: var(--gold);
 }
 
 .brand-name {
   font-size: 15px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text);
   letter-spacing: 0.04em;
 }
 
@@ -334,10 +335,9 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 .dev-pill:hover:not(.static) {
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   border-color: var(--gold-2);
   color: var(--gold-3);
-  transform: translateY(-1px);
 }
 .dev-pill.static {
   cursor: default;
@@ -359,7 +359,7 @@ onUnmounted(() => {
 .sources-list {
   padding: 8px 12px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.04);
   color: var(--text-3);
   font-size: 10px;
@@ -388,18 +388,15 @@ onUnmounted(() => {
   display: grid;
   place-items: center;
   background: rgba(20, 24, 36, 0.9);
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  border: 1px solid rgba(232, 199, 125, 0.35);
   color: var(--gold-3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(251, 191, 36, 0.2);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(8px);
 }
 .back-to-top-btn:hover {
   background: var(--gold-btn);
-  color: #000000;
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 12px 30px rgba(251, 191, 36, 0.4);
+  color: var(--gold-ink);
 }
 
 .fade-enter-active,

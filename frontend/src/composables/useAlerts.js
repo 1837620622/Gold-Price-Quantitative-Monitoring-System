@@ -4,6 +4,7 @@
 
 import { ref, watch } from 'vue';
 import { playAlertSound } from '../lib/sound';
+import { t } from '../i18n';
 
 const STORAGE_KEY = 'gold_monitor_price_alerts';
 
@@ -32,7 +33,7 @@ export function useAlerts() {
       target, // 'cn' | 'intl'
       condition, // 'gte' (>=) | 'lte' (<=)
       price: Number(price),
-      label: label || (target === 'cn' ? '国内 AU9999' : '国际 XAU/USD'),
+      label: label || (target === 'cn' ? t('alerts.cnLabel') : t('alerts.intlLabel')),
       createdAt: new Date().toISOString(),
       triggered: false,
     };
@@ -88,9 +89,9 @@ export function useAlerts() {
         saveAlerts(alerts.value);
 
         const sym = a.target === 'cn' ? '¥' : '$';
-        const condText = a.condition === 'gte' ? '突破上方目标' : '跌破下方防线';
-        const title = `🚨 黄金价格预警：${a.label} 已达到 ${sym}${current}`;
-        const body = `目标阈值：${sym}${a.price}（${condText}）。当前最新报价为 ${sym}${current}。`;
+        const condText = a.condition === 'gte' ? t('alerts.condGte') : t('alerts.condLte');
+        const title = t('alerts.title', { label: a.label, price: `${sym}${current}` });
+        const body = t('alerts.body', { target: `${sym}${a.price}`, cond: condText, current: `${sym}${current}` });
 
         // 1. 播放高可用提示音
         playAlertSound();

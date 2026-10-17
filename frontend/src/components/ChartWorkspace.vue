@@ -2,28 +2,28 @@
   <section class="card workspace" aria-labelledby="workspace-title">
     <header class="head">
       <div>
-        <h2 id="workspace-title" class="title">图表工作台</h2>
+        <h2 id="workspace-title" class="title">{{ t('chartWorkspace.title') }}</h2>
         <p class="sub">{{ subtitle }}</p>
       </div>
-      <div class="seg" role="tablist" aria-label="图表类型">
+      <div class="seg" role="tablist" :aria-label="t('chartWorkspace.typeAria')">
         <button
-          v-for="t in TABS"
-          :key="t.key"
+          v-for="tb in tabItems"
+          :key="tb.key"
           type="button"
           role="tab"
-          :aria-selected="tab === t.key"
-          :class="{ active: tab === t.key }"
-          @click="tab = t.key"
-        >{{ t.label }}</button>
+          :aria-selected="tab === tb.key"
+          :class="{ active: tab === tb.key }"
+          @click="tab = tb.key"
+        >{{ tb.label }}</button>
       </div>
     </header>
 
     <!-- K 线：国内 / 国际 -->
     <template v-if="tab === 'cn' || tab === 'intl'">
       <div class="toolbar">
-        <div class="seg seg-sm" role="group" aria-label="显示周期">
+        <div class="seg seg-sm" role="group" :aria-label="t('chartWorkspace.periodAria')">
           <button
-            v-for="p in PERIODS"
+            v-for="p in periodItems"
             :key="p.key"
             type="button"
             :class="{ active: period === p.key }"
@@ -31,9 +31,9 @@
             @click="period = p.key"
           >{{ p.label }}</button>
         </div>
-        <div class="toggles" role="group" aria-label="指标开关">
+        <div class="toggles" role="group" :aria-label="t('chartWorkspace.indicatorAria')">
           <button
-            v-for="g in TOGGLES"
+            v-for="g in toggleItems"
             :key="g.key"
             type="button"
             class="toggle"
@@ -60,33 +60,33 @@
     <!-- 溢价 -->
     <template v-else-if="tab === 'premium'">
       <div v-if="premium?.available" class="premium-stats">
-        <div><span>当前溢价</span><b :class="toneOf(premium.current)">{{ signedPct(premium.current) }}</b></div>
-        <div><span>近60日均值</span><b>{{ signedPct(premium.mean60) }}</b></div>
-        <div><span>Z 分数</span><b>{{ fmt(premium.z) }}</b></div>
-        <div><span>历史分位</span><b>{{ fmt(premium.percentile, 0) }}%</b></div>
-        <div><span>样本区间</span><b>{{ premium.count }} 个交易日</b></div>
+        <div><span>{{ t('chartWorkspace.premiumNow') }}</span><b :class="toneOf(premium.current)">{{ signedPct(premium.current) }}</b></div>
+        <div><span>{{ t('chartWorkspace.premiumMean60') }}</span><b>{{ signedPct(premium.mean60) }}</b></div>
+        <div><span>{{ t('chartWorkspace.premiumZ') }}</span><b>{{ fmt(premium.z) }}</b></div>
+        <div><span>{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ fmt(premium.percentile, 0) }}%</b></div>
+        <div><span>{{ t('chartWorkspace.sampleRange') }}</span><b>{{ t('chartWorkspace.sampleDays', { count: premium.count }) }}</b></div>
       </div>
       <PremiumChart :series="premiumSeries" :stats="premium" :theme="theme" />
       <p class="note">
-        溢价 = 国内 AU9999 日线收盘 ÷（国际 XAU 日线收盘 × 美元兑人民币 ÷ 31.1035）- 1。
-        国内与国际收盘时点不同，属于日线级近似；阴影为近60日均值 ±1 个标准差。
+        {{ t('chartWorkspace.premiumFormula') }}
+        {{ t('chartWorkspace.premiumNote') }}
       </p>
     </template>
 
     <!-- 金银比率 -->
     <template v-else-if="tab === 'ratio'">
       <div v-if="ratioData" class="premium-stats">
-        <div><span>当前金银比</span><b class="tone-up">{{ fmt(ratioData.current) }}</b></div>
-        <div><span>历史均值</span><b>{{ fmt(ratioData.mean) }}</b></div>
-        <div><span>历史分位</span><b>{{ fmt(ratioData.percentile, 0) }}%</b></div>
-        <div><span>市场状态</span><b style="font-size: 14px">{{ ratioData.label }}</b></div>
-        <div><span>配对策略参考</span><span style="font-size: 12px; margin-top: 4px; display: block; color: var(--text-2)">{{ ratioData.suggestion }}</span></div>
+        <div><span>{{ t('chartWorkspace.ratioNow') }}</span><b class="tone-up">{{ fmt(ratioData.current) }}</b></div>
+        <div><span>{{ t('chartWorkspace.ratioMean') }}</span><b>{{ fmt(ratioData.mean) }}</b></div>
+        <div><span>{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ fmt(ratioData.percentile, 0) }}%</b></div>
+        <div><span>{{ t('chartWorkspace.regime') }}</span><b style="font-size: 14px">{{ tLabel(ratioData.label) }}</b></div>
+        <div><span>{{ t('chartWorkspace.pairHint') }}</span><span style="font-size: 12px; margin-top: 4px; display: block; color: var(--text-2)">{{ ratioData.suggestion }}</span></div>
       </div>
-      <div v-if="ratioLoading" class="notice">金银比数据加载中…</div>
+      <div v-if="ratioLoading" class="notice">{{ t('chartWorkspace.ratioLoading') }}</div>
       <RatioChart v-else :series="ratioData?.series || []" :stats="ratioData" :theme="theme" />
       <p class="note">
-        金银比率 = 国际金价 (XAU/USD) ÷ 国际银价 (XAG/USD)。代表购买 1 盎司黄金所需的白银盎司数。
-        高位（通常 > 80）预示白银被低估，具备均值回归修复潜能；低位（< 65）预示白银相对偏强。
+        {{ t('chartWorkspace.ratioFormula') }}
+        {{ t('chartWorkspace.ratioNote') }}
       </p>
     </template>
 
@@ -94,7 +94,7 @@
     <template v-else-if="tab === 'tradingview'">
       <div class="tradingview-container">
         <iframe 
-          src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=1a1a24&studies=[]&theme=dark&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN"
+          :src="tvSrc"
           class="chart-iframe"
           frameborder="0"
           allowtransparency="true"
@@ -103,7 +103,7 @@
         ></iframe>
       </div>
       <p class="note">
-        数据来源于 TradingView (OANDA XAU/USD)，包含全球做市商连续报价、深度K线与指标工具。
+        {{ t('chartWorkspace.tvSource') }}
       </p>
     </template>
 
@@ -112,7 +112,7 @@
       <div v-if="activeBacktest?.available">
         <BacktestPanel :backtest="activeBacktest" :theme="theme" />
       </div>
-      <div v-else class="notice">{{ activeBacktest?.reason || '回测数据不可用' }}</div>
+      <div v-else class="notice">{{ tField(activeBacktest, 'reason') || t('chartWorkspace.noBacktest') }}</div>
     </template>
   </section>
 </template>
@@ -124,6 +124,9 @@ import PremiumChart from './PremiumChart.vue';
 import RatioChart from './RatioChart.vue';
 import BacktestPanel from './BacktestPanel.vue';
 import { fetchRatio } from '../api';
+import { tField, useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   cn: { type: Object, default: null },
@@ -135,29 +138,33 @@ const props = defineProps({
   theme: { type: String, default: 'dark' },
 });
 
+// 标签文字按当前语言取值（labelKey），MA / MACD / KDJ / RSI 为通用缩写保持不变
 const TABS = [
-  { key: 'cn', label: '国内 AU9999' },
-  { key: 'tradingview', label: 'TradingView 走势' },
-  { key: 'intl', label: '国际 XAU/USD' },
-  { key: 'ratio', label: '金银比率' },
-  { key: 'premium', label: '国内溢价' },
-  { key: 'backtest', label: '策略回测' },
+  { key: 'cn', labelKey: 'chartWorkspace.tabCn' },
+  { key: 'tradingview', labelKey: 'chartWorkspace.tabTv' },
+  { key: 'intl', labelKey: 'chartWorkspace.tabIntl' },
+  { key: 'ratio', labelKey: 'chartWorkspace.tabRatio' },
+  { key: 'premium', labelKey: 'chartWorkspace.tabPremium' },
+  { key: 'backtest', labelKey: 'chartWorkspace.tabBacktest' },
 ];
 const PERIODS = [
-  { key: 30, label: '30日' },
-  { key: 90, label: '90日' },
-  { key: 180, label: '半年' },
-  { key: 'all', label: '全部' },
+  { key: 30, labelKey: 'chartWorkspace.range30' },
+  { key: 90, labelKey: 'chartWorkspace.range90' },
+  { key: 180, labelKey: 'chartWorkspace.rangeHalf' },
+  { key: 'all', labelKey: 'chartWorkspace.rangeAll' },
 ];
 const TOGGLES = [
   { key: 'ma', label: 'MA' },
-  { key: 'boll', label: '布林带' },
-  { key: 'vol', label: '成交量' },
-  { key: 'score', label: '量化评分' },
+  { key: 'boll', labelKey: 'chartWorkspace.indBoll' },
+  { key: 'vol', labelKey: 'chartWorkspace.indVolume' },
+  { key: 'score', labelKey: 'chartWorkspace.indScore' },
   { key: 'macd', label: 'MACD' },
   { key: 'kdj', label: 'KDJ' },
   { key: 'rsi', label: 'RSI' },
 ];
+const tabItems = computed(() => TABS.map((x) => ({ ...x, label: t(x.labelKey) })));
+const periodItems = computed(() => PERIODS.map((x) => ({ ...x, label: t(x.labelKey) })));
+const toggleItems = computed(() => TOGGLES.map((x) => ({ ...x, label: x.labelKey ? t(x.labelKey) : x.label })));
 
 const tab = ref('cn');
 const period = ref(90);
@@ -192,8 +199,8 @@ async function loadRatio() {
   }
 }
 
-watch(tab, (t) => {
-  if (t === 'ratio') loadRatio();
+watch(tab, (key) => {
+  if (key === 'ratio') loadRatio();
 });
 
 onMounted(() => {
@@ -204,13 +211,19 @@ const activeQuant = computed(() => (tab.value === 'intl' ? props.intl : props.cn
 const activeError = computed(() => {
   const err = tab.value === 'intl' ? props.intlError : props.cnError;
   if (err) return err;
-  return activeQuant.value && !activeQuant.value.available ? (activeQuant.value.reason || '数据不足') : '';
+  return activeQuant.value && !activeQuant.value.available ? (tField(activeQuant.value, 'reason') || t('chartWorkspace.insufficient')) : '';
 });
 const activeLoading = computed(() => (tab.value === 'intl' ? props.loadingIntl : props.loadingCn) && !activeQuant.value);
 
 const premium = computed(() => props.cn?.premium ?? null);
 const premiumSeries = computed(() => premium.value?.series ?? []);
 const activeBacktest = computed(() => props.cn?.backtest ?? null);
+
+// TradingView 嵌入跟随主题：日间用浅色图表与纸白工具栏，夜间保持金库暗色
+const tvSrc = computed(() => {
+  const light = props.theme === 'light';
+  return `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${light ? 'ffffff' : '1a1a24'}&studies=[]&theme=${light ? 'light' : 'dark'}&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN`;
+});
 
 // 周期：以 K 线条数换算为 dataZoom 起点百分比
 const zoomStart = computed(() => {
@@ -221,11 +234,11 @@ const zoomStart = computed(() => {
 
 const subtitle = computed(() => {
   const q = activeQuant.value;
-  if (tab.value === 'tradingview') return 'TradingView 国际现货黄金 (XAU/USD) 实时行情图表';
-  if (tab.value === 'premium') return '国内相对国际金价折算的溢价，及其历史分布';
-  if (tab.value === 'ratio') return '国际现货金银价格比率，套利与宏观配置参考';
-  if (tab.value === 'backtest') return '基于真实日K的策略回测，对比买入持有';
-  return q?.asOf ? `数据截至 ${q.asOf} 收盘` : '日K线与技术指标';
+  if (tab.value === 'tradingview') return t('chartWorkspace.aria.tv');
+  if (tab.value === 'premium') return t('chartWorkspace.aria.premium');
+  if (tab.value === 'ratio') return t('chartWorkspace.aria.ratio');
+  if (tab.value === 'backtest') return t('chartWorkspace.aria.backtest');
+  return q?.asOf ? t('chartWorkspace.asOf', { date: q.asOf }) : t('chartWorkspace.dailyLine');
 });
 
 const fmt = (v, d = 2) => (Number.isFinite(v) ? v.toFixed(d) : '--');
@@ -246,7 +259,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);
-  background: #1a1a24;
+  background: var(--surface-2);
 }
 
 .chart-iframe {
@@ -366,7 +379,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);
-  background: #08090e;
+  background: var(--surface-2);
   position: relative;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }

@@ -3,17 +3,17 @@
     <header class="card-head">
       <div class="head-info">
         <div class="title-with-badge">
-          <h2 id="report-title" class="card-title">AI 智能量化研报</h2>
-          <span class="report-badge">深度推演</span>
+          <h2 id="report-title" class="card-title">{{ t('analysisReport.title') }}</h2>
+          <span class="report-badge">{{ t('analysisReport.deep') }}</span>
         </div>
-        <p class="card-sub">多因子程序量化计算 + 大模型深度场景推演，提供实盘博弈参考</p>
+        <p class="card-sub">{{ t('analysisReport.desc') }}</p>
       </div>
 
       <div class="head-actions">
         <ul v-if="state === 'done'" class="meta">
           <li v-if="signalChip" class="chip chip-signal" :class="signalTone">{{ signalChip }}</li>
           <li class="chip chip-gold">{{ modelLabel }}</li>
-          <li v-if="cached" class="chip chip-muted">缓存数据</li>
+          <li v-if="cached" class="chip chip-muted">{{ t('analysisReport.cached') }}</li>
           <li v-if="timeText" class="chip chip-muted">{{ timeText }}</li>
         </ul>
 
@@ -31,18 +31,18 @@
           <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--down)">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          <span>{{ copied ? '已复制' : '复制研报' }}</span>
+          <span>{{ copied ? t('analysisReport.copied') : t('analysisReport.copy') }}</span>
         </button>
       </div>
     </header>
 
-    <div v-if="state === 'loading'" class="skeleton-block" aria-label="分析生成中">
+    <div v-if="state === 'loading'" class="skeleton-block" :aria-label="t('analysisReport.busy')">
       <div class="loading-animation">
         <div class="loading-wave">
           <span></span><span></span><span></span><span></span>
         </div>
-        <p class="loading-title">正在调用大模型进行多因子与日K线推理计算…</p>
-        <span class="loading-sub">解析趋势动量、金银比偏离、内外盘溢价与关键阻力支撑位</span>
+        <p class="loading-title">{{ t('analysisReport.loading1') }}</p>
+        <span class="loading-sub">{{ t('analysisReport.loading2') }}</span>
       </div>
       <span class="skeleton skeleton-title"></span>
       <span class="skeleton skeleton-line"></span>
@@ -54,15 +54,15 @@
     <div v-else-if="state === 'error'" class="report-error" role="alert">
       <div class="error-icon">⚠️</div>
       <div class="error-body">
-        <p class="error-title">量化分析生成遇到异常</p>
-        <p class="error-desc">{{ error || '请检查网络连接或稍后重试' }}</p>
+        <p class="error-title">{{ t('analysisReport.errorTitle') }}</p>
+        <p class="error-desc">{{ error || t('analysisReport.errorHint') }}</p>
       </div>
     </div>
 
     <div v-else-if="state === 'done'" class="report-content">
       <div class="md" :class="{ clamped: isLong && !expanded }" v-html="html"></div>
       <button v-if="isLong" type="button" class="btn btn-ghost btn-sm expand-btn" @click="expanded = !expanded">
-        <span>{{ expanded ? '收起部分内容' : '展开阅读完整研报' }}</span>
+        <span>{{ expanded ? t('analysisReport.collapse') : t('analysisReport.expand') }}</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" :style="{ transform: expanded ? 'rotate(180deg)' : 'none' }">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
@@ -75,6 +75,9 @@
 import { ref, computed } from 'vue';
 import { renderMarkdown } from '../lib/markdown';
 import { fmtDateTime } from '../format';
+import { useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   state: { type: String, default: 'idle' },
@@ -94,13 +97,13 @@ const html = computed(() => renderMarkdown(props.text));
 const isLong = computed(() => props.text.length > LONG_TEXT);
 const timeText = computed(() => fmtDateTime(props.timestamp));
 
-const MODEL_LABELS = { 'auto-analysis': '规则摘要（程序量化）' };
+const MODEL_LABELS = { 'auto-analysis': t('analysisReport.ruleSummary') };
 const modelLabel = computed(() => MODEL_LABELS[props.model] ?? props.model ?? 'Workers AI');
 
 const signalChip = computed(() => {
   const s = props.quant?.signal;
   if (!s?.available) return '';
-  return `量化评分 ${s.label} (${s.score >= 0 ? '+' : ''}${s.score})`;
+  return `${t('analysisReport.score')} ${tLabel(s.label)} (${s.score >= 0 ? '+' : ''}${s.score})`;
 });
 const signalTone = computed(() => (props.quant?.signal?.score >= 0 ? 'tone-up' : 'tone-down'));
 
@@ -118,8 +121,8 @@ function copyReport() {
 <style scoped>
 .report {
   scroll-margin-top: 80px;
-  background: linear-gradient(145deg, rgba(22, 26, 40, 0.95) 0%, rgba(13, 16, 25, 0.98) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.22);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.22);
 }
 
 .card-head {
@@ -140,10 +143,10 @@ function copyReport() {
 }
 
 .card-title {
-  font-family: 'Archivo', var(--font);
+  font-family: var(--font-display), var(--font);
   font-size: 18px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
   letter-spacing: -0.01em;
 }
 
@@ -152,8 +155,8 @@ function copyReport() {
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 4px;
-  background: linear-gradient(135deg, var(--gold-3), var(--gold));
-  color: #000;
+  background: var(--gold);
+  color: var(--gold-ink);
 }
 
 .card-sub {
@@ -202,8 +205,8 @@ function copyReport() {
 .loading-animation {
   padding: 24px;
   border-radius: 12px;
-  background: rgba(251, 191, 36, 0.04);
-  border: 1px dashed rgba(251, 191, 36, 0.25);
+  background: rgba(232, 199, 125, 0.04);
+  border: 1px dashed rgba(232, 199, 125, 0.25);
   display: flex;
   flex-direction: column;
   align-items: center;

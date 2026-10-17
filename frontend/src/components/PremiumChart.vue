@@ -1,13 +1,16 @@
 <template>
   <div class="premium">
-    <div ref="el" class="echart" role="img" aria-label="国内溢价历史序列图"></div>
-    <div v-if="!hasData" class="overlay">溢价样本不足（需要国际金价与汇率历史）</div>
+    <div ref="el" class="echart" role="img" :aria-label="t('premiumChart.aria')"></div>
+    <div v-if="!hasData" class="overlay">{{ t('premiumChart.empty') }}</div>
   </div>
 </template>
 
 <script setup>
 import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
+import { useI18n } from '../i18n';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
   series: { type: Array, default: () => [] },
@@ -41,11 +44,12 @@ function buildOption() {
 
   return {
     animationDuration: 300,
+    textStyle: { fontFamily: pal.font },
     grid: { left: 58, right: 24, top: 18, bottom: 34 },
     tooltip: {
       trigger: 'axis',
       backgroundColor: pal.tipBg,
-      borderColor: pal.axis,
+      borderColor: pal.tipBorder,
       textStyle: { color: pal.text, fontSize: 12 },
       valueFormatter: (v) => `${fmtVal(v, 3)}%`,
     },
@@ -65,7 +69,7 @@ function buildOption() {
     },
     series: [
       {
-        name: '国内溢价',
+        name: t('premiumChart.series'),
         type: 'line',
         data: values,
         showSymbol: false,
@@ -78,7 +82,7 @@ function buildOption() {
           ? {
               symbol: 'none',
               silent: true,
-              label: { color: pal.muted, fontSize: 11, formatter: '近60日均值', position: 'insideStartTop' },
+              label: { color: pal.muted, fontSize: 11, formatter: t('premiumChart.mean60'), position: 'insideStartTop' },
               lineStyle: { color: pal.mean, type: 'dashed' },
               data: [{ yAxis: mean }],
             }
@@ -105,7 +109,7 @@ function render() {
   chart.value.setOption(buildOption(), { notMerge: true });
 }
 
-watch([() => props.series, () => props.stats, () => props.theme], render);
+watch([() => props.series, () => props.stats, () => props.theme, () => locale.value], render);
 
 onMounted(async () => {
   const { default: echarts } = await import('../lib/echarts.js');

@@ -5,8 +5,8 @@
         <div class="head-title-wrap">
           <div class="share-icon">✦</div>
           <div>
-            <h3 class="modal-title">量化研报海报卡片</h3>
-            <p class="modal-sub">一键复制或分享黄金实战量化快报</p>
+            <h3 class="modal-title">{{ t('sharePoster.title') }}</h3>
+            <p class="modal-sub">{{ t('sharePoster.desc') }}</p>
           </div>
         </div>
         <button type="button" class="close-btn" @click="$emit('close')">✕</button>
@@ -20,7 +20,7 @@
             <span class="p-symbol">Au</span>
             <div>
               <div class="p-brand">GOLD MONITOR</div>
-              <div class="p-sub">专业黄金量化终端 · 实时研判</div>
+              <div class="p-sub">{{ t('sharePoster.brandTag') }}</div>
             </div>
           </div>
           <div class="p-time">{{ timeText }}</div>
@@ -29,7 +29,7 @@
         <!-- 价格大字对比 -->
         <div class="poster-prices">
           <div class="p-price-box">
-            <span class="p-label">国内现货 AU9999</span>
+            <span class="p-label">{{ t('sharePoster.domestic') }}</span>
             <div class="p-val">¥{{ fmt(domestic?.price) }}</div>
             <div class="p-chg" :class="toneClass(domestic?.changePercent)">
               {{ domestic?.changePercent > 0 ? '+' : '' }}{{ fmt(domestic?.changePercent) }}%
@@ -37,7 +37,7 @@
             </div>
           </div>
           <div class="p-price-box">
-            <span class="p-label">伦敦金 XAU/USD</span>
+            <span class="p-label">{{ t('sharePoster.intl') }}</span>
             <div class="p-val">${{ fmt(intl?.price) }}</div>
             <div class="p-chg" :class="toneClass(intl?.changePercent)">
               {{ intl?.changePercent > 0 ? '+' : '' }}{{ fmt(intl?.changePercent) }}%
@@ -47,41 +47,41 @@
 
         <!-- 关键因子与跨市场 -->
         <div class="poster-stats">
-          <div><span>实时金银比</span><b>{{ fmt(ratio) }}</b></div>
-          <div><span>国内溢价率</span><b>{{ fmtSigned(snapshot?.premiumPercent) }}%</b></div>
-          <div><span>USD/CNY 汇率</span><b>{{ fmt(snapshot?.fx?.usdCny, 4) }}</b></div>
-          <div><span>ATR(14) 振幅</span><b>¥{{ fmt(quant?.levels?.atr) }}</b></div>
+          <div><span>{{ t('sharePoster.ratio') }}</span><b>{{ fmt(ratio) }}</b></div>
+          <div><span>{{ t('sharePoster.premium') }}</span><b>{{ fmtSigned(snapshot?.premiumPercent) }}%</b></div>
+          <div><span>{{ t('sharePoster.fx') }}</span><b>{{ fmt(snapshot?.fx?.usdCny, 4) }}</b></div>
+          <div><span>{{ t('sharePoster.atr') }}</span><b>¥{{ fmt(quant?.levels?.atr) }}</b></div>
         </div>
 
         <!-- 量化信号定调 -->
         <div v-if="quant?.signal" class="poster-verdict" :class="signalTone">
           <div class="v-title">
-            <span>量化定调：<b>{{ quant.signal.label }}</b> (评分 {{ quant.signal.score }})</span>
-            <span class="v-trend">{{ quant.signal.trend }} · {{ quant.signal.volRegime }}</span>
+            <span>{{ t('sharePoster.verdict') }}<b>{{ tLabel(quant.signal.label) }}</b> {{ t('sharePoster.score', { score: quant.signal.score }) }}</span>
+            <span class="v-trend">{{ tLabel(quant.signal.trend) }} · {{ tLabel(quant.signal.volRegime) }}</span>
           </div>
-          <p class="v-reason">{{ quant.signal.reasons?.[0] || '多因子共振计算' }}</p>
+          <p class="v-reason">{{ tField(quant.signal, 'reasons')?.[0] || t('sharePoster.fallbackReason') }}</p>
         </div>
 
         <!-- 支撑阻力区间 -->
         <div v-if="quant?.levels" class="poster-levels">
-          <div><span>多头参考防守</span><b>¥{{ fmt(quant.levels.stopLongRef) }}</b></div>
-          <div><span>当日波动区间</span><b>¥{{ fmt(quant.levels.refLow) }} ~ ¥{{ fmt(quant.levels.refHigh) }}</b></div>
+          <div><span>{{ t('sharePoster.support') }}</span><b>¥{{ fmt(quant.levels.stopLongRef) }}</b></div>
+          <div><span>{{ t('sharePoster.range') }}</span><b>¥{{ fmt(quant.levels.refLow) }} ~ ¥{{ fmt(quant.levels.refHigh) }}</b></div>
         </div>
 
         <!-- 底部水印 -->
         <div class="poster-foot">
-          <span>量化终端：gold.chuankangkk.top</span>
-          <span>仅供研究参考 · 不构成投资建议</span>
+          <span>{{ t('sharePoster.terminal') }}</span>
+          <span>{{ t('sharePoster.disclaimer') }}</span>
         </div>
       </div>
 
       <!-- 底部操作按钮 -->
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" @click="$emit('close')">
-          关闭
+          {{ t('sharePoster.close') }}
         </button>
         <button type="button" class="btn btn-primary" @click="copyText">
-          {{ copied ? '✓ 快报文本已复制' : '一键复制快报文本' }}
+          {{ copied ? t('sharePoster.copied') : t('sharePoster.copy') }}
         </button>
       </div>
     </div>
@@ -91,6 +91,9 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { fmtNumber, fmtSigned } from '../format';
+import { tField, useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -134,17 +137,17 @@ async function copyText() {
   const l = props.quant?.levels;
 
   const text = [
-    `【Gold Monitor · 黄金量化研判快报】`,
-    `⏰ 生成时间：${timeText.value}`,
+    t('sharePoster.copyHeader'),
+    `⏰ ${t('sharePoster.copyTime', { time: timeText.value })}`,
     `--------------------------`,
-    `🇨🇳 国内 AU9999：¥${fmt(dom?.price)} (${dom?.changePercent > 0 ? '+' : ''}${fmt(dom?.changePercent)}%)`,
-    `🌍 国际 XAU/USD：$${fmt(xau?.price)} (${xau?.changePercent > 0 ? '+' : ''}${fmt(xau?.changePercent)}%)`,
-    `⚖️ 实时金银比：${fmt(ratio.value)} | 国内溢价率：${fmtSigned(props.snapshot?.premiumPercent)}%`,
-    s ? `📊 量化评级：${s.label} (评分 ${s.score} | 趋势 ${s.trend})` : '',
-    l ? `🛡️ 支撑阻力：支撑 ¥${l.support?.join('/')} | 阻力 ¥${l.resistance?.join('/')}` : '',
-    l ? `🎯 参考波动区间：¥${fmt(l.refLow)} ~ ¥${fmt(l.refHigh)}` : '',
+    `🇨🇳 ${t('sharePoster.copyDomestic', { price: fmt(dom?.price), pct: `${dom?.changePercent > 0 ? '+' : ''}${fmt(dom?.changePercent)}` })}`,
+    `🌍 ${t('sharePoster.copyIntl', { price: fmt(xau?.price), pct: `${xau?.changePercent > 0 ? '+' : ''}${fmt(xau?.changePercent)}` })}`,
+    `⚖️ ${t('sharePoster.copyRatio', { ratio: fmt(ratio.value), premium: fmtSigned(props.snapshot?.premiumPercent) })}`,
+    s ? `📊 ${t('sharePoster.copyRating', { label: tLabel(s.label), score: s.score, trend: tLabel(s.trend) })}` : '',
+    l ? `🛡️ ${t('sharePoster.copyLevels', { support: l.support?.join('/'), resistance: l.resistance?.join('/') })}` : '',
+    l ? `🎯 ${t('sharePoster.copyRange', { low: fmt(l.refLow), high: fmt(l.refHigh) })}` : '',
     `--------------------------`,
-    `终端地址：https://gold.chuankangkk.top`,
+    t('sharePoster.copyTerminal'),
   ].filter(Boolean).join('\n');
 
   try {
@@ -173,10 +176,9 @@ async function copyText() {
 .modal-card {
   width: 100%;
   max-width: 520px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.98) 0%, rgba(13, 16, 24, 0.99) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.3);
   border-radius: var(--radius-lg);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(251, 191, 36, 0.15);
   padding: 24px;
 }
 
@@ -199,17 +201,17 @@ async function copyText() {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(232, 199, 125, 0.15);
   color: var(--gold-3);
   font-size: 18px;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(232, 199, 125, 0.3);
 }
 
 .modal-title {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .modal-sub {
@@ -228,7 +230,7 @@ async function copyText() {
   border-radius: 6px;
 }
 .close-btn:hover {
-  color: #ffffff;
+  color: var(--text);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -239,8 +241,8 @@ async function copyText() {
   gap: 14px;
   padding: 20px;
   border-radius: 14px;
-  background: radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.12) 0%, transparent 70%), #0c0e15;
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: #0c0e15;
+  border: 1px solid rgba(232, 199, 125, 0.35);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   margin-bottom: 20px;
 }
@@ -263,8 +265,8 @@ async function copyText() {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--gold-3), var(--gold-2));
-  color: #000000;
+  background: var(--gold);
+  color: var(--gold-ink);
   font-weight: 900;
   font-size: 16px;
   display: grid;
@@ -389,8 +391,8 @@ async function copyText() {
   justify-content: space-between;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(251, 191, 36, 0.06);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  background: rgba(232, 199, 125, 0.06);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   font-size: 11px;
 }
 .poster-levels span {

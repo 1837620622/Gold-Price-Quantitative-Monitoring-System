@@ -11,8 +11,8 @@
           </svg>
         </div>
         <div>
-          <h3 class="calc-title">黄金量化与投资盈亏精算中心</h3>
-          <p class="calc-sub">实物持仓变现测算 · 内外盘跨市无风险套利与基差推演</p>
+          <h3 class="calc-title">{{ t('goldCalc.title') }}</h3>
+          <p class="calc-sub">{{ t('goldCalc.subtitle') }}</p>
         </div>
       </div>
 
@@ -24,7 +24,7 @@
           :class="{ active: mode === 'holding' }"
           @click="mode = 'holding'"
         >
-          实物持仓盈亏
+          {{ t('goldCalc.modeHolding') }}
         </button>
         <button
           type="button"
@@ -32,13 +32,13 @@
           :class="{ active: mode === 'arbitrage' }"
           @click="mode = 'arbitrage'"
         >
-          ⚡ 内外盘跨市套利
+          ⚡ {{ t('goldCalc.modeArb') }}
         </button>
       </div>
 
       <div class="current-price-badge">
-        <span>当前基准金价</span>
-        <b>¥{{ fmt(currentPrice) }} / 克</b>
+        <span>{{ t('goldCalc.benchmark') }}</span>
+        <b>¥{{ fmt(currentPrice) }} {{ t('goldCalc.perGram') }}</b>
       </div>
     </header>
 
@@ -48,18 +48,18 @@
       <div class="calc-form">
         <!-- 产品类型选择 -->
         <div class="form-group">
-          <label class="form-label">黄金持仓类型</label>
+          <label class="form-label">{{ t('goldCalc.typeLabel') }}</label>
           <div class="type-grid">
             <button
-              v-for="t in PRODUCT_TYPES"
-              :key="t.key"
+              v-for="pt in productTypes"
+              :key="pt.key"
               type="button"
               class="type-btn"
-              :class="{ active: productType === t.key }"
-              @click="selectType(t)"
+              :class="{ active: productType === pt.key }"
+              @click="selectType(pt)"
             >
-              <span class="type-name">{{ t.name }}</span>
-              <span class="type-fee">工费约 ¥{{ t.defaultFee }}/g</span>
+              <span class="type-name">{{ pt.name }}</span>
+              <span class="type-fee">{{ t('goldCalc.typeFee', { fee: pt.defaultFee }) }}</span>
             </button>
           </div>
         </div>
@@ -67,7 +67,7 @@
         <!-- 快捷克重选择 -->
         <div class="form-group">
           <div class="label-row">
-            <label class="form-label">持仓克重 (g)</label>
+            <label class="form-label">{{ t('goldCalc.weightLabel') }}</label>
             <div class="weight-presets">
               <button
                 v-for="w in PRESET_WEIGHTS"
@@ -85,32 +85,32 @@
               type="number"
               min="0.1"
               step="any"
-              placeholder="输入克重，如 50"
+              :placeholder="t('goldCalc.weightPh')"
               class="calc-input"
             />
-            <span class="input-unit">克 (g)</span>
+            <span class="input-unit">{{ t('goldCalc.unitGram') }}</span>
           </div>
         </div>
 
         <!-- 买入成本单价与工费 -->
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">买入基础克价 (元/克)</label>
+            <label class="form-label">{{ t('goldCalc.buyLabel') }}</label>
             <div class="input-wrap">
               <input
                 v-model.number="buyPrice"
                 type="number"
                 min="100"
                 step="any"
-                placeholder="如 560"
+                :placeholder="t('goldCalc.buyPh')"
                 class="calc-input"
               />
-              <span class="input-unit">元/克</span>
+              <span class="input-unit">{{ t('goldCalc.unitYuanGram') }}</span>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">每克工费/溢价 (元/克)</label>
+            <label class="form-label">{{ t('goldCalc.feeLabel') }}</label>
             <div class="input-wrap">
               <input
                 v-model.number="feePerGram"
@@ -120,26 +120,26 @@
                 placeholder="0"
                 class="calc-input"
               />
-              <span class="input-unit">元/克</span>
+              <span class="input-unit">{{ t('goldCalc.unitYuanGram') }}</span>
             </div>
           </div>
         </div>
 
         <!-- 回收折价设置 -->
         <div class="form-group">
-          <label class="form-label">回收折价扣减 (元/克，相对现货大盘)</label>
+          <label class="form-label">{{ t('goldCalc.discountLabel') }}</label>
           <div class="input-wrap">
             <input
               v-model.number="recycleDiscount"
               type="number"
               min="0"
               step="any"
-              placeholder="如 3"
+              :placeholder="t('goldCalc.discountPh')"
               class="calc-input"
             />
-            <span class="input-unit">元/克</span>
+            <span class="input-unit">{{ t('goldCalc.unitYuanGram') }}</span>
           </div>
-          <span class="form-hint">投资金条通常扣 2~3 元/克，首饰回收通常扣 5~10 元/克且不返还工费</span>
+          <span class="form-hint">{{ t('goldCalc.discountHint') }}</span>
         </div>
       </div>
 
@@ -147,34 +147,34 @@
       <div class="calc-results">
         <div class="res-card-grid">
           <div class="res-item">
-            <span class="res-label">总持仓综合成本 (本金)</span>
+            <span class="res-label">{{ t('goldCalc.totalCost') }}</span>
             <span class="res-num">¥{{ fmt(totalCost, 2) }}</span>
-            <span class="res-sub">综合成本 ¥{{ fmt(costPerGram, 2) }}/g</span>
+            <span class="res-sub">{{ t('goldCalc.costPerGram', { value: fmt(costPerGram, 2) }) }}</span>
           </div>
 
           <div class="res-item">
-            <span class="res-label">当前盘面市值 (无折价)</span>
+            <span class="res-label">{{ t('goldCalc.marketValue') }}</span>
             <span class="res-num gold">¥{{ fmt(marketValue, 2) }}</span>
-            <span class="res-sub">浮动盈亏：<b :class="profitTone">{{ profit >= 0 ? '+' : '' }}¥{{ fmt(profit, 2) }} ({{ fmt(profitRate, 2) }}%)</b></span>
+            <span class="res-sub">{{ t('goldCalc.floatPnl') }}<b :class="profitTone">{{ profit >= 0 ? '+' : '' }}¥{{ fmt(profit, 2) }} ({{ fmt(profitRate, 2) }}%)</b></span>
           </div>
 
           <div class="res-item highlight">
-            <span class="res-label">变现回收估算 (净到手现金)</span>
+            <span class="res-label">{{ t('goldCalc.liquidation') }}</span>
             <span class="res-num">¥{{ fmt(liquidationValue, 2) }}</span>
-            <span class="res-sub">按回收折价 -¥{{ recycleDiscount }}/g 测算</span>
+            <span class="res-sub">{{ t('goldCalc.discountBasis', { discount: recycleDiscount }) }}</span>
           </div>
 
           <div class="res-item">
-            <span class="res-label">变现净盈亏 (扣除工费与折价)</span>
+            <span class="res-label">{{ t('goldCalc.liquidationPnl') }}</span>
             <span class="res-num" :class="liquidationProfit >= 0 ? 'tone-up' : 'tone-down'">
               {{ liquidationProfit >= 0 ? '+' : '' }}¥{{ fmt(liquidationProfit, 2) }}
             </span>
-            <span class="res-sub">保本所需金价：¥{{ fmt(breakevenPrice, 2) }}/g</span>
+            <span class="res-sub">{{ t('goldCalc.breakeven', { price: fmt(breakevenPrice, 2) }) }}</span>
           </div>
         </div>
 
         <p class="calc-tip">
-          注：实物回收通常扣除品牌首饰工费并按大盘折价 3~5 元/克，计算结果供投资与变现参考。
+          {{ t('goldCalc.tip') }}
         </p>
       </div>
     </div>
@@ -185,7 +185,7 @@
       <div class="calc-form">
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">国内现货金价 AU9999 (元/克)</label>
+            <label class="form-label">{{ t('goldCalc.domPrice') }}</label>
             <div class="input-wrap">
               <input
                 v-model.number="arbDomPrice"
@@ -193,12 +193,12 @@
                 step="any"
                 class="calc-input"
               />
-              <span class="input-unit">元/克</span>
+              <span class="input-unit">{{ t('goldCalc.unitYuanGram') }}</span>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">国际现货金价 XAU/USD (美元/盎司)</label>
+            <label class="form-label">{{ t('goldCalc.intlPrice') }}</label>
             <div class="input-wrap">
               <input
                 v-model.number="arbIntlPrice"
@@ -213,7 +213,7 @@
 
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">实时基准汇率 USD/CNY</label>
+            <label class="form-label">{{ t('goldCalc.fxLabel') }}</label>
             <div class="input-wrap">
               <input
                 v-model.number="arbFxRate"
@@ -221,12 +221,12 @@
                 step="0.0001"
                 class="calc-input"
               />
-              <span class="input-unit">汇率</span>
+              <span class="input-unit">{{ t('goldCalc.unitRate') }}</span>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">综合摩擦成本费率 (%)</label>
+            <label class="form-label">{{ t('goldCalc.costLabel') }}</label>
             <div class="input-wrap">
               <input
                 v-model.number="arbCostRate"
@@ -234,7 +234,7 @@
                 step="0.01"
                 class="calc-input"
               />
-              <span class="input-unit">% (换汇+交易)</span>
+              <span class="input-unit">{{ t('goldCalc.unitCost') }}</span>
             </div>
           </div>
         </div>
@@ -242,7 +242,7 @@
         <!-- 对冲名义规模 -->
         <div class="form-group">
           <div class="label-row">
-            <label class="form-label">对冲名义克重规模 (g)</label>
+            <label class="form-label">{{ t('goldCalc.arbWeightLabel') }}</label>
             <div class="weight-presets">
               <button
                 v-for="w in [100, 500, 1000, 5000, 10000]"
@@ -262,12 +262,12 @@
               step="any"
               class="calc-input"
             />
-            <span class="input-unit">克 (名义头寸)</span>
+            <span class="input-unit">{{ t('goldCalc.unitNotional') }}</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">预估套利对冲持有周期 (天)</label>
+          <label class="form-label">{{ t('goldCalc.holdLabel') }}</label>
           <div class="input-wrap">
             <input
               v-model.number="arbHoldingDays"
@@ -276,7 +276,7 @@
               max="365"
               class="calc-input"
             />
-            <span class="input-unit">天 (用于年化折算)</span>
+            <span class="input-unit">{{ t('goldCalc.unitDays') }}</span>
           </div>
         </div>
       </div>
@@ -285,39 +285,39 @@
       <div class="calc-results">
         <div class="res-card-grid">
           <div class="res-item highlight">
-            <span class="res-label">理论国际平价折算 (元/克)</span>
+            <span class="res-label">{{ t('goldCalc.parityLabel') }}</span>
             <span class="res-num">¥{{ fmt(theoreticalParity, 2) }}</span>
-            <span class="res-sub">折算公式：XAU × 汇率 ÷ 31.1034768</span>
+            <span class="res-sub">{{ t('goldCalc.parityFormula') }}</span>
           </div>
 
           <div class="res-item">
-            <span class="res-label">内外盘实时绝对基差</span>
+            <span class="res-label">{{ t('goldCalc.basisLabel') }}</span>
             <span class="res-num" :class="basisSpread >= 0 ? 'tone-up' : 'tone-down'">
-              {{ basisSpread >= 0 ? '+' : '' }}¥{{ fmt(basisSpread, 2) }} / 克
+              {{ basisSpread >= 0 ? '+' : '' }}¥{{ fmt(basisSpread, 2) }} {{ t('goldCalc.perGram') }}
             </span>
-            <span class="res-sub">溢价率：<b>{{ premiumComputed >= 0 ? '+' : '' }}{{ fmt(premiumComputed, 2) }}%</b></span>
+            <span class="res-sub">{{ t('goldCalc.premiumRate') }}<b>{{ premiumComputed >= 0 ? '+' : '' }}{{ fmt(premiumComputed, 2) }}%</b></span>
           </div>
 
           <div class="res-item">
-            <span class="res-label">套利扣费净利润 (名义 {{ arbWeight }}g)</span>
+            <span class="res-label">{{ t('goldCalc.netProfit', { weight: arbWeight }) }}</span>
             <span class="res-num" :class="netArbProfit >= 0 ? 'tone-up' : 'tone-down'">
               {{ netArbProfit >= 0 ? '+' : '' }}¥{{ fmt(netArbProfit, 2) }}
             </span>
-            <span class="res-sub">毛空间 ¥{{ fmt(grossArbProfit, 2) }} · 扣费 ¥{{ fmt(arbCostTotal, 2) }}</span>
+            <span class="res-sub">{{ t('goldCalc.grossCost', { gross: fmt(grossArbProfit, 2), cost: fmt(arbCostTotal, 2) }) }}</span>
           </div>
 
           <div class="res-item">
-            <span class="res-label">推演年化无风险收益率 (APR)</span>
+            <span class="res-label">{{ t('goldCalc.aprLabel') }}</span>
             <span class="res-num gold">
               {{ netArbApr >= 0 ? '+' : '' }}{{ fmt(netArbApr, 2) }}%
             </span>
-            <span class="res-sub">基于 {{ arbHoldingDays }} 天基差收敛回归周期测算</span>
+            <span class="res-sub">{{ t('goldCalc.aprBasis', { days: arbHoldingDays }) }}</span>
           </div>
         </div>
 
         <!-- 套利信号指引 -->
         <div class="arb-strategy-guide" :class="arbActionClass">
-          <div class="guide-tag">🎯 机构套利评级</div>
+          <div class="guide-tag">{{ t('goldCalc.guideTag') }}</div>
           <div class="guide-title">{{ arbActionTitle }}</div>
           <div class="guide-desc">{{ arbActionDesc }}</div>
         </div>
@@ -329,6 +329,9 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { fmtNumber } from '../format';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   domesticPrice: { type: Number, default: 899 },
@@ -341,10 +344,11 @@ const mode = ref('holding');
 const currentPrice = computed(() => props.domesticPrice || 899);
 
 const PRODUCT_TYPES = [
-  { key: 'bar', name: '实物投资金条', defaultFee: 8, discount: 3 },
-  { key: 'jewelry', name: '金店首饰黄金', defaultFee: 50, discount: 5 },
-  { key: 'etf', name: '黄金 ETF / 纸黄金', defaultFee: 0, discount: 0 },
+  { key: 'bar', labelKey: 'goldCalc.typeBar', defaultFee: 8, discount: 3 },
+  { key: 'jewelry', labelKey: 'goldCalc.typeJewelry', defaultFee: 50, discount: 5 },
+  { key: 'etf', labelKey: 'goldCalc.typeEtf', defaultFee: 0, discount: 0 },
 ];
+const productTypes = computed(() => PRODUCT_TYPES.map((p) => ({ ...p, name: t(p.labelKey) })));
 
 const PRESET_WEIGHTS = [10, 20, 50, 100, 200, 500, 1000];
 const STORAGE_CALC = 'gold_monitor_calc_state';
@@ -356,10 +360,10 @@ const buyPrice = ref(560);
 const feePerGram = ref(8);
 const recycleDiscount = ref(3);
 
-function selectType(t) {
-  productType.value = t.key;
-  feePerGram.value = t.defaultFee;
-  recycleDiscount.value = t.discount;
+function selectType(pt) {
+  productType.value = pt.key;
+  feePerGram.value = pt.defaultFee;
+  recycleDiscount.value = pt.discount;
 }
 
 // 模式 2：跨市套利表单
@@ -456,20 +460,20 @@ const arbActionClass = computed(() => {
 
 const arbActionTitle = computed(() => {
   const p = premiumComputed.value;
-  if (p > 0.65) return '正向溢价套利窗口开启（卖内盘 / 买外盘对冲）';
-  if (p < -0.25) return '反向折价套利窗口开启（买内盘现货 / 抛补外盘）';
-  return '内外盘无套利均衡常态区间（适合网格统计对冲）';
+  if (p > 0.65) return t('goldCalc.arbPositive');
+  if (p < -0.25) return t('goldCalc.arbNegative');
+  return t('goldCalc.arbNeutral');
 });
 
 const arbActionDesc = computed(() => {
   const p = premiumComputed.value;
   if (p > 0.65) {
-    return `国内价格相对国际平价大幅溢价 +${p.toFixed(2)}%，理论套利空间显著。机构可做空国内近月/卖出现货，同时做多伦敦现货并锁汇。`;
+    return t('goldCalc.arbPositiveDesc', { pct: p.toFixed(2) });
   }
   if (p < -0.25) {
-    return `国内现货相对国际平价折价 ${p.toFixed(2)}%，国内黄金性价比极高，适合低吸实物交割金条并在国际对冲流动性。`;
+    return t('goldCalc.arbNegativeDesc', { pct: p.toFixed(2) });
   }
-  return `当前价差处于 ${p.toFixed(2)}% 常态波动通道内，跨市套利利润无法充分覆盖摩擦成本，建议依托 EMA/布林带进行基差网格交易。`;
+  return t('goldCalc.arbNeutralDesc', { pct: p.toFixed(2) });
 });
 
 function fmt(v, d = 2) {
@@ -512,8 +516,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 <style scoped>
 .calc-card {
   padding: 24px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.95) 0%, rgba(13, 16, 24, 0.98) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
 }
@@ -539,16 +543,16 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   color: var(--gold-3);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(232, 199, 125, 0.3);
 }
 
 .calc-title {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .calc-sub {
@@ -560,7 +564,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 .calc-tab-group {
   display: flex;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--surface-2);
   padding: 4px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -579,9 +583,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 }
 .calc-tab-btn.active {
   background: var(--gold-btn);
-  color: #000000;
+  color: var(--gold-ink);
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
 }
 
 .current-price-badge {
@@ -590,8 +593,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   align-items: flex-end;
   padding: 6px 14px;
   border-radius: 8px;
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: rgba(232, 199, 125, 0.08);
+  border: 1px solid rgba(232, 199, 125, 0.25);
 }
 .current-price-badge span {
   font-size: 11px;
@@ -600,7 +603,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 .current-price-badge b {
   font-size: 16px;
   font-family: var(--mono);
-  color: #ffffff;
+  color: var(--text);
 }
 
 .calc-body {
@@ -665,7 +668,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   border-color: var(--border-hover);
 }
 .type-btn.active {
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   border-color: var(--gold);
   color: var(--gold-3);
 }
@@ -698,7 +701,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 }
 .preset-chip.active {
   background: var(--gold);
-  color: #000;
+  color: var(--gold-ink);
   border-color: var(--gold);
   font-weight: 700;
 }
@@ -722,7 +725,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   border-radius: 8px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  color: #ffffff;
+  color: var(--text);
   font-family: var(--mono);
   font-size: 14px;
   outline: none;
@@ -768,8 +771,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   border: 1px solid var(--border);
 }
 .res-item.highlight {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.05) 100%);
-  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(232, 199, 125, 0.08);
+  border-color: rgba(232, 199, 125, 0.35);
 }
 
 .res-label {
@@ -781,7 +784,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   font-size: 20px;
   font-weight: 700;
   font-family: var(--mono);
-  color: #ffffff;
+  color: var(--text);
   margin: 6px 0 2px;
 }
 .res-num.gold {
@@ -797,7 +800,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   padding: 14px 16px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--surface-2);
 }
 .arb-strategy-guide.action-positive {
   border-color: rgba(239, 68, 68, 0.4);
@@ -823,7 +826,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 .guide-title {
   font-size: 13px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
   margin: 4px 0;
 }
 

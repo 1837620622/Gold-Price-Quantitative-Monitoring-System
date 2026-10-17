@@ -28,7 +28,7 @@
 
     <!-- 价格大字与闪烁动效 -->
     <div class="price-main" :class="toneClass">
-      <span v-if="loading" class="skeleton skeleton-price" aria-label="加载中"></span>
+      <span v-if="loading" class="skeleton skeleton-price" :aria-label="t('priceCard.loading')"></span>
       <span v-else :key="flashKey" class="price-value" :class="{ flash: flashKey > 0, 'is-empty': !isNum(price) }">
         {{ priceText }}
       </span>
@@ -46,7 +46,7 @@
           <span class="change-pct">({{ fmtPercent(changePercent) }})</span>
         </div>
       </template>
-      <span v-else-if="isNum(price)" class="change-none">暂无涨跌幅</span>
+      <span v-else-if="isNum(price)" class="change-none">{{ t('priceCard.noChange') }}</span>
     </div>
 
     <!-- 迷你走势折线 -->
@@ -73,6 +73,9 @@
 import { ref, computed, watch } from 'vue';
 import SparkLine from './SparkLine.vue';
 import { isNum, fmtNumber, fmtSigned, fmtPercent, toneOf } from '../format';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   code: { type: String, required: true },
@@ -122,12 +125,12 @@ watch(
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  background: var(--gold);
   opacity: 0.7;
 }
 
 .price-card.accent-blue::before {
-  background: linear-gradient(90deg, transparent, var(--info), transparent);
+  background: var(--info);
 }
 
 .price-head {
@@ -149,9 +152,9 @@ watch(
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: rgba(251, 191, 36, 0.1);
+  background: rgba(232, 199, 125, 0.1);
   color: var(--gold);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   flex-shrink: 0;
 }
 
@@ -176,7 +179,7 @@ watch(
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.5px;
-  color: #ffffff;
+  color: var(--text);
   font-family: var(--mono);
 }
 
@@ -206,25 +209,23 @@ watch(
 
 .price-value {
   display: inline-block;
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   font-stretch: 110%;
   font-size: clamp(36px, 4.2vw, 46px);
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.02;
   font-variant-numeric: tabular-nums;
-  color: #ffffff;
+  color: var(--text);
   transition: color 0.3s ease;
 }
 
 .price-main.tone-up .price-value {
   color: var(--up);
-  text-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
 }
 
 .price-main.tone-down .price-value {
   color: var(--down);
-  text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
 .price-value.is-empty {
@@ -236,8 +237,8 @@ watch(
 }
 
 @keyframes price-pulse {
-  0% { transform: scale(1.035); opacity: 0.7; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { color: var(--gold-3); }
+  100% { color: inherit; }
 }
 
 /* 涨跌幅 Pill 胶囊 */
@@ -256,7 +257,7 @@ watch(
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   letter-spacing: -0.01em;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -300,8 +301,8 @@ watch(
   padding-top: 14px;
   border-top: 1px solid var(--border);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 12px 10px;
 }
 
 .stat-item {
@@ -344,7 +345,7 @@ watch(
 
 @media (max-width: 600px) {
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 </style>

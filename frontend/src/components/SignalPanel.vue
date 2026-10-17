@@ -2,22 +2,22 @@
   <section class="card signal" aria-labelledby="signal-title">
     <header class="head">
       <div>
-        <h2 id="signal-title" class="title">量化信号</h2>
-        <p class="sub">多因子评分 · 基于截至 {{ asOf }} 的日K</p>
+        <h2 id="signal-title" class="title">{{ t('signalPanel.title') }}</h2>
+        <p class="sub">{{ t('signalPanel.asOf', { asOf }) }}</p>
       </div>
       <div class="chips">
-        <span class="chip">趋势 {{ signal.trend }}</span>
-        <span class="chip">波动 {{ signal.volRegime }}</span>
+        <span class="chip">{{ t('signalPanel.trend', { trend: tLabel(signal.trend) }) }}</span>
+        <span class="chip">{{ t('signalPanel.regime', { regime: tLabel(signal.volRegime) }) }}</span>
       </div>
     </header>
 
     <div class="verdict" :class="`tone-${toneKey}`">
-      <span class="verdict-label">{{ signal.label }}</span>
+      <span class="verdict-label">{{ tLabel(signal.label) }}</span>
       <span class="verdict-score">{{ scoreText }}</span>
-      <span class="verdict-conf">置信度 {{ signal.confidence }}%</span>
+      <span class="verdict-conf">{{ t('signalPanel.confidence', { confidence: signal.confidence }) }}</span>
     </div>
 
-    <div class="meter" role="img" :aria-label="`量化评分 ${scoreText}，范围 -100 到 +100`">
+    <div class="meter" role="img" :aria-label="t('signalPanel.scoreAria', { score: scoreText })">
       <div class="meter-track">
         <span class="meter-zone zone-down"></span>
         <span class="meter-zone zone-mid"></span>
@@ -30,91 +30,45 @@
     <ul class="components">
       <li v-for="c in signal.components" :key="c.key" class="comp">
         <div class="comp-head">
-          <span class="comp-name">{{ c.label }}</span>
-          <span class="comp-meta">权重 {{ c.weight }} · {{ signedScore(c.score) }}</span>
+          <span class="comp-name">{{ tLabel(c.label) }}</span>
+          <span class="comp-meta">{{ t('signalPanel.weight', { weight: c.weight, score: signedScore(c.score) }) }}</span>
         </div>
         <div class="comp-bar" aria-hidden="true">
           <span class="comp-fill" :class="c.score >= 0 ? 'pos' : 'neg'" :style="fillStyle(c.score)"></span>
         </div>
-        <p class="comp-reason">{{ c.reason }}</p>
+        <p class="comp-reason">{{ tField(c, 'reason') }}</p>
       </li>
     </ul>
 
     <dl v-if="levels" class="levels">
       <div>
-        <dt>支撑</dt>
+        <dt>{{ t('signalPanel.support') }}</dt>
         <dd>{{ levels.support.join(' / ') }}</dd>
       </div>
       <div>
-        <dt>阻力</dt>
+        <dt>{{ t('signalPanel.resistance') }}</dt>
         <dd>{{ levels.resistance.join(' / ') }}</dd>
       </div>
       <div>
-        <dt>参考区间</dt>
+        <dt>{{ t('signalPanel.range') }}</dt>
         <dd>{{ fmt(levels.refLow) }} – {{ fmt(levels.refHigh) }}</dd>
       </div>
       <div>
         <dt>ATR(14)</dt>
-        <dd>{{ fmt(levels.atr) }}（{{ fmt(levels.atrPercent) }}%）</dd>
+        <dd>{{ t('signalPanel.atr', { atr: fmt(levels.atr), percent: fmt(levels.atrPercent) }) }}</dd>
       </div>
     </dl>
 
-    <div v-if="pivots" class="pivots-box">
-      <div class="pivots-header">
-        <span class="pivots-title">日内枢轴阶梯 (Pivot Points)</span>
-        <div class="seg seg-xs">
-          <button
-            type="button"
-            :class="{ active: pivotMode === 'classic' }"
-            @click="pivotMode = 'classic'"
-          >经典</button>
-          <button
-            type="button"
-            :class="{ active: pivotMode === 'fibonacci' }"
-            @click="pivotMode = 'fibonacci'"
-          >斐波那契</button>
-        </div>
-      </div>
-      <div class="pivots-ladder">
-        <div class="p-row p-res">
-          <span class="p-badge">R3 阻力</span>
-          <span class="p-num">{{ fmt(activePivot?.r3) }}</span>
-        </div>
-        <div class="p-row p-res">
-          <span class="p-badge">R2 阻力</span>
-          <span class="p-num">{{ fmt(activePivot?.r2) }}</span>
-        </div>
-        <div class="p-row p-res">
-          <span class="p-badge">R1 阻力</span>
-          <span class="p-num">{{ fmt(activePivot?.r1) }}</span>
-        </div>
-        <div class="p-row p-mid">
-          <span class="p-badge">P 枢轴位</span>
-          <span class="p-num">{{ fmt(activePivot?.p) }}</span>
-        </div>
-        <div class="p-row p-sup">
-          <span class="p-badge">S1 支撑</span>
-          <span class="p-num">{{ fmt(activePivot?.s1) }}</span>
-        </div>
-        <div class="p-row p-sup">
-          <span class="p-badge">S2 支撑</span>
-          <span class="p-num">{{ fmt(activePivot?.s2) }}</span>
-        </div>
-        <div class="p-row p-sup">
-          <span class="p-badge">S3 支撑</span>
-          <span class="p-num">{{ fmt(activePivot?.s3) }}</span>
-        </div>
-      </div>
-    </div>
-
     <p class="disclaimer">
-      量化参考，不构成投资建议。参考区间与止损参考位由 ATR 及枢轴点推算，仅用于风险控制讨论。
+      {{ t('signalPanel.disclaimer') }}
     </p>
   </section>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { tField, useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
+import { computed } from 'vue';
 import { fmtNumber } from '../format';
 
 const props = defineProps({
@@ -122,10 +76,6 @@ const props = defineProps({
   levels: { type: Object, default: null },
   asOf: { type: String, default: '' },
 });
-
-const pivotMode = ref('classic');
-const pivots = computed(() => props.levels?.pivots ?? null);
-const activePivot = computed(() => (pivots.value ? pivots.value[pivotMode.value] : null));
 
 const score = computed(() => (Number.isFinite(props.signal.score) ? props.signal.score : 0));
 const scoreText = computed(() => `${score.value >= 0 ? '+' : ''}${score.value.toFixed(1)}`);
@@ -162,10 +112,9 @@ function fillStyle(value) {
 
 .title {
   margin: 0;
-  font-family: 'Archivo', var(--font);
-  font-size: 17px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--text);
 }
 
 .sub {
@@ -194,7 +143,7 @@ function fillStyle(value) {
 }
 
 .verdict-score {
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   font-stretch: 110%;
   font-size: 21px;
   font-weight: 700;
@@ -229,9 +178,9 @@ function fillStyle(value) {
   flex: 1;
 }
 
-.zone-down { background: linear-gradient(90deg, rgba(16, 185, 129, 0.85), rgba(16, 185, 129, 0.35)); }
+.zone-down { background: rgba(16, 185, 129, 0.55); }
 .zone-mid { background: var(--surface-2); flex: 0.8; }
-.zone-up { background: linear-gradient(90deg, rgba(239, 68, 68, 0.35), rgba(239, 68, 68, 0.85)); }
+.zone-up { background: rgba(239, 68, 68, 0.55); }
 
 .meter-marker {
   position: absolute;
@@ -336,80 +285,6 @@ function fillStyle(value) {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-
-.pivots-box {
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-
-.pivots-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.pivots-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.seg-xs {
-  display: inline-flex;
-  padding: 2px;
-  border-radius: 6px;
-  background: var(--surface-2);
-}
-
-.seg-xs button {
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.seg-xs button.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.pivots-ladder {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
-  gap: 6px;
-}
-
-.p-row {
-  display: flex;
-  flex-direction: column;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-}
-
-.p-badge {
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.p-num {
-  margin-top: 2px;
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.p-res .p-badge { color: var(--up); }
-.p-mid .p-badge { color: var(--gold); }
-.p-sup .p-badge { color: var(--down); }
 
 .disclaimer {
   font-size: 12px;

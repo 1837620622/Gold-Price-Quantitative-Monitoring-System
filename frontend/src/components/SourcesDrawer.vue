@@ -3,8 +3,8 @@
     <div v-if="open" class="drawer-backdrop" @click.self="$emit('close')">
       <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
         <header class="drawer-head">
-          <h2 id="drawer-title">数据源与交叉校验</h2>
-          <button ref="closeBtn" type="button" class="icon-btn" aria-label="关闭" @click="$emit('close')">
+          <h2 id="drawer-title">{{ t('sourcesDrawer.title') }}</h2>
+          <button ref="closeBtn" type="button" class="icon-btn" :aria-label="t('sourcesDrawer.close')" @click="$emit('close')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
@@ -12,37 +12,37 @@
         </header>
 
         <section class="block">
-          <h3>交叉校验</h3>
+          <h3>{{ t('sourcesDrawer.checks') }}</h3>
           <ul class="checks">
             <li v-for="c in checks" :key="c.name" class="check" :class="`st-${c.status}`">
               <span class="pill">{{ checkLabel(c.status) }}</span>
               <div>
-                <b>{{ c.name }}</b>
-                <p>{{ c.detail }}</p>
+                <b>{{ tLabel(c.name) }}</b>
+                <p>{{ tLabel(c.detail) }}</p>
               </div>
             </li>
-            <li v-if="!checks.length" class="empty">暂无校验结果</li>
+            <li v-if="!checks.length" class="empty">{{ t('sourcesDrawer.noChecks') }}</li>
           </ul>
         </section>
 
         <section class="block">
-          <h3>数据源</h3>
+          <h3>{{ t('sourcesDrawer.sources') }}</h3>
           <ul class="sources">
             <li v-for="s in sources" :key="s.name" class="source">
               <div class="source-head">
                 <b>{{ s.name }}</b>
                 <span class="pill" :class="`st-${s.status}`">{{ statusLabel(s.status) }}</span>
               </div>
-              <p class="roles">{{ s.roles.join(' · ') }}</p>
+              <p class="roles">{{ s.roles.map((r) => tLabel(r)).join(' · ') }}</p>
               <p class="meta">
-                耗时 {{ s.latencyMs ?? '--' }} ms · 成功 {{ s.okCount }} 次 · 失败 {{ s.errCount }} 次
-                <template v-if="s.lastOkAt"> · 最近成功 {{ fmtDateTime(s.lastOkAt) }}</template>
+                {{ t('sourcesDrawer.stats', { latency: s.latencyMs ?? '--', ok: s.okCount, err: s.errCount }) }}
+                <template v-if="s.lastOkAt"> {{ t('sourcesDrawer.lastOk', { time: fmtDateTime(s.lastOkAt) }) }}</template>
               </p>
-              <p v-if="s.lastError" class="error">最近错误：{{ s.lastError }}</p>
+              <p v-if="s.lastError" class="error">{{ t('sourcesDrawer.lastError', { error: s.lastError }) }}</p>
             </li>
-            <li v-if="!sources.length" class="empty">暂无数据源记录</li>
+            <li v-if="!sources.length" class="empty">{{ t('sourcesDrawer.noSources') }}</li>
           </ul>
-          <p class="hint">“未调用”表示本次会话中该数据源尚未被请求（例如备用源只在主源失败时调用）。</p>
+          <p class="hint">{{ t('sourcesDrawer.uncalledHint') }}</p>
         </section>
       </aside>
     </div>
@@ -52,6 +52,9 @@
 <script setup>
 import { ref, watch, nextTick, onUnmounted } from 'vue';
 import { fmtDateTime } from '../format';
+import { useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -62,10 +65,10 @@ const emit = defineEmits(['close']);
 
 const closeBtn = ref(null);
 
-const STATUS = { ok: '正常', error: '异常', idle: '未调用' };
-const CHECK = { ok: '通过', warn: '注意', info: '提示', single: '单源' };
-const statusLabel = (s) => STATUS[s] ?? s;
-const checkLabel = (s) => CHECK[s] ?? s;
+const STATUS = { ok: 'sourcesDrawer.statusOk', error: 'sourcesDrawer.statusError', idle: 'sourcesDrawer.statusIdle' };
+const CHECK = { ok: 'sourcesDrawer.checkOk', warn: 'sourcesDrawer.checkWarn', info: 'sourcesDrawer.checkInfo', single: 'sourcesDrawer.checkSingle' };
+const statusLabel = (s) => (STATUS[s] ? t(STATUS[s]) : s);
+const checkLabel = (s) => (CHECK[s] ? t(CHECK[s]) : s);
 
 function onKeydown(event) {
   if (event.key === 'Escape') emit('close');

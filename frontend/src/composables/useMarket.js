@@ -12,6 +12,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { fetchPrices } from '../api';
 import { fmtClock } from '../format';
 import { playTickSound } from '../lib/sound';
+import { t } from '../i18n';
 
 const STORAGE_INTERVAL_KEY = 'gold_monitor_poll_interval';
 
@@ -28,14 +29,14 @@ function getStoredInterval() {
 function describe(data) {
   const hasIntl = Boolean(data.international);
   const hasDom = Boolean(data.domestic);
-  if (!hasIntl && !hasDom) return { status: 'error', message: '行情暂不可用，请稍后刷新' };
+  if (!hasIntl && !hasDom) return { status: 'error', message: t('marketLoad.unavailable') };
 
   const notes = [];
-  if (!hasIntl) notes.push('国际金价暂不可用');
-  if (!hasDom) notes.push('国内金价暂不可用');
-  if (hasDom && data.domestic.estimated) notes.push('国内价为汇率估算值，无涨跌数据，不触发预警');
+  if (!hasIntl) notes.push(t('marketLoad.intlUnavailable'));
+  if (!hasDom) notes.push(t('marketLoad.domUnavailable'));
+  if (hasDom && data.domestic.estimated) notes.push(t('marketLoad.domEstimated'));
 
-  return notes.length ? { status: 'partial', message: notes.join('；') } : { status: 'live', message: '' };
+  return notes.length ? { status: 'partial', message: notes.join(t('marketLoad.noteSep')) } : { status: 'live', message: '' };
 }
 
 export function useMarket() {
@@ -62,7 +63,7 @@ export function useMarket() {
   function fail(text) {
     if (snapshot.value) {
       status.value = 'stale';
-      message.value = `${text}，当前显示 ${fmtClock(updatedAt.value)} 的数据`;
+      message.value = t('marketLoad.showingAt', { text, time: fmtClock(updatedAt.value) });
     } else {
       status.value = 'error';
       message.value = text;
@@ -99,11 +100,11 @@ export function useMarket() {
           status.value = state.status;
           message.value = state.message;
         } else {
-          fail('行情暂不可用');
+          fail(t('marketLoad.unavailableShort'));
         }
       })
       .catch((error) => {
-        fail(error?.response ? '行情服务暂时异常' : '无法连接行情服务');
+        fail(error?.response ? t('marketLoad.serviceError') : t('marketLoad.connectError'));
       })
       .finally(() => {
         inFlight = null;

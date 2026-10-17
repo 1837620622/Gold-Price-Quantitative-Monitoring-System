@@ -1,8 +1,8 @@
 <template>
   <section class="card tiles" aria-labelledby="tiles-title">
     <header class="head">
-      <h2 id="tiles-title" class="title">指标速览</h2>
-      <p class="sub">最新一根收盘后的指标读数</p>
+      <h2 id="tiles-title" class="title">{{ t('riskTiles.title') }}</h2>
+      <p class="sub">{{ t('riskTiles.sub') }}</p>
     </header>
     <div class="grid">
       <article v-for="tile in tiles" :key="tile.label" class="tile">
@@ -16,7 +16,7 @@
     </div>
     <div v-if="scoreSeries.length" class="trend">
       <div class="trend-head">
-        <span>量化评分走势（近 60 个交易日）</span>
+        <span>{{ t('riskTiles.scoreTrend') }}</span>
         <b :class="scoreTone">{{ scoreText }}</b>
       </div>
       <SparkLine :values="scoreSeries" :tone="scoreNow !== null && scoreNow >= 0 ? 'up' : 'down'" />
@@ -28,6 +28,9 @@
 import { computed } from 'vue';
 import { fmtNumber, fmtSigned } from '../format';
 import SparkLine from './SparkLine.vue';
+import { useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   quant: { type: Object, required: true },
@@ -57,11 +60,11 @@ const rsiTone = computed(() => {
 
 const pctB = computed(() => lastValue(ind.value.pctB));
 function bandLabel(p) {
-  if (p >= 1) return '突破上轨';
-  if (p <= 0) return '跌破下轨';
-  if (p >= 0.8) return '上轨附近';
-  if (p <= 0.2) return '下轨附近';
-  return '位于带内';
+  if (p >= 1) return t('riskTiles.breakUpper');
+  if (p <= 0) return t('riskTiles.breakLower');
+  if (p >= 0.8) return t('riskTiles.nearUpper');
+  if (p <= 0.2) return t('riskTiles.nearLower');
+  return t('riskTiles.inBand');
 }
 
 // MACD 状态：DIF 与 DEA 的符号，以及当前符号开始的日期
@@ -90,19 +93,19 @@ const kdj = computed(() => {
   const k = kObj.value;
   const d = dObj.value;
   const j = jObj.value;
-  let status = '震荡区间';
+  let status = t('riskTiles.range');
   let tone = 'tone-flat';
   if (k >= 80 || d >= 80) {
-    status = '超买区警戒';
+    status = t('riskTiles.overbought');
     tone = 'tone-up';
   } else if (k <= 20 || d <= 20) {
-    status = '超卖区蓄势';
+    status = t('riskTiles.oversold');
     tone = 'tone-down';
   } else if (k > d) {
-    status = '多头金叉';
+    status = t('riskTiles.goldenCross');
     tone = 'tone-up';
   } else {
-    status = '空头死叉';
+    status = t('riskTiles.deathCross');
     tone = 'tone-down';
   }
   return { k, d, j, status, tone };
@@ -120,16 +123,16 @@ const tiles = computed(() => {
   list.push({
     label: 'RSI(14)',
     value: dash(r?.value, 1),
-    sub: r ? (r.value >= 70 ? '超买区' : r.value <= 30 ? '超卖区' : '中性区') : '数据不足',
+    sub: r ? (r.value >= 70 ? t('riskTiles.zoneOverbought') : r.value <= 30 ? t('riskTiles.zoneOversold') : t('riskTiles.zoneNeutral')) : t('riskTiles.insufficient'),
     tone: rsiTone.value,
     gauge: r?.value ?? undefined,
   });
 
   const m = macdState.value;
   list.push({
-    label: 'MACD 状态',
-    value: m ? (m.bullish ? '多头' : '空头') : '--',
-    sub: m ? `DIF-DEA ${fmtSigned(m.diff, 3)}，自 ${m.since} 起` : '数据不足',
+    label: t('riskTiles.macdState'),
+    value: m ? (m.bullish ? t('riskTiles.bull') : t('riskTiles.bear')) : '--',
+    sub: m ? t('riskTiles.macdDetail', { diff: fmtSigned(m.diff, 3), since: m.since }) : t('riskTiles.insufficient'),
     tone: m ? (m.bullish ? 'tone-up' : 'tone-down') : 'tone-flat',
   });
 
@@ -146,40 +149,40 @@ const tiles = computed(() => {
 
   const b = pctB.value;
   list.push({
-    label: '布林 %B',
+    label: t('riskTiles.bollPctB'),
     value: dash(b?.value, 2),
-    sub: b ? bandLabel(b.value) : '数据不足',
+    sub: b ? bandLabel(b.value) : t('riskTiles.insufficient'),
     tone: 'tone-flat',
     gauge: b ? b.value * 100 : undefined,
   });
 
   list.push({
-    label: 'ATR 占比',
+    label: t('riskTiles.atrShare'),
     value: atrPercent.value !== null ? `${dash(atrPercent.value)}%` : '--',
-    sub: '近14日平均真实波幅 / 收盘价',
+    sub: t('riskTiles.atrHint'),
     tone: 'tone-flat',
   });
 
   list.push({
-    label: '年化波动（20日）',
+    label: t('riskTiles.vol20'),
     value: props.quant.risk?.vol20 !== null && props.quant.risk?.vol20 !== undefined ? `${dash(props.quant.risk.vol20)}%` : '--',
-    sub: props.quant.risk ? `波动状态：${props.quant.risk.volRegime}` : '数据不足',
+    sub: props.quant.risk ? t('riskTiles.volState', { regime: tLabel(props.quant.risk.volRegime) }) : t('riskTiles.insufficient'),
     tone: 'tone-flat',
   });
 
   list.push({
-    label: '样本最大回撤',
+    label: t('riskTiles.maxDrawdown'),
     value: props.quant.risk ? `${dash(props.quant.risk.maxDrawdown)}%` : '--',
-    sub: props.quant.risk ? `当前回撤 ${dash(props.quant.risk.currentDrawdown)}%` : '数据不足',
+    sub: props.quant.risk ? t('riskTiles.drawdownNow', { value: dash(props.quant.risk.currentDrawdown) }) : t('riskTiles.insufficient'),
     tone: 'tone-down',
   });
 
   if (premium.value) {
     const z = premium.value.z;
     list.push({
-      label: '国内溢价 Z 分数',
+      label: t('riskTiles.premiumZ'),
       value: dash(z, 2),
-      sub: `当前 ${fmtSigned(premium.value.current, 2)}%，历史分位 ${dash(premium.value.percentile, 0)}%`,
+      sub: t('riskTiles.premiumNow', { current: fmtSigned(premium.value.current, 2), percentile: dash(premium.value.percentile, 0) }),
       tone: z >= 1 ? 'tone-up' : z <= -1 ? 'tone-down' : 'tone-flat',
     });
   }

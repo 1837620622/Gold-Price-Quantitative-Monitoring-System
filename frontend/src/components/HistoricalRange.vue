@@ -10,8 +10,8 @@
           </svg>
         </div>
         <div>
-          <h3 class="range-title">历史极值与周期收益率阶梯</h3>
-          <p class="range-sub">52 周波动区间定位 · ATH 历史高点回撤 · 周期动量</p>
+          <h3 class="range-title">{{ t('historicalRange.title') }}</h3>
+          <p class="range-sub">{{ t('historicalRange.sub') }}</p>
         </div>
       </div>
     </header>
@@ -21,15 +21,15 @@
       <div class="range-slider-box">
         <div class="slider-meta">
           <div class="meta-item">
-            <span class="meta-label">52 周最低 (L)</span>
+            <span class="meta-label">{{ t('historicalRange.low52') }}</span>
             <b class="meta-val">¥{{ fmt(low52) }}</b>
           </div>
           <div class="meta-current">
-            <span class="meta-label">当前位置</span>
+            <span class="meta-label">{{ t('historicalRange.now') }}</span>
             <b class="meta-val highlight">¥{{ fmt(currentPrice) }} ({{ fmt(percentile52, 1) }}%)</b>
           </div>
           <div class="meta-item right">
-            <span class="meta-label">52 周最高 (H)</span>
+            <span class="meta-label">{{ t('historicalRange.high52') }}</span>
             <b class="meta-val">¥{{ fmt(high52) }}</b>
           </div>
         </div>
@@ -37,14 +37,14 @@
         <!-- 进度条 -->
         <div class="track-bar">
           <div class="track-fill" :style="{ width: `${percentile52}%` }"></div>
-          <div class="track-pointer" :style="{ left: `${percentile52}%` }" :title="`位于 52 周第 ${percentile52}% 分位`">
+          <div class="track-pointer" :style="{ left: `${percentile52}%` }" :title="t('historicalRange.percentile', { value: percentile52 })">
             <span class="pointer-dot"></span>
           </div>
         </div>
 
         <div class="ath-row">
-          <span>距 52 周最高点差：<b>-¥{{ fmt(athDiff) }} ({{ fmt(athDrawdown) }}%)</b></span>
-          <span class="ath-tag">{{ athDrawdown > -2 ? '高位盘整' : '阶段调整' }}</span>
+          <span>{{ t('historicalRange.dropFromHigh') }}<b>-¥{{ fmt(athDiff) }} ({{ fmt(athDrawdown) }}%)</b></span>
+          <span class="ath-tag">{{ athDrawdown > -2 ? t('historicalRange.hot') : t('historicalRange.pullback') }}</span>
         </div>
       </div>
 
@@ -65,6 +65,9 @@
 <script setup>
 import { computed } from 'vue';
 import { fmtNumber } from '../format';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   bars: { type: Array, default: () => [] },
@@ -118,12 +121,12 @@ const periods = computed(() => {
   };
 
   return [
-    { label: '近 24 小时 (1D)', rate: getReturn(1) },
-    { label: '近 7 天 (1W)', rate: getReturn(5) },
-    { label: '近 30 天 (1M)', rate: getReturn(22) },
-    { label: '近 90 天 (3M)', rate: getReturn(66) },
-    { label: '今年以来 (YTD)', rate: getReturn(120) },
-    { label: '近 1 年 (1Y)', rate: getReturn(240) },
+    { label: t('historicalRange.d1'), rate: getReturn(1) },
+    { label: t('historicalRange.w1'), rate: getReturn(5) },
+    { label: t('historicalRange.m1'), rate: getReturn(22) },
+    { label: t('historicalRange.m3'), rate: getReturn(66) },
+    { label: t('historicalRange.ytd'), rate: getReturn(120) },
+    { label: t('historicalRange.y1'), rate: getReturn(240) },
   ];
 });
 
@@ -140,8 +143,8 @@ function toneClass(rate) {
 <style scoped>
 .range-card {
   padding: 24px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.95) 0%, rgba(13, 16, 24, 0.98) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
 }
@@ -165,16 +168,16 @@ function toneClass(rate) {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   color: var(--gold-3);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(232, 199, 125, 0.3);
 }
 
 .range-title {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .range-sub {
@@ -201,7 +204,7 @@ function toneClass(rate) {
   gap: 12px;
   padding: 16px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -234,7 +237,7 @@ function toneClass(rate) {
 .meta-val {
   font-size: 14px;
   font-family: var(--mono);
-  color: #ffffff;
+  color: var(--text);
 }
 .meta-val.highlight {
   color: var(--gold-3);
@@ -246,14 +249,14 @@ function toneClass(rate) {
   position: relative;
   height: 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-hover);
   margin: 8px 0;
 }
 
 .track-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #10b981 0%, #fbbf24 60%, #ef4444 100%);
+  background: linear-gradient(90deg, #10b981 0%, #e8c77d 60%, #ef4444 100%);
 }
 
 .track-pointer {
@@ -264,7 +267,6 @@ function toneClass(rate) {
   height: 18px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
   display: grid;
   place-items: center;
   transition: left 0.3s ease;
@@ -295,7 +297,7 @@ function toneClass(rate) {
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   color: var(--gold-3);
 }
 
@@ -317,7 +319,7 @@ function toneClass(rate) {
   justify-content: center;
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.06);
   gap: 4px;
 }

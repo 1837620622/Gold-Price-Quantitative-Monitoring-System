@@ -14,6 +14,7 @@
 
 import { AI_TIMEOUT_MS, SOURCE_URLS, TTL } from './config.js';
 import { getState, setState } from './lib/cache.js';
+import { SYSTEM_PROMPT_EN, buildPromptEn, ruleBasedEn } from './ai-en.js';
 import { fmt, signed, signedPercent } from './lib/util.js';
 import { getSnapshot, getQuant } from './market.js';
 
@@ -69,7 +70,8 @@ function quantBlock(quant) {
   return lines.join('\n');
 }
 
-function buildPrompt(snapshot, quant) {
+function buildPrompt(snapshot, quant, lang = 'zh') {
+  if (lang === 'en') return buildPromptEn(snapshot, quant);
   const intl = snapshot.international;
   const dom = snapshot.domestic;
   const ratio = intl?.price && intl?.silverPrice ? (intl.price / intl.silverPrice).toFixed(2) : '--';
@@ -128,7 +130,8 @@ ${quantBlock(quant)}
 - 完整包含投资风险警示与免责声明。`;
 }
 
-function ruleBased(snapshot, quant) {
+function ruleBased(snapshot, quant, lang = 'zh') {
+  if (lang === 'en') return ruleBasedEn(snapshot, quant);
   const dom = snapshot.domestic;
   const intl = snapshot.international;
   const ratio = intl?.price && intl?.silverPrice ? (intl.price / intl.silverPrice).toFixed(2) : '--';
@@ -210,11 +213,11 @@ async function fetchChatCompletion(url, apiKey, body) {
 }
 
 // ModelScope 调用
-async function callModelScope(apiKey, candidate, prompt) {
+async function callModelScope(apiKey, candidate, prompt, system) {
   return fetchChatCompletion(SOURCE_URLS.modelscope, apiKey, {
     model: candidate.model,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: system },
       { role: 'user', content: prompt },
     ],
     ...candidate.options,
@@ -222,11 +225,11 @@ async function callModelScope(apiKey, candidate, prompt) {
 }
 
 // DeepSeek 官方 API
-async function callDeepSeek(apiKey, prompt) {
+async function callDeepSeek(apiKey, prompt, system) {
   return fetchChatCompletion('https://api.deepseek.com/v1/chat/completions', apiKey, {
     model: 'deepseek-chat',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: system },
       { role: 'user', content: prompt },
     ],
     temperature: 0.6,
@@ -235,14 +238,14 @@ async function callDeepSeek(apiKey, prompt) {
 }
 
 // OpenRouter 免费/聚合模型
-async function callOpenRouter(apiKey, prompt) {
+async function callOpenRouter(apiKey, prompt, system) {
   const models = ['deepseek/deepseek-r1:free', 'meta-llama/llama-3.3-70b-instruct:free', 'qwen/qwen-2.5-72b-instruct:free'];
   for (const m of models) {
     try {
       return await fetchChatCompletion('https://openrouter.ai/api/v1/chat/completions', apiKey, {
         model: m,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: system },
           { role: 'user', content: prompt },
         ],
         temperature: 0.6,
@@ -256,11 +259,11 @@ async function callOpenRouter(apiKey, prompt) {
 }
 
 // 硅基流动 SiliconFlow API
-async function callSiliconFlow(apiKey, prompt) {
+async function callSiliconFlow(apiKey, prompt, system) {
   return fetchChatCompletion('https://api.siliconflow.cn/v1/chat/completions', apiKey, {
     model: 'deepseek-ai/DeepSeek-V3',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: system },
       { role: 'user', content: prompt },
     ],
     temperature: 0.6,
@@ -281,7 +284,7 @@ export function cleanAiReport(text) {
 }
 
 // Cloudflare Workers AI 内置大模型矩阵（支持指定模型优先 + 智能容灾降级）
-async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
+async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system = SYSTEM_PROMPT, lang = 'zh') {
   if (!aiBinding || typeof aiBinding.run !== 'function') throw new Error('Workers AI 未绑定');
 
   const MODEL_MAP = {
@@ -299,7 +302,7 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
     try {
       const response = await aiBinding.run(candidateModel, {
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: system },
           { role: 'user', content: prompt },
         ],
         max_tokens: 3500,
@@ -318,11 +321,11 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
 
   // 2. 兜底梯队（按质量与配额平滑降级，保证输出完整）
   const fallbackList = [
-    { model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'deepseek-r1-distill-qwen-32b (深度推理)', maxTokens: 3500 },
-    { model: '@cf/qwen/qwen2.5-72b-instruct', name: 'qwen2.5-72b-instruct (全能旗舰)', maxTokens: 2600 },
-    { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'llama-3.3-70b (顶尖研报)', maxTokens: 2600 },
-    { model: '@cf/qwen/qwen2.5-14b-instruct', name: 'qwen2.5-14b-instruct (均衡低耗)', maxTokens: 2200 },
-    { model: '@cf/qwen/qwen2.5-7b-instruct', name: 'qwen2.5-7b-instruct (极速兜底)', maxTokens: 1800 },
+    { model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'deepseek-r1-distill-qwen-32b (深度推理)', nameEn: 'deepseek-r1-distill-qwen-32b (deep reasoning)', maxTokens: 3500 },
+    { model: '@cf/qwen/qwen2.5-72b-instruct', name: 'qwen2.5-72b-instruct (全能旗舰)', nameEn: 'qwen2.5-72b-instruct (flagship all-round)', maxTokens: 2600 },
+    { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'llama-3.3-70b (顶尖研报)', nameEn: 'llama-3.3-70b (top-tier research)', maxTokens: 2600 },
+    { model: '@cf/qwen/qwen2.5-14b-instruct', name: 'qwen2.5-14b-instruct (均衡低耗)', nameEn: 'qwen2.5-14b-instruct (balanced, low cost)', maxTokens: 2200 },
+    { model: '@cf/qwen/qwen2.5-7b-instruct', name: 'qwen2.5-7b-instruct (极速兜底)', nameEn: 'qwen2.5-7b-instruct (fast fallback)', maxTokens: 1800 },
   ];
 
   for (const item of fallbackList) {
@@ -330,7 +333,7 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
     try {
       const response = await aiBinding.run(item.model, {
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: system },
           { role: 'user', content: prompt },
         ],
         max_tokens: item.maxTokens,
@@ -339,7 +342,8 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
       const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
       const cleaned = cleanAiReport(text);
       if (cleaned && cleaned.length > 20) {
-        return { content: cleaned, modelName: `Workers AI · ${item.name}` };
+        const name = lang === 'en' ? item.nameEn : item.name;
+        return { content: cleaned, modelName: `Workers AI · ${name}` };
       }
     } catch (e) {
       console.warn(`Workers AI 兜底模型 ${item.model} 失败:`, e.message);
@@ -351,13 +355,14 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
   throw new Error('Workers AI 所有模型均未能成功响应');
 }
 
-export async function generateAnalysis(env, snapshot, quant, requestedModel = 'auto') {
-  const prompt = buildPrompt(snapshot, quant);
+export async function generateAnalysis(env, snapshot, quant, requestedModel = 'auto', lang = 'zh') {
+  const prompt = buildPrompt(snapshot, quant, lang);
+  const system = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT;
 
   // 1. 首选：Cloudflare Workers AI 原生内置大模型（免 Key、零外部延迟、分级省流）
   if (env?.AI) {
     try {
-      const result = await callWorkersAi(env.AI, prompt, requestedModel);
+      const result = await callWorkersAi(env.AI, prompt, requestedModel, system, lang);
       return { success: true, analysis: result.content, model: result.modelName, timestamp: new Date().toISOString() };
     } catch (error) {
       console.warn('Cloudflare Workers AI 尝试后转入备用模型:', error.message);
@@ -368,7 +373,7 @@ export async function generateAnalysis(env, snapshot, quant, requestedModel = 'a
   if (env?.MODELSCOPE_API_KEY) {
     for (const candidate of MODELS) {
       try {
-        const content = await callModelScope(env.MODELSCOPE_API_KEY, candidate, prompt);
+        const content = await callModelScope(env.MODELSCOPE_API_KEY, candidate, prompt, system);
         return { success: true, analysis: content, model: candidate.name, timestamp: new Date().toISOString() };
       } catch (error) {
         console.error('ModelScope 模型失败:', error.message);
@@ -379,7 +384,7 @@ export async function generateAnalysis(env, snapshot, quant, requestedModel = 'a
   // 3. 备选：DeepSeek 官方 API
   if (env?.DEEPSEEK_API_KEY) {
     try {
-      const content = await callDeepSeek(env.DEEPSEEK_API_KEY, prompt);
+      const content = await callDeepSeek(env.DEEPSEEK_API_KEY, prompt, system);
       return { success: true, analysis: content, model: 'DeepSeek-V3 (Official)', timestamp: new Date().toISOString() };
     } catch (error) {
       console.error('DeepSeek 官方 API 失败:', error.message);
@@ -389,7 +394,7 @@ export async function generateAnalysis(env, snapshot, quant, requestedModel = 'a
   // 4. 备选：硅基流动 SiliconFlow
   if (env?.SILICONFLOW_API_KEY) {
     try {
-      const content = await callSiliconFlow(env.SILICONFLOW_API_KEY, prompt);
+      const content = await callSiliconFlow(env.SILICONFLOW_API_KEY, prompt, system);
       return { success: true, analysis: content, model: 'SiliconFlow DeepSeek-V3', timestamp: new Date().toISOString() };
     } catch (error) {
       console.error('SiliconFlow 失败:', error.message);
@@ -399,7 +404,7 @@ export async function generateAnalysis(env, snapshot, quant, requestedModel = 'a
   // 5. 备选：OpenRouter 免费模型
   if (env?.OPENROUTER_API_KEY) {
     try {
-      const content = await callOpenRouter(env.OPENROUTER_API_KEY, prompt);
+      const content = await callOpenRouter(env.OPENROUTER_API_KEY, prompt, system);
       return { success: true, analysis: content, model: 'OpenRouter Free AI', timestamp: new Date().toISOString() };
     } catch (error) {
       console.error('OpenRouter 失败:', error.message);
@@ -407,7 +412,7 @@ export async function generateAnalysis(env, snapshot, quant, requestedModel = 'a
   }
 
   // 6. 无缝降级：专业规则引擎摘要（零用量消耗、100% 高可用）
-  return { success: true, analysis: ruleBased(snapshot, quant), model: 'auto-analysis', timestamp: new Date().toISOString() };
+  return { success: true, analysis: ruleBased(snapshot, quant, lang), model: 'auto-analysis', timestamp: new Date().toISOString() };
 }
 
 // 响应体只带摘要，完整序列留给图表接口
@@ -431,18 +436,23 @@ function summarizeQuant(quant) {
 // ------------------------------------------------------------
 // 分析入口：支持指定模型与按模型缓存，并发请求合并
 // ------------------------------------------------------------
-let inflight = null;
+// 并发合并按“语言 + 模型”分开：中英文请求不会共用同一份在途结果
+const inflight = new Map();
+const cacheKeyOf = (lang, model) => `analysisCache:${lang}:${model || 'auto'}`;
+// 旧版缓存键只属于中文 auto 结果：指定模型与英文结果都不读写它，避免串模型或串语言
+const usesLegacyCache = (lang, model) => lang === 'zh' && (!model || model === 'auto');
 
-async function buildAnalysis(env, { requestedModel = 'auto' } = {}) {
+async function buildAnalysis(env, { requestedModel = 'auto', lang = 'zh' } = {}) {
   const snapshot = await getSnapshot();
   if (!snapshot.domestic) {
-    return { success: false, message: '行情暂不可用，请稍后重试', priceData: snapshot, timestamp: new Date().toISOString() };
+    const message = lang === 'en' ? 'Quotes are unavailable. Please try again later.' : '行情暂不可用，请稍后重试';
+    return { success: false, message, priceData: snapshot, timestamp: new Date().toISOString() };
   }
   const quant = await getQuant('cn').catch((error) => {
     console.error('量化计算失败:', error.message);
     return null;
   });
-  const analysis = await generateAnalysis(env, snapshot, quant, requestedModel);
+  const analysis = await generateAnalysis(env, snapshot, quant, requestedModel, lang);
   const payload = {
     success: true,
     priceData: snapshot,
@@ -451,23 +461,20 @@ async function buildAnalysis(env, { requestedModel = 'auto' } = {}) {
     timestamp: new Date().toISOString(),
   };
   if (analysis.model !== 'auto-analysis') {
-    const cacheKey = `analysisCache:${requestedModel || 'auto'}`;
-    await setState(env, cacheKey, { at: Date.now(), payload });
-    await setState(env, 'analysisCache', { at: Date.now(), payload });
+    await setState(env, cacheKeyOf(lang, requestedModel), { at: Date.now(), payload });
+    if (usesLegacyCache(lang, requestedModel)) await setState(env, 'analysisCache', { at: Date.now(), payload });
   }
   return payload;
 }
 
-export async function getAnalysis(env, { requestedModel = 'auto', force = false } = {}) {
-  const cacheKey = `analysisCache:${requestedModel || 'auto'}`;
-  const cached = await getState(env, cacheKey) || await getState(env, 'analysisCache');
+export async function getAnalysis(env, { requestedModel = 'auto', force = false, lang = 'zh' } = {}) {
+  const key = cacheKeyOf(lang, requestedModel);
+  const cached = await getState(env, key) || (usesLegacyCache(lang, requestedModel) ? await getState(env, 'analysisCache') : null);
   if (!force && cached && Date.now() - cached.at < TTL.analysis) {
     return { ...cached.payload, cached: true };
   }
-  if (!inflight) {
-    inflight = buildAnalysis(env, { requestedModel }).finally(() => {
-      inflight = null;
-    });
+  if (!inflight.has(key)) {
+    inflight.set(key, buildAnalysis(env, { requestedModel, lang }).finally(() => inflight.delete(key)));
   }
-  return { ...(await inflight), cached: false };
+  return { ...(await inflight.get(key)), cached: false };
 }
