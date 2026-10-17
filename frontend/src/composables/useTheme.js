@@ -63,7 +63,6 @@ function apply(theme) {
   root.style.colorScheme = theme === 'light' ? 'light' : 'dark';
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', theme === 'light' ? '#f6f3ec' : '#050507');
-  writeStorage(AUTO_KEY, autoTheme.value);
 }
 
 let started = false;
@@ -78,6 +77,8 @@ function start() {
     if (!document.hidden) now.value = Date.now();
   });
   watch(resolved, apply, { immediate: true });
+  // 自动结果不受手动模式影响：每次变化都保存，手动选择期间也保持最新，供下次首屏脚本读取
+  watch(autoTheme, (value) => writeStorage(AUTO_KEY, value), { immediate: true });
 }
 
 export function useTheme() {

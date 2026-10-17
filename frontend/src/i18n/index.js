@@ -82,7 +82,7 @@ export function tField(item, key) {
 
 let documentBound = false;
 
-// 同步 <html lang> 与页面标题；在组件中调用一次即可
+// 同步 <html lang>、页面标题与 meta description；在组件中调用一次即可
 export function useI18n() {
   if (!documentBound) {
     documentBound = true;
@@ -91,6 +91,9 @@ export function useI18n() {
       (value) => {
         document.documentElement.lang = value === 'zh' ? 'zh-CN' : 'en';
         document.title = t('app.title');
+        // index.html 中的中文 description 作为无 JS 时的回退，这里按当前语言覆盖
+        const meta = document.querySelector('meta[name="description"]');
+        if (meta) meta.content = t('app.description');
       },
       { immediate: true }
     );

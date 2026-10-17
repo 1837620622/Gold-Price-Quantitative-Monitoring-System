@@ -54,10 +54,3 @@ export function fmtDateTime(input) {
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
 }
-
-export function fmtAgo(seconds) {
-  if (!isNum(seconds)) return '';
-  if (seconds < 5) return '刚刚更新';
-  if (seconds < 60) return `${seconds} 秒前更新`;
-  return `${Math.floor(seconds / 60)} 分钟前更新`;
-}

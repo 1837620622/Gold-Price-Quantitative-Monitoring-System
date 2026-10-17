@@ -94,7 +94,7 @@
     <template v-else-if="tab === 'tradingview'">
       <div class="tradingview-container">
         <iframe 
-          src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=1a1a24&studies=[]&theme=dark&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN"
+          :src="tvSrc"
           class="chart-iframe"
           frameborder="0"
           allowtransparency="true"
@@ -218,6 +218,12 @@ const activeLoading = computed(() => (tab.value === 'intl' ? props.loadingIntl :
 const premium = computed(() => props.cn?.premium ?? null);
 const premiumSeries = computed(() => premium.value?.series ?? []);
 const activeBacktest = computed(() => props.cn?.backtest ?? null);
+
+// TradingView 嵌入跟随主题：日间用浅色图表与纸白工具栏，夜间保持金库暗色
+const tvSrc = computed(() => {
+  const light = props.theme === 'light';
+  return `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_gold&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${light ? 'ffffff' : '1a1a24'}&studies=[]&theme=${light ? 'light' : 'dark'}&style=1&timezone=Asia%2FShanghai&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=[]&disabled_features=[]&locale=zh_CN`;
+});
 
 // 周期：以 K 线条数换算为 dataZoom 起点百分比
 const zoomStart = computed(() => {

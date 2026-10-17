@@ -7,9 +7,9 @@
  * ============================================================
  */
 
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { fetchQuant } from '../api';
-import { t } from '../i18n';
+import { t, tField } from '../i18n';
 
 const REFRESH_MS = 5 * 60 * 1000;
 const CACHE_PREFIX = 'gold_quant_cache_';
@@ -59,12 +59,21 @@ async function fetchWithRetry(market, days = 250, retries = 3) {
   throw lastError || new Error(t('quantLoad.busy'));
 }
 
+// 错误文案按当前语言计算：英文界面取后端 reasonEn，请求失败时取服务端消息，缺失则显示重试提示
+function quantErrorText(info) {
+  if (!info) return '';
+  return tField(info, 'reason') || (info.failed ? t('quantLoad.retrying') : '');
+}
+
 export function useQuant() {
   // 优先自本地持久化缓存唤醒，实现 0ms 瞬间渲染
   const cn = ref(getCachedQuant('cn'));
   const intl = ref(getCachedQuant('intl'));
-  const cnError = ref('');
-  const intlError = ref('');
+  // 保留原始错误字段，cnError / intlError 随语言切换实时更新
+  const cnErrorInfo = ref(null);
+  const intlErrorInfo = ref(null);
+  const cnError = computed(() => quantErrorText(cnErrorInfo.value));
+  const intlError = computed(() => quantErrorText(intlErrorInfo.value));
   const loadingCn = ref(!cn.value);
   const loadingIntl = ref(!intl.value);
   let timer = null;
@@ -73,7 +82,7 @@ export function useQuant() {
     const isCn = market === 'cn';
     const loading = isCn ? loadingCn : loadingIntl;
     const target = isCn ? cn : intl;
-    const errorRef = isCn ? cnError : intlError;
+    const errorInfo = isCn ? cnErrorInfo : intlErrorInfo;
 
     // 若本地已有缓存，仅在后台静默刷新，不阻塞交互
     if (!target.value) {
@@ -84,11 +93,11 @@ export function useQuant() {
       const data = await fetchWithRetry(market, 250, 3);
       target.value = data;
       setCachedQuant(market, data);
-      errorRef.value = data.available ? '' : (data.reason || '');
+      errorInfo.value = data.available ? null : { reason: data.reason, reasonEn: data.reasonEn };
     } catch (error) {
       // 若已有缓存支撑，不将全局状态置为错误，仅保留最新可用量化推演
       if (!target.value) {
-        errorRef.value = error?.response?.data?.message || t('quantLoad.retrying');
+        errorInfo.value = { reason: error?.response?.data?.message, failed: true };
       }
     } finally {
       loading.value = false;

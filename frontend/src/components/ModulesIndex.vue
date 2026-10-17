@@ -44,13 +44,16 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import SectionHead from './SectionHead.vue';
 import { gsap, prefersReducedMotion } from '../lib/motion';
 import { useI18n } from '../i18n';
+import { useTheme } from '../composables/useTheme';
 
 const props = defineProps({
   // 量化结果（国内 AU9999），用于生成预览序列；为空时预览显示占位
   cn: { type: Object, default: null },
 });
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+// 昼夜切换时重绘画布，使调色盘跟随主题
+const { resolved } = useTheme();
 
 // 每个模块对应一个仪表盘区块（target 为 section 的 id）；文案走 i18n 键
 const MODULES = [
@@ -152,7 +155,8 @@ function paint() {
   if (values.length < 2) {
     ctx.fillStyle = muted;
     ctx.font = '11px "JetBrains Mono", monospace';
-    ctx.fillText('样本不足，等待行情数据', 14, 24);
+    // 英文文案较长：窄画布下按 maxWidth 压缩，避免被裁切
+    ctx.fillText(t('modulesPreview.empty'), 14, 24, width - 28);
     return;
   }
 
@@ -181,8 +185,11 @@ function paint() {
   ctx.lineTo(x(values.length - 1), height - pad);
   ctx.lineTo(x(0), height - pad);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(232, 199, 125, 0.08)';
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = gold;
   ctx.fill();
+  ctx.restore();
 
   ctx.beginPath();
   values.forEach((v, i) => (i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v))));
@@ -225,7 +232,7 @@ function go(index) {
   if (target) target.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 }
 
-watch([series, active], () => nextTick(paint));
+watch([series, active, locale, resolved], () => nextTick(paint));
 
 let observer = null;
 onMounted(() => {
@@ -334,12 +341,6 @@ onBeforeUnmount(() => {
   align-items: baseline;
   gap: 4px 16px;
   text-align: left;
-}
-
-.row-zh {
-  font-size: 13px;
-  color: var(--text);
-  white-space: nowrap;
 }
 
 .row-services {

@@ -56,8 +56,8 @@
         <!-- 量化信号定调 -->
         <div v-if="quant?.signal" class="poster-verdict" :class="signalTone">
           <div class="v-title">
-            <span>{{ t('sharePoster.verdict') }}<b>{{ quant.signal.label }}</b> {{ t('sharePoster.score', { score: quant.signal.score }) }}</span>
-            <span class="v-trend">{{ quant.signal.trend }} · {{ quant.signal.volRegime }}</span>
+            <span>{{ t('sharePoster.verdict') }}<b>{{ tLabel(quant.signal.label) }}</b> {{ t('sharePoster.score', { score: quant.signal.score }) }}</span>
+            <span class="v-trend">{{ tLabel(quant.signal.trend) }} · {{ tLabel(quant.signal.volRegime) }}</span>
           </div>
           <p class="v-reason">{{ tField(quant.signal, 'reasons')?.[0] || t('sharePoster.fallbackReason') }}</p>
         </div>

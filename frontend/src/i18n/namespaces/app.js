@@ -7,7 +7,7 @@ export default {
     'app.title': 'Gold Monitor · 黄金量化终端',
     'app.skip': '跳到主要内容',
     'app.toastClose': '关闭提醒',
-    'app.noticeTitle': '提醒',
+    'app.description': '黄金量化终端：国内 AU9999 与国际 XAU/USD 实时行情、多因子量化信号、跨市溢价与基差、回测、AI 研报与微信推送。',
 
     'section.market': '行情',
     'section.marketTag': '实时行情',
@@ -46,11 +46,9 @@ export default {
     'modules.brief.name': 'AI 研报与推送',
     'modules.brief.services': '研报情景 · 价格预警 · 微信推送',
     'modules.brief.caption': 'AU9999 收盘 · 近 90 个交易日',
-    'modules.aria': '模块索引',
 
     'contact.setAlert': '设置价格预警 ↗',
     'contact.subscribe': '订阅微信推送 ↗',
-    'contact.coinAria': '提醒与推送',
 
     'action.poster': '分享研报海报',
     'quant.computing': '量化信号计算中…',
@@ -90,7 +88,7 @@ export default {
     'app.title': 'Gold Monitor · Quant Terminal',
     'app.skip': 'Skip to content',
     'app.toastClose': 'Dismiss alert',
-    'app.noticeTitle': 'Alert',
+    'app.description': 'Gold quant terminal with live domestic AU9999 and international XAU/USD prices, multi-factor quant signals, cross-market premium and basis, backtests, AI briefs and WeChat push.',
 
     'section.market': 'Market',
     'section.marketTag': 'Live market',
@@ -129,11 +127,9 @@ export default {
     'modules.brief.name': 'AI BRIEF & ALERTS',
     'modules.brief.services': 'SCENARIOS · PRICE ALERTS · WECHAT PUSH',
     'modules.brief.caption': 'AU9999 close · last 90 sessions',
-    'modules.aria': 'Module index',
 
     'contact.setAlert': 'Set price alert ↗',
     'contact.subscribe': 'Subscribe to WeChat push ↗',
-    'contact.coinAria': 'Alerts and push',
 
     'action.poster': 'Share brief poster',
     'quant.computing': 'Computing quant signal…',

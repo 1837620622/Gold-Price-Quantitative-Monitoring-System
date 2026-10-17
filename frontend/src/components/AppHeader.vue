@@ -185,7 +185,7 @@ onUnmounted(() => {
   font-weight: 300;
   letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: #ffffff;
+  color: var(--ink);
   font-size: clamp(15px, 1.45vw, 23px);
   text-decoration: none;
   cursor: pointer;
@@ -213,7 +213,7 @@ onUnmounted(() => {
 .nav-links a {
   font-family: 'Inter', sans-serif;
   font-size: clamp(11px, 0.88vw, 14px);
-  color: #8a8a8f;
+  color: var(--text-2);
   text-decoration: none;
   transition: color 0.3s ease;
   white-space: nowrap;
@@ -221,7 +221,7 @@ onUnmounted(() => {
 
 .nav-links a:hover,
 .nav-links a.active {
-  color: #ffffff;
+  color: var(--ink);
 }
 
 .nav-actions {
@@ -237,8 +237,8 @@ onUnmounted(() => {
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border: 1px solid var(--line-strong);
   color: var(--dim);
   font-size: 11px;
   font-family: var(--font-display), var(--mono);
@@ -246,8 +246,8 @@ onUnmounted(() => {
   transition: all 0.25s ease;
 }
 .tool-pill:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink);
 }
 
 .tool-dot {
@@ -264,8 +264,8 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border: 1px solid var(--line-strong);
   color: var(--dim);
   display: grid;
   place-items: center;
@@ -273,9 +273,9 @@ onUnmounted(() => {
   transition: all 0.25s ease;
 }
 .tool-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border-color: rgba(232, 199, 125, 0.4);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink);
+  border-color: var(--border-hover);
 }
 
 .tool-icon-btn.spinning svg {
@@ -284,11 +284,11 @@ onUnmounted(() => {
 
 .nav-pill {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
   padding: 0.85em 1.55em;
   font-size: clamp(11px, 0.88vw, 14px);
-  color: #ffffff;
+  color: var(--ink);
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
@@ -298,9 +298,9 @@ onUnmounted(() => {
   transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 }
 .nav-pill:hover {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
 }
 
 /* 44x44 Hamburger */
@@ -309,7 +309,7 @@ onUnmounted(() => {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  border: 1px solid var(--line-strong);
   background: transparent;
   cursor: pointer;
   padding: 0;
@@ -323,7 +323,7 @@ onUnmounted(() => {
   display: block;
   width: 16px;
   height: 1.5px;
-  background: #ffffff;
+  background: var(--ink);
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 .nav-toggle[aria-expanded="true"] span:nth-child(1) {
@@ -360,10 +360,10 @@ onUnmounted(() => {
     gap: 2px;
     min-width: 180px;
     padding: 10px 16px;
-    background: rgba(10, 12, 18, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: color-mix(in srgb, var(--surface-card) 96%, transparent);
+    border: 1px solid var(--line-strong);
     border-radius: 16px;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
+    box-shadow: var(--shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     margin: 0;
@@ -380,7 +380,7 @@ onUnmounted(() => {
     display: block;
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid var(--line);
     width: 100%;
     text-align: center;
   }

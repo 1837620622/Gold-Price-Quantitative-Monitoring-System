@@ -17,15 +17,20 @@ function solarDayIndex(ms) {
   return Math.floor(jd - 2451545 + 0.5);
 }
 
-// 某个日序在给定经纬度的日出、日落；极昼 / 极夜时返回 polar 标记
-export function sunTimesForDay(n, lat, lon) {
+// 某个日序的太阳赤纬与正午凌日时刻（儒略日），日出日落与任一时刻的太阳高度共用
+function solarDayParams(n, lon) {
   const jStar = n - lon / 360; // 经度向东为正：正午提前
   const M = mod(357.5291 + 0.98560028 * jStar, 360) * RAD;
   const C = 1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M);
   const lambda = mod(M / RAD + C + 180 + 102.9372, 360) * RAD;
   const jTransit = 2451545 + jStar + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * lambda);
   const sinDec = Math.sin(lambda) * Math.sin(23.4397 * RAD);
-  const dec = Math.asin(sinDec);
+  return { jTransit, sinDec, dec: Math.asin(sinDec) };
+}
+
+// 某个日序在给定经纬度的日出、日落；极昼 / 极夜时返回 polar 标记
+export function sunTimesForDay(n, lat, lon) {
+  const { jTransit, sinDec, dec } = solarDayParams(n, lon);
   const phi = lat * RAD;
   const cosOmega = (Math.sin(-0.833 * RAD) - Math.sin(phi) * sinDec) / (Math.cos(phi) * Math.cos(dec));
 
@@ -41,28 +46,18 @@ export function sunTimesForDay(n, lat, lon) {
   };
 }
 
-// 判断某一时刻在给定位置是否为白天：取前后各两天的日出日落，找最近一次事件
-export function isDaytimeAt(date, lat, lon) {
-  const ms = date.getTime();
-  const n0 = solarDayIndex(ms);
-  const events = [];
-  let polar = null;
-  for (let n = n0 - 2; n <= n0 + 2; n += 1) {
-    const t = sunTimesForDay(n, lat, lon);
-    if (t.polar) {
-      polar = t.polar;
-      continue;
-    }
-    events.push({ at: t.sunrise, day: true }, { at: t.sunset, day: false });
-  }
-  if (events.length === 0) return polar === 'day';
+// 某一时刻的太阳高度角（度）：用该时刻所在日序的赤纬与凌日时刻求时角，极昼 / 极夜同样适用
+export function solarAltitudeAt(ms, lat, lon) {
+  const { jTransit, dec } = solarDayParams(solarDayIndex(ms), lon);
+  const hourAngle = (ms / DAY_MS + UNIX_JD - jTransit) * 360 * RAD;
+  const phi = lat * RAD;
+  const sinAlt = Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(hourAngle);
+  return Math.asin(sinAlt) / RAD;
+}
 
-  events.sort((a, b) => a.at - b.at);
-  let last = null;
-  for (const e of events) {
-    if (e.at <= ms) last = e;
-  }
-  return last ? last.day : !events[0].day;
+// 判断某一时刻在给定位置是否为白天：太阳高度角高于 -0.833°（与日出日落的定义一致）
+export function isDaytimeAt(date, lat, lon) {
+  return solarAltitudeAt(date.getTime(), lat, lon) > -0.833;
 }
 
 // 指定时区内的当地小时（0–23），时区无效时回退到浏览器本地时间

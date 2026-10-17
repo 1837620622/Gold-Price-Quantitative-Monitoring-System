@@ -217,8 +217,8 @@ const countdownText = computed(() => {
 
 <style scoped>
 .ticker-bar {
-  background: rgba(13, 16, 24, 0.95);
-  border-bottom: 1px solid rgba(232, 199, 125, 0.12);
+  background: color-mix(in srgb, var(--surface-card) 92%, transparent);
+  border-bottom: 1px solid var(--line);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   font-size: 12px;
@@ -266,19 +266,19 @@ const countdownText = computed(() => {
   font-weight: 700;
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--text-2);
 }
 .ticker-tag.cn {
   color: var(--gold-3);
-  background: rgba(232, 199, 125, 0.12);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
 }
 .ticker-tag.intl {
-  color: #7aa2ff;
-  background: rgba(59, 130, 246, 0.12);
+  color: var(--info);
+  background: var(--info-bg);
 }
 .ticker-tag.silver {
-  color: #cbd5e1;
+  color: var(--dim);
 }
 
 .ticker-price {
@@ -303,7 +303,7 @@ const countdownText = computed(() => {
 .ticker-divider {
   width: 1px;
   height: 14px;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
   flex-shrink: 0;
 }
 
@@ -321,26 +321,26 @@ const countdownText = computed(() => {
   height: 26px;
   padding: 0 8px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
   color: var(--text-2);
   font-size: 11px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .tool-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
   color: var(--text);
-  border-color: rgba(232, 199, 125, 0.3);
+  border-color: color-mix(in srgb, var(--gold) 30%, transparent);
 }
 .tool-btn.active {
   color: var(--gold-3);
-  border-color: rgba(232, 199, 125, 0.4);
-  background: rgba(232, 199, 125, 0.08);
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
 }
 .tool-btn.has-alerts {
-  color: #7aa2ff;
-  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--info);
+  border-color: color-mix(in srgb, var(--info) 40%, transparent);
 }
 
 .refresh-control {
@@ -362,7 +362,7 @@ const countdownText = computed(() => {
 }
 .ring-bg {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.1);
+  stroke: color-mix(in srgb, var(--ink) 10%, transparent);
   stroke-width: 2;
 }
 .ring-progress {
@@ -384,8 +384,8 @@ const countdownText = computed(() => {
   height: 26px;
   padding: 0 6px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
   color: var(--text-2);
   font-size: 11px;
   cursor: pointer;
