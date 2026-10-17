@@ -21,6 +21,17 @@
       @alert="showAlerts = true"
     />
 
+    <!-- 00 电影级全景沉浸视界 (PLUME 极致工艺与实盘行情联动) -->
+    <CinematicHero
+      :domestic-price="domestic?.price"
+      :domestic-change="domestic?.changePercent"
+      :intl-price="international?.price"
+      :intl-change="international?.changePercent"
+      :premium-percent="snapshot?.premiumPercent"
+      :quant-score="cnQuant?.signal?.score"
+      @run-ai="runAnalysis"
+    />
+
     <!-- 实时全景跑马灯与快捷控制条 -->
     <GlobalTickerBar
       :snapshot="snapshot"
@@ -50,7 +61,7 @@
       </div>
 
       <!-- 01 行情全景看板 -->
-      <section class="block" aria-labelledby="sec-overview">
+      <section id="sec-overview" class="block" aria-labelledby="sec-overview">
         <div class="section-header">
           <div class="section-title">
             <span class="sec-badge">01</span>
@@ -219,6 +230,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import AppHeader from './components/AppHeader.vue';
+import CinematicHero from './components/CinematicHero.vue';
 import GlobalTickerBar from './components/GlobalTickerBar.vue';
 import PriceCard from './components/PriceCard.vue';
 import AiCard from './components/AiCard.vue';
