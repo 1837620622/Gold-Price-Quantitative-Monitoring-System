@@ -67,12 +67,10 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
     tex.center.set(0.5, 0.5);
     tex.rotation = -Math.PI / 2; // 标签在圆面上正向显示
     faceTextures.push(tex);
-    // 高饱和黄金材质，metalness 调为 0.15，彻底消除金属纯白镜面过曝，让 24K 纯金纹理与浮雕深字鲜明呈现
-    const faceMat = new THREE.MeshStandardMaterial({
+    // 使用 MeshBasicMaterial 直接呈现 100% 精准绘制的 24K 金币机镂纹与浮雕，彻底消除环境图导致的白雾现象
+    const faceMat = new THREE.MeshBasicMaterial({
       map: tex,
-      metalness: 0.15,
-      roughness: 0.32,
-      envMapIntensity: 0.25,
+      toneMapped: false,
     });
     // 圆柱分组：0 侧面，1 顶面，2 底面；顶面朝向观众
     const mesh = new THREE.Mesh(coinGeo, [sideMat, faceMat, faceMat]);
@@ -182,7 +180,7 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
       lastPos[coin.index] = { x, y, scale: s, visible };
     }
 
-    if (draw && (needsRender || !allAsleep(world))) {
+    if (draw) {
       renderer.render(scene, camera);
       needsRender = false;
     }
