@@ -17,7 +17,7 @@ const props = defineProps({
   toggles: { type: Object, default: () => ({}) },
   theme: { type: String, default: 'dark' },
   zoomStart: { type: Number, default: 60 },
-  name: { type: String, default: t('klineChart.candles') },
+  name: { type: String, default: '' },
   loading: { type: Boolean, default: false },
 });
 
@@ -27,7 +27,8 @@ let unmounted = false;
 let resizeObserver = null;
 
 const hasData = computed(() => props.bars.length > 0);
-const ariaLabel = computed(() => t('klineChart.aria', { name: props.name }));
+const displayName = computed(() => props.name || t('klineChart.candles'));
+const ariaLabel = computed(() => t('klineChart.aria', { name: displayName.value }));
 
 // 窗格（pane）按开关动态生成：价格 → 成交量 → 评分 → MACD → RSI → KDJ
 function activePanes() {

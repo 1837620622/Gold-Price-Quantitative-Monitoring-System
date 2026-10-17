@@ -272,6 +272,8 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   // 只更新颜色与贴图，不重建几何体，因此无需重载页面
   function setTheme(mode, baseHex) {
     palette = mode === 'light' ? dayPalette(baseHex) : NIGHT;
+    // 日间以同一张环境贴图提供柔和的环境光；夜间不挂载，保持纯黑调
+    hall.environment = palette === NIGHT ? null : env;
     renderer.setClearColor(palette.base, 1);
     gridMat.color.copy(palette.line);
     for (const letter of letters) {
@@ -293,9 +295,18 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
 
     // 建筑渐显：p 0.16 → 0.45；减少动态时固定为 0.6
     const a = reduced ? 0.6 : smooth(0.16, 0.45, p);
-    for (const { mat, key: tone } of archMats) mat.color.copy(palette.base).lerp(palette[tone], a);
+    // 未点亮时以底色自发光：建筑从背景色渐显，首帧不会出现黑块
+    for (const { mat, key: tone } of archMats) {
+      mat.color.copy(palette.base).lerp(palette[tone], a);
+      mat.emissive.copy(palette.base);
+      mat.emissiveIntensity = 1 - a;
+    }
     barMat.color.copy(palette.base).lerp(GOLD_BAR, a);
+    barMat.emissive.copy(palette.base);
+    barMat.emissiveIntensity = 1 - a;
     barMat.envMapIntensity = a * 1.25;
+    // 日间环境光随建筑渐显（夜间无环境贴图，此项不生效）
+    hall.environmentIntensity = 0.9 * a;
     stripMat.color.copy(palette.base).lerp(palette.light, a * 0.5);
     gridMat.opacity = 0.18 * a;
     ambient.intensity = 0.5 * a;
