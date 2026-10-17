@@ -9,7 +9,7 @@ import { track, declareSource } from '../lib/sources.js';
 import { inRange, isNum, round } from '../lib/util.js';
 
 const NAME = 'Yahoo Finance';
-const SYMBOL = 'XAUUSD=X';
+const SYMBOL = 'GC=F';
 declareSource(NAME, '国际现货校验 / 昨收（副）、国际日K（备）');
 
 function chartResult(json) {

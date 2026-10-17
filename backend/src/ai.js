@@ -283,17 +283,86 @@ export function cleanAiReport(text) {
   return cleaned.trim();
 }
 
+// Kilo AI 公共免密网关（来自 dsh-our-free-model 免费车道，无需 Key）
+export async function callKiloAi(prompt, system, requestedModel = 'kilo-auto/free') {
+  const model = requestedModel === 'kilo-auto-free' ? 'kilo-auto/free'
+    : requestedModel === 'nemotron-3.5' ? 'nvidia/nemotron-3.5-lightning:free'
+    : requestedModel.startsWith('kilo:') ? requestedModel.slice(5)
+    : (requestedModel || 'kilo-auto/free');
+
+  const res = await fetch('https://api.kilo.ai/api/gateway/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'dsh-our-free-model',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 2800,
+      temperature: 0.6,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Kilo AI HTTP ${res.status}: ${errText.slice(0, 100)}`);
+  }
+
+  const json = await res.json();
+  const choice = json?.choices?.[0]?.message;
+  const text = choice?.content || choice?.reasoning || '';
+  const cleaned = cleanAiReport(text);
+  if (!cleaned) throw new Error('Kilo AI 返回内容为空');
+
+  const modelId = json.model || model;
+  return {
+    content: cleaned,
+    modelName: `Kilo AI · ${modelId}`,
+  };
+}
+
+const MODEL_MAP = {
+  // DeepSeek 深度求索
+  'deepseek-r1': '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+  'deepseek-v4-flash': '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+  'deepseek-v3': '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+  // Moonshot AI 月之暗面 (Kimi)
+  'kimi-k3': '@cf/moonshotai/kimi-k2.5',
+  'kimi-k2.5': '@cf/moonshotai/kimi-k2.5',
+  // Zhipu AI 智谱 AI (GLM)
+  'glm-5.3': '@cf/zai-org/glm-4.7-flash',
+  'glm-4.7-flash': '@cf/zai-org/glm-4.7-flash',
+  // Alibaba 阿里千问 (Qwen)
+  'qwen-72b': '@cf/qwen/qwen2.5-72b-instruct',
+  'qwen-14b': '@cf/qwen/qwen2.5-14b-instruct',
+  'qwen-7b': '@cf/qwen/qwen2.5-7b-instruct',
+  // Meta Llama
+  'llama-70b': '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+};
+
+const MODEL_TITLES = {
+  'deepseek-r1': 'DeepSeek-R1 (深度思维链推理)',
+  'deepseek-v4-flash': 'DeepSeek-V4.1 Flash (超高速极速研判)',
+  'deepseek-v3': 'DeepSeek-V3.2 (千亿全能机构旗舰)',
+  'kimi-k3': 'Kimi K3 (200万上下文 · 跨周期推演)',
+  'kimi-k2.5': 'Kimi K2.5 (高阶金融逻辑剖析)',
+  'glm-5.3': 'GLM 5.3 (旗舰高阶金融因子建模)',
+  'glm-4.7-flash': 'GLM 4.7 Flash (极速实时异动预警)',
+  'qwen-72b': 'Qwen 2.5 72B (全能策略大师)',
+  'qwen-14b': 'Qwen 2.5 14B (低延迟均衡型)',
+  'qwen-7b': 'Qwen 2.5 7B (轻量极速)',
+  'llama-70b': 'Llama 3.3 70B (顶尖研报)',
+  'kilo-auto-free': 'Kilo Auto Free (免密公共池)',
+  'nemotron-3.5': 'Nemotron 3.5 Lightning (NVIDIA 免密)',
+};
+
 // Cloudflare Workers AI 内置大模型矩阵（支持指定模型优先 + 智能容灾降级）
 async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system = SYSTEM_PROMPT, lang = 'zh') {
   if (!aiBinding || typeof aiBinding.run !== 'function') throw new Error('Workers AI 未绑定');
-
-  const MODEL_MAP = {
-    'deepseek-r1': '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-    'qwen-72b': '@cf/qwen/qwen2.5-72b-instruct',
-    'llama-70b': '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-    'qwen-14b': '@cf/qwen/qwen2.5-14b-instruct',
-    'qwen-7b': '@cf/qwen/qwen2.5-7b-instruct',
-  };
 
   const candidateModel = MODEL_MAP[requestedModel] || (requestedModel?.startsWith('@cf/') ? requestedModel : null);
 
@@ -311,8 +380,8 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system 
       const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
       const cleaned = cleanAiReport(text);
       if (cleaned && cleaned.length > 20) {
-        const shortName = candidateModel.split('/').pop();
-        return { content: cleaned, modelName: `Workers AI · ${shortName}` };
+        const title = MODEL_TITLES[requestedModel] || candidateModel.split('/').pop();
+        return { content: cleaned, modelName: `Workers AI · ${title}` };
       }
     } catch (e) {
       console.warn(`指定的 Workers AI 模型 ${candidateModel} 失败，启用兜底梯队:`, e.message);
@@ -358,6 +427,16 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system 
 export async function generateAnalysis(env, snapshot, quant, requestedModel = 'auto', lang = 'zh') {
   const prompt = buildPrompt(snapshot, quant, lang);
   const system = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT;
+
+  // 0. 若用户指定了 Kilo AI 免费免密池模型，优先直连公共网关
+  if (requestedModel === 'kilo-auto-free' || requestedModel === 'nemotron-3.5' || requestedModel?.startsWith('kilo:')) {
+    try {
+      const kiloResult = await callKiloAi(prompt, system, requestedModel);
+      return { success: true, analysis: kiloResult.content, model: kiloResult.modelName, timestamp: new Date().toISOString() };
+    } catch (kiloError) {
+      console.warn('指定 Kilo AI 失败，尝试转入 Workers AI 兜底:', kiloError.message);
+    }
+  }
 
   // 1. 首选：Cloudflare Workers AI 原生内置大模型（免 Key、零外部延迟、分级省流）
   if (env?.AI) {
@@ -409,6 +488,14 @@ export async function generateAnalysis(env, snapshot, quant, requestedModel = 'a
     } catch (error) {
       console.error('OpenRouter 失败:', error.message);
     }
+  }
+
+  // 5.5. 备选：Kilo AI 公共免密网关（无需 Key，基于 dsh-our-free-model 免费车道）
+  try {
+    const kiloResult = await callKiloAi(prompt, system, 'kilo-auto/free');
+    return { success: true, analysis: kiloResult.content, model: kiloResult.modelName, timestamp: new Date().toISOString() };
+  } catch (kiloFallbackErr) {
+    console.warn('Kilo AI 兜底失败，转入规则引擎:', kiloFallbackErr.message);
   }
 
   // 6. 无缝降级：专业规则引擎摘要（零用量消耗、100% 高可用）

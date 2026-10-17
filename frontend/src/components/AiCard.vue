@@ -13,12 +13,18 @@
       </div>
     </header>
 
-    <!-- 可选模型下拉选择器（金融终端风格） -->
+    <!-- 可选模型下拉选择器（按上游厂商分组与新建栏目） -->
     <div class="model-select-group">
-      <label class="select-label" for="model-selector">
-        <span class="label-dot"></span>
-        <span>{{ t('aiCard.modelLabel') }}</span>
-      </label>
+      <div class="select-header">
+        <label class="select-label" for="model-selector">
+          <span class="label-dot"></span>
+          <span>{{ t('aiCard.modelLabel') }}</span>
+        </label>
+        <span class="upstream-badge">
+          <span class="upstream-dot"></span>
+          <span>{{ currentModelUpstream }}</span>
+        </span>
+      </div>
       <div class="select-wrapper">
         <select
           id="model-selector"
@@ -27,9 +33,11 @@
           :disabled="state === 'loading'"
           @change="onModelChange"
         >
-          <option v-for="m in models" :key="m.id" :value="m.id">
-            {{ m.label }}
-          </option>
+          <optgroup v-for="group in modelGroups" :key="group.id" :label="group.name">
+            <option v-for="m in group.models" :key="m.id" :value="m.id">
+              {{ m.label }}
+            </option>
+          </optgroup>
         </select>
         <span class="select-arrow" aria-hidden="true">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -94,29 +102,80 @@ const props = defineProps({
 
 const emit = defineEmits(['run']);
 
-// 模型名称与说明按当前语言取值；short 为英文模型名，智能调度的简称按语言翻译
-const MODELS = [
-  { id: 'deepseek-r1', labelKey: 'aiCard.model.deepseek', short: 'DeepSeek-R1', descKey: 'aiCard.model.deepseekDesc' },
-  { id: 'qwen-72b', labelKey: 'aiCard.model.qwen72', short: 'Qwen 72B', descKey: 'aiCard.model.qwen72Desc' },
-  { id: 'llama-70b', labelKey: 'aiCard.model.llama', short: 'Llama 70B', descKey: 'aiCard.model.llamaDesc' },
-  { id: 'qwen-14b', labelKey: 'aiCard.model.qwen14', short: 'Qwen 14B', descKey: 'aiCard.model.qwen14Desc' },
-  { id: 'qwen-7b', labelKey: 'aiCard.model.qwen7', short: 'Qwen 7B', descKey: 'aiCard.model.qwen7Desc' },
-  { id: 'auto', labelKey: 'aiCard.model.auto', shortKey: 'aiCard.model.autoShort', descKey: 'aiCard.model.autoDesc' },
+// 模型按上游厂商分组配置（按语言动态获取名称与说明）
+const RAW_GROUPS = [
+  {
+    id: 'deepseek',
+    nameKey: 'aiCard.group.deepseek',
+    models: [
+      { id: 'deepseek-r1', labelKey: 'aiCard.model.deepseek', short: 'DeepSeek-R1', descKey: 'aiCard.model.deepseekDesc' },
+      { id: 'deepseek-v4-flash', labelKey: 'aiCard.model.deepseekV4', short: 'DeepSeek-V4.1', descKey: 'aiCard.model.deepseekV4Desc' },
+      { id: 'deepseek-v3', labelKey: 'aiCard.model.deepseekV3', short: 'DeepSeek-V3.2', descKey: 'aiCard.model.deepseekV3Desc' },
+    ],
+  },
+  {
+    id: 'kimi',
+    nameKey: 'aiCard.group.kimi',
+    models: [
+      { id: 'kimi-k3', labelKey: 'aiCard.model.kimiK3', short: 'Kimi K3', descKey: 'aiCard.model.kimiK3Desc' },
+      { id: 'kimi-k2.5', labelKey: 'aiCard.model.kimiK25', short: 'Kimi K2.5', descKey: 'aiCard.model.kimiK25Desc' },
+    ],
+  },
+  {
+    id: 'glm',
+    nameKey: 'aiCard.group.glm',
+    models: [
+      { id: 'glm-5.3', labelKey: 'aiCard.model.glm53', short: 'GLM 5.3', descKey: 'aiCard.model.glm53Desc' },
+      { id: 'glm-4.7-flash', labelKey: 'aiCard.model.glmFlash', short: 'GLM 4.7 Flash', descKey: 'aiCard.model.glmFlashDesc' },
+    ],
+  },
+  {
+    id: 'qwen',
+    nameKey: 'aiCard.group.qwen',
+    models: [
+      { id: 'qwen-72b', labelKey: 'aiCard.model.qwen72', short: 'Qwen 72B', descKey: 'aiCard.model.qwen72Desc' },
+      { id: 'qwen-14b', labelKey: 'aiCard.model.qwen14', short: 'Qwen 14B', descKey: 'aiCard.model.qwen14Desc' },
+    ],
+  },
+  {
+    id: 'kilo',
+    nameKey: 'aiCard.group.kilo',
+    models: [
+      { id: 'kilo-auto-free', labelKey: 'aiCard.model.kiloAuto', short: 'Kilo Free', descKey: 'aiCard.model.kiloAutoDesc' },
+      { id: 'nemotron-3.5', labelKey: 'aiCard.model.nemotron', short: 'Nemotron', descKey: 'aiCard.model.nemotronDesc' },
+    ],
+  },
+  {
+    id: 'other',
+    nameKey: 'aiCard.group.other',
+    models: [
+      { id: 'llama-70b', labelKey: 'aiCard.model.llama', short: 'Llama 70B', descKey: 'aiCard.model.llamaDesc' },
+      { id: 'auto', labelKey: 'aiCard.model.auto', shortKey: 'aiCard.model.autoShort', descKey: 'aiCard.model.autoDesc' },
+    ],
+  },
 ];
-const models = computed(() =>
-  MODELS.map((m) => ({
-    ...m,
-    label: t(m.labelKey),
-    desc: t(m.descKey),
-    short: m.shortKey ? t(m.shortKey) : m.short,
+
+const modelGroups = computed(() =>
+  RAW_GROUPS.map((g) => ({
+    id: g.id,
+    name: t(g.nameKey),
+    models: g.models.map((m) => ({
+      ...m,
+      label: t(m.labelKey),
+      desc: t(m.descKey),
+      short: m.shortKey ? t(m.shortKey) : m.short,
+      upstream: t(g.nameKey),
+    })),
   }))
 );
+
+const allModels = computed(() => modelGroups.value.flatMap((g) => g.models));
 
 const selectedModel = ref('deepseek-r1');
 
 onMounted(() => {
   const saved = localStorage.getItem('gold_ai_model');
-  if (saved && MODELS.some((m) => m.id === saved)) {
+  if (saved && allModels.value.some((m) => m.id === saved)) {
     selectedModel.value = saved;
   }
 });
@@ -126,13 +185,18 @@ function onModelChange() {
 }
 
 const currentModelDesc = computed(() => {
-  const found = models.value.find((m) => m.id === selectedModel.value);
+  const found = allModels.value.find((m) => m.id === selectedModel.value);
   return found ? found.desc : t('aiCard.reportTitle');
 });
 
 const currentModelShortName = computed(() => {
-  const found = models.value.find((m) => m.id === selectedModel.value);
+  const found = allModels.value.find((m) => m.id === selectedModel.value);
   return found ? found.short : t('aiCard.modelBadge');
+});
+
+const currentModelUpstream = computed(() => {
+  const found = allModels.value.find((m) => m.id === selectedModel.value);
+  return found ? found.upstream : 'Cloudflare Workers AI';
 });
 
 const statusText = computed(() => {
@@ -218,6 +282,34 @@ function handleRun() {
 
 .model-select-group:focus-within {
   border-color: var(--gold);
+}
+
+.select-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.upstream-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--gold-3);
+  background: rgba(232, 199, 125, 0.1);
+  border: 1px solid rgba(232, 199, 125, 0.22);
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.upstream-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
 }
 
 .select-label {

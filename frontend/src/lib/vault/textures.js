@@ -96,6 +96,19 @@ export function paintCoinFace(label, size = 512, canvas) {
   ctx.arc(r, r, r * 0.82, 0, Math.PI * 2);
   ctx.stroke();
 
+  // 4.5 外沿精铸滚花齿纹（48 齿 Milled Reeded Edge）
+  ctx.save();
+  ctx.translate(r, r);
+  ctx.fillStyle = 'rgba(120, 53, 15, 0.42)';
+  const teeth = 48;
+  const toothWidth = size * 0.012;
+  const toothDepth = size * 0.024;
+  for (let i = 0; i < teeth; i++) {
+    ctx.rotate((Math.PI * 2) / teeth);
+    ctx.fillRect(r * 0.95 - toothDepth, -toothWidth / 2, toothDepth, toothWidth);
+  }
+  ctx.restore();
+
   // 5. 压印文字与阴影（高对比立体雕刻感）
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

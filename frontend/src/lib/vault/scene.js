@@ -288,10 +288,10 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   function layoutHero() {
     heroPerPx = (2 * Math.tan(THREE.MathUtils.degToRad(HERO_FOV / 2)) * HERO_DIST) / height;
     const cx = mobile ? width * 0.5 : width * 0.66;
-    const cy = mobile ? height * 0.49 : height * 0.44;
+    const cy = mobile ? height * 0.40 : height * 0.44;
     heroBaseX = (cx - width / 2) * heroPerPx;
     heroBaseY = (height / 2 - cy) * heroPerPx;
-    const targetPx = mobile ? Math.min(width * 0.5, height * 0.24) : Math.min(width * 0.34, height * 0.5);
+    const targetPx = mobile ? Math.min(width * 0.48, height * 0.19) : Math.min(width * 0.34, height * 0.5);
     heroBaseScale = (targetPx * heroPerPx) / 2.2;
   }
 
@@ -399,9 +399,9 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
       -2.5 * k
     );
     ingotGroup.rotation.set(
-      look.y * 0.1,
-      0.32 * Math.sin(time * 0.35) + look.x * 0.2 - 1.4 * Math.PI * k,
-      -look.x * 0.018
+      0.10 + look.y * 0.08,
+      0.30 * Math.sin(time * 0.35) + look.x * 0.18 - 1.4 * Math.PI * k,
+      0.03 - look.x * 0.016
     );
 
     // 建筑、远墙与投影字都不可见时跳过大厅绘制（首屏常态），只绘制金条

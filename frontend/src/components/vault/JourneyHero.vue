@@ -276,7 +276,7 @@ function sizeAll() {
 
 function coinStartXs() {
   const w = stageEl.value?.clientWidth ?? 1440;
-  const fractions = mobile ? [0.3, 0.5, 0.7] : [0.36, 0.52, 0.68];
+  const fractions = mobile ? [0.20, 0.50, 0.80] : [0.36, 0.52, 0.68];
   return fractions.map((f) => f * w);
 }
 
@@ -424,8 +424,8 @@ onMounted(async () => {
     applyTheme();
     coins = createCoinLayer(coinEl.value, {
       labels: COIN_LABELS,
-      radius: mobile ? 36 : 52,
-      thickness: 12,
+      radius: mobile ? 28 : 52,
+      thickness: mobile ? 7 : 12,
     });
     sizeAll();
     coins.spawn(coinStartXs());
@@ -703,34 +703,59 @@ onBeforeUnmount(() => {
   }
 
   .eyebrow {
-    left: 28px;
-    top: max(4vh, 84px);
-    max-width: 200px;
-    line-height: 1.5;
+    left: 18px;
+    top: clamp(68px, 9vh, 80px);
+    max-width: 260px;
+    line-height: 1.4;
+    font-size: 11px;
   }
 
   .title {
-    left: 22px;
-    top: 15vh;
-    font-size: clamp(96px, 30vw, 170px);
+    left: 16px;
+    top: clamp(92px, 12.2vh, 112px);
+    font-size: clamp(48px, 14vw, 70px);
+    line-height: 0.92;
   }
 
   .sub {
-    left: 28px;
-    top: 56vh;
-    font-size: 14px;
+    left: 16px;
+    right: 16px;
+    top: clamp(400px, 49vh, 440px);
+    max-width: calc(100% - 32px);
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 8px 12px;
   }
 
   .live {
-    right: 20px;
-    top: 11vh;
+    left: 16px;
+    right: 16px;
+    top: clamp(208px, 25.5vh, 238px);
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .live-row {
+    justify-items: center;
+  }
+
+  .live dt {
+    font-size: 10px;
+  }
+
+  .live dd {
+    font-size: clamp(15px, 4.2vw, 19px);
   }
 
   .footer-line {
-    left: 22px;
-    bottom: 6vh;
-    font-size: clamp(60px, 19vw, 120px);
-    line-height: 0.9;
+    left: 16px;
+    bottom: clamp(16px, 3vh, 28px);
+    font-size: clamp(42px, 13vw, 70px);
+    line-height: 0.92;
     pointer-events: auto;
     touch-action: pan-y;
   }

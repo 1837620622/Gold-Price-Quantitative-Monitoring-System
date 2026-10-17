@@ -20,7 +20,7 @@ export const SOURCE_URLS = {
 };
 
 export const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-export const FETCH_TIMEOUT_MS = 3000;
+export const FETCH_TIMEOUT_MS = 7000;
 export const AI_TIMEOUT_MS = 30000;
 export const OZ_TO_GRAM = 31.1035;
 

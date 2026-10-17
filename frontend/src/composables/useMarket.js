@@ -39,11 +39,23 @@ function describe(data) {
   return notes.length ? { status: 'partial', message: notes.join(t('marketLoad.noteSep')) } : { status: 'live', message: '' };
 }
 
+const STORAGE_SNAPSHOT_KEY = 'gold_monitor_last_snapshot';
+
+function getCachedSnapshot() {
+  try {
+    const raw = localStorage.getItem(STORAGE_SNAPSHOT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useMarket() {
-  const snapshot = ref(null);
-  const status = ref('loading');
+  const cached = getCachedSnapshot();
+  const snapshot = ref(cached);
+  const status = ref(cached ? 'live' : 'loading');
   const message = ref('');
-  const updatedAt = ref(null);
+  const updatedAt = ref(cached ? new Date() : null);
   const latency = ref(null);
   const now = ref(Date.now());
 
@@ -94,6 +106,9 @@ export function useMarket() {
           prevDomesticPrice = newPrice;
 
           snapshot.value = data;
+          try {
+            localStorage.setItem(STORAGE_SNAPSHOT_KEY, JSON.stringify(data));
+          } catch {}
           updatedAt.value = new Date();
           countdown.value = pollInterval.value;
           const state = describe(data);

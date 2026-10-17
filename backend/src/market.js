@@ -282,7 +282,7 @@ export const getDomesticKline = (days) =>
     }
   });
 
-// 国际日K：新浪主通道（高可用不限IP），Stooq 为备，Yahoo 为兜底
+// 国际日K：新浪主通道（高可用不限IP），Yahoo（GC=F）为备，Stooq 为兜底
 export const getGoldHistory = (days) =>
   memo(`hist-xau:${days}`, TTL.history, async () => {
     try {
@@ -290,12 +290,12 @@ export const getGoldHistory = (days) =>
     } catch (sinaErr) {
       console.warn('新浪国际日K不可用，尝试备用源:', sinaErr.message);
       try {
-        return (await fetchStooqDaily('xauusd')).slice(-days);
-      } catch (stooqError) {
+        return (await fetchYahooDaily(days)).slice(-days);
+      } catch (yahooError) {
         try {
-          return (await fetchYahooDaily(days)).slice(-days);
-        } catch (yahooError) {
-          throw new Error(`国际金价历史不可用（Sina: ${sinaErr.message}；Stooq: ${stooqError.message}；Yahoo: ${yahooError.message}）`);
+          return (await fetchStooqDaily('xauusd')).slice(-days);
+        } catch (stooqError) {
+          throw new Error(`国际金价历史不可用（Sina: ${sinaErr.message}；Yahoo: ${yahooError.message}；Stooq: ${stooqError.message}）`);
         }
       }
     }
