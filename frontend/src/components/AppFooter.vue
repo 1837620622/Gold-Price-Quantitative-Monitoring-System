@@ -139,7 +139,13 @@ const showBackTop = ref(false);
 
 function handleScroll() {
   if (typeof window !== 'undefined') {
-    showBackTop.value = window.scrollY > 320;
+    const ws = document.getElementById('workspace');
+    if (ws) {
+      const rect = ws.getBoundingClientRect();
+      showBackTop.value = rect.top <= 160;
+    } else {
+      showBackTop.value = window.scrollY > 1500;
+    }
   }
 }
 

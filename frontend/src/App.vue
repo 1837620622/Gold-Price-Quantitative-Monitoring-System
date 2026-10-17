@@ -25,6 +25,7 @@
     <PlumeCinematicTrack
       :domestic-price="domestic?.price"
       :intl-price="international?.price"
+      :premium-rate="snapshot?.premiumPercent"
     />
 
     <!-- 第五部分：实盘量化投研终端工作台 (#workspace) -->
@@ -192,8 +193,13 @@
         </div>
 
         <div class="tools-grid">
-          <!-- 黄金计算器 -->
-          <GoldCalculator :domestic-price="domestic?.price" />
+          <!-- 黄金持仓与跨市套利精算器 -->
+          <GoldCalculator
+            :domestic-price="domestic?.price"
+            :intl-price="international?.price"
+            :fx-rate="snapshot?.fx?.usdCny"
+            :premium-percent="snapshot?.premiumPercent"
+          />
           <!-- 52周区间与多周期收益率阶梯 -->
           <HistoricalRange :bars="cnQuant?.bars" :current-price="domestic?.price" />
         </div>

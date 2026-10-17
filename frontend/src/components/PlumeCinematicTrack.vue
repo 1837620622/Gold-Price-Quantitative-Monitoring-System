@@ -1,61 +1,54 @@
 <template>
   <div class="plume-cinematic-track">
+    <!-- 全局全景动态黄金粒子与量子能量波背景画布 -->
+    <canvas ref="bgCanvasRef" class="global-gold-canvas"></canvas>
+
     <!-- ============================================================
          SECTION 1 — HERO (#hero, class "hero panel")
          ============================================================ -->
     <section class="hero panel" id="hero">
-      <video
-        ref="heroVideoRef"
-        class="hero-video video-cover"
-        src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/0a285ef6-17e3-443b-a3e3-bf043fcf6952.mp4"
-        muted
-        playsinline
-        autoplay
-        loop
-        preload="auto"
-      ></video>
-
       <div class="hero-content panel-content">
         <!-- 主标题（两行剪裁字） -->
         <h1 class="display h-title">
-          <span class="clip"><span>Light as</span></span>
-          <span class="clip"><span>a Feather.</span></span>
+          <span class="clip"><span>Pure as</span></span>
+          <span class="clip"><span>Au 999.9</span></span>
         </h1>
 
         <!-- 右上材质/行情锁定位 -->
         <div class="h-mats rv">
-          <div class="h-mat-line"><span class="mat-pink">Titanium core.</span></div>
+          <div class="h-mat-line"><span class="mat-pink">SGE Physical Bullion.</span></div>
           <div class="h-mat-line">
-            <span class="mat-blue">Steel</span>
-            <span class="mat-pink"> outer Layer.</span>
+            <span class="mat-blue">London Spot</span>
+            <span class="mat-pink"> XAU/USD.</span>
           </div>
           <div v-if="domesticPrice" class="h-mat-quote">
             <span class="quote-gold">AU9999 ¥{{ fmt(domesticPrice) }}</span>
             <span class="quote-sep">/</span>
             <span class="quote-intl">${{ fmt(intlPrice) }}</span>
+            <span v-if="premiumRate" class="quote-premium">({{ premiumRate >= 0 ? '+' : '' }}{{ premiumRate }}%)</span>
           </div>
         </div>
 
         <!-- 第二标题 -->
         <h2 class="display h-strong">
-          <span class="clip"><span>Strong by</span></span>
+          <span class="clip"><span>Quant by</span></span>
           <span class="clip"><span>Design</span></span>
         </h2>
 
         <!-- 模型标识 -->
         <p class="body-sm h-model rv">
-          Demonstrated model —<br>
-          “Plume OnlyMetal 001”
+          Demonstrated Asset —<br>
+          “AU9999 / XAU Institutional Matrix v2.0”
         </p>
 
         <!-- 文案 1 -->
         <p class="body-sm h-copy-1 rv">
-          Designed to feel weightless, PLUME reduces mass to the minimum necessary for control. The blade moves effortlessly, leaving only precision in its wake.
+          Engineered for institutional precision, Gold Monitor eliminates execution latency and cross-border basis spread friction. The quantitative algorithms move effortlessly across Shanghai and London, leaving pure trading edge in their wake.
         </p>
 
         <!-- 文案 2 -->
         <p class="body-sm h-copy-2 rv">
-          A titanium core forms the structural backbone of the knife, delivering exceptional rigidity and durability without adding unnecessary weight.
+          A physical 99.99% gold bullion backing forms the immutable backbone, reinforced by 12 quantitative factors, dual-source tick cross-checks, and AI scenario deductions without emotional bias.
         </p>
 
         <!-- 探索按钮 -->
@@ -64,7 +57,7 @@
           type="button"
           @click="scrollTo('#recipe')"
         >
-          Scroll to explore
+          Scroll to explore · 深入核心量化
         </button>
       </div>
     </section>
@@ -73,37 +66,28 @@
          SECTION 2 — RECIPE (#recipe, class "recipe panel")
          ============================================================ -->
     <section class="recipe panel" id="recipe">
-      <video
-        ref="recipeVideoRef"
-        class="recipe-video video-cover"
-        src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/ddcebad8-6b75-40e2-b30e-83035b3f4d26.mp4"
-        muted
-        playsinline
-        preload="auto"
-      ></video>
-
       <div class="recipe-content panel-content">
         <h2 class="display r-title">
           <span class="clip"><span>Recipe for</span></span>
-          <span class="clip"><span class="grad-text">Lightness</span></span>
+          <span class="clip"><span class="grad-text">Alpha Edge</span></span>
         </h2>
 
         <p class="body-sm r-lede rv">
-          Every detail is engineered to remove excess mass while preserving strength, balance, and control.
+          Every quantitative factor and data feed is engineered to eliminate noise while preserving multi-market arbitrage precision and risk management.
         </p>
 
         <div class="callout co-steel">
-          <h3 class="rv">Steel Outer Layer</h3>
+          <h3 class="rv">Shanghai Physical Core</h3>
           <p class="body-sm rv">
-            Outer steel layers provide cutting performance, edge retention, and protection against wear and corrosion.
+            Physical bullion liquidity on the Shanghai Gold Exchange (AU9999), pricing renminbi purchasing power parity and genuine domestic sovereign reserve anchors.
           </p>
           <span class="co-line"></span>
         </div>
 
         <div class="callout co-core">
-          <h3 class="rv">Titanium Core</h3>
+          <h3 class="rv">London Spot Matrix</h3>
           <p class="body-sm rv">
-            A lightweight titanium layer runs through the center of the blade, absorbing stress while maintaining structural stability.
+            Global benchmark spot gold (XAU/USD), pricing international macro shifts, real US Treasury yields, and systemic liquidity shocks.
           </p>
           <span class="co-line"></span>
         </div>
@@ -115,68 +99,38 @@
          ============================================================ -->
     <section class="adv" id="adv" ref="advSectionRef">
       <div class="adv-stage" ref="advStageRef">
-        <video
-          ref="advVideoRef"
-          class="adv-video"
-          src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/5ce34dc5-db43-4b33-9cd0-82d9da44bf96.mp4"
-          muted
-          playsinline
-          preload="auto"
-        ></video>
+        <!-- 核心 3D 黄金金条 WebGL 渲染舞台 -->
+        <canvas ref="adv3dCanvasRef" class="adv-3d-canvas"></canvas>
 
-        <div class="adv-shots">
-          <img
-            ref="shot1Ref"
-            class="adv-shot"
-            id="shot1"
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260922_235551_d79382b3-319e-46ee-9be7-c434921ef3c7.png"
-            alt="PLUME knife, skeletonised steel body"
-          >
-          <img
-            ref="shot2Ref"
-            class="adv-shot"
-            id="shot2"
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260922_235605_60056fc4-aca1-4e44-8b37-84cdd87761d0.png"
-            alt="PLUME knife in profile"
-          >
-          <img
-            ref="shot3Ref"
-            class="adv-shot"
-            id="shot3"
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260923_002256_436731d2-c211-48a2-9793-a6c0be6d7906.png"
-            alt="PLUME knife, blackened finish"
-          >
-        </div>
-
-        <p class="adv-label"><span class="grad-text">Undeniable advantages</span></p>
+        <p class="adv-label"><span class="grad-text">Undeniable advantages · 核心量化优势</span></p>
 
         <div class="adv-slide" data-slide="0">
           <div class="adv-head">
             <div class="line l1" data-text="Structural"></div>
-            <div class="line l2" data-text="Lightness"></div>
+            <div class="line l2" data-text="Purity"></div>
           </div>
           <div class="adv-copy">
-            <p class="body-sm">Material is reduced at a structural level, lowering weight without sacrificing rigidity or stability.</p>
+            <p class="body-sm">Physical Au999.9 sovereign bullion backing with sub-second tick feeds, eliminating counterparty friction and phantom spread noise.</p>
           </div>
         </div>
 
         <div class="adv-slide" data-slide="1">
           <div class="adv-head">
-            <div class="line l1" data-text="Balanced"></div>
-            <div class="line l2" data-text="Geometry"></div>
+            <div class="line l1" data-text="Cross-Market"></div>
+            <div class="line l2" data-text="Arbitrage"></div>
           </div>
           <div class="adv-copy">
-            <p class="body-sm">Every curve and angle distributes mass evenly, ensuring control, balance, and predictable handling.</p>
+            <p class="body-sm">Real-time Shanghai vs London basis tracking, Z-score spread anomaly detection, and automated non-deliverable risk-neutral parity locks.</p>
           </div>
         </div>
 
         <div class="adv-slide" data-slide="2">
           <div class="adv-head">
-            <div class="line l1" data-text="Controlled"></div>
-            <div class="line l2" data-text="Edge"></div>
+            <div class="line l1" data-text="12-Factor"></div>
+            <div class="line l2" data-text="Convergence"></div>
           </div>
           <div class="adv-copy">
-            <p class="body-sm">The cutting edge is tuned for precision, maintaining sharpness while avoiding unnecessary material mass.</p>
+            <p class="body-sm">Multi-frequency trend, momentum, volatility, and volume indicators synchronized with DeepSeek-R1 deep reasoning AI game-theoretic models.</p>
           </div>
         </div>
       </div>
@@ -186,16 +140,6 @@
          SECTION 4 — ESSENTIALS (#ess, class "ess panel")
          ============================================================ -->
     <section class="ess panel" id="ess">
-      <video
-        ref="essVideoRef"
-        class="ess-video video-cover"
-        src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/8f758ee6-5736-4b37-9c66-db8e59a1f154.mp4"
-        muted
-        loop
-        playsinline
-        preload="auto"
-      ></video>
-
       <div class="ess-content panel-content">
         <h2 class="display e-title">
           <span class="clip"><span>Only what</span></span>
@@ -203,7 +147,7 @@
         </h2>
 
         <p class="body-sm e-lede rv">
-          Stripped of excess, refined to essentials. PLUME is engineered where every gram, angle, and surface serves a purpose.
+          Stripped of speculative noise, refined to mathematical conviction. Engineered where every tick, factor, and basis point serves a purpose.
         </p>
 
         <button
@@ -211,7 +155,7 @@
           type="button"
           @click="scrollTo('#workspace')"
         >
-          View Full Specification & Live Terminal
+          Enter Institutional Quantitative Terminal · 进入量化投研工作台
         </button>
       </div>
     </section>
@@ -220,21 +164,18 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import * as THREE from 'three';
 
 const props = defineProps({
   domesticPrice: { type: Number, default: null },
   intlPrice: { type: Number, default: null },
+  premiumRate: { type: Number, default: 0.20 },
 });
 
-const heroVideoRef = ref(null);
-const recipeVideoRef = ref(null);
-const essVideoRef = ref(null);
+const bgCanvasRef = ref(null);
 const advSectionRef = ref(null);
 const advStageRef = ref(null);
-const advVideoRef = ref(null);
-const shot1Ref = ref(null);
-const shot2Ref = ref(null);
-const shot3Ref = ref(null);
+const adv3dCanvasRef = ref(null);
 
 function fmt(v) {
   return typeof v === 'number' && Number.isFinite(v) ? v.toFixed(2) : '--';
@@ -249,12 +190,311 @@ function scrollTo(selector) {
 
 let rafId = null;
 let advObserver = null;
-let heroObserver = null;
+let bgAnimId = null;
+
+// Three.js 3D 黄金金条系统变量
+let threeRenderer = null;
+let threeScene = null;
+let threeCamera = null;
+let goldIngotMesh = null;
+let sparklePoints = null;
+let mouseX = 0.5;
+let mouseY = 0.5;
+let currentRotX = 0.38;
+let currentRotY = 0.65;
+let currentRotZ = 0.12;
+let targetRotX = 0.38;
+let targetRotY = 0.65;
+let targetRotZ = 0.12;
+let currentScale = 1.0;
+let targetScale = 1.0;
+
+// 创建经典梯形倒角 1000g 金条几何体
+function createGoldIngotGeometry() {
+  const shape = new THREE.Shape();
+  const w = 1.45;
+  const l = 3.65;
+  const r = 0.14;
+
+  shape.moveTo(-l / 2 + r, -w / 2);
+  shape.lineTo(l / 2 - r, -w / 2);
+  shape.quadraticCurveTo(l / 2, -w / 2, l / 2, -w / 2 + r);
+  shape.lineTo(l / 2, w / 2 - r);
+  shape.quadraticCurveTo(l / 2, w / 2, l / 2 - r, w / 2);
+  shape.lineTo(-l / 2 + r, w / 2);
+  shape.quadraticCurveTo(-l / 2, w / 2, -l / 2, w / 2 - r);
+  shape.lineTo(-l / 2, -w / 2 + r);
+  shape.quadraticCurveTo(-l / 2, -w / 2, -l / 2 + r, -w / 2);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: 0.72,
+    bevelEnabled: true,
+    bevelThickness: 0.1,
+    bevelSize: 0.08,
+    bevelOffset: 0,
+    bevelSegments: 4,
+  };
+
+  const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  geom.center();
+
+  // 金条经典上窄下宽梯形放样 (Trapezoidal Ingot Draft Angle)
+  const pos = geom.attributes.position;
+  const depthTotal = 0.72;
+  for (let i = 0; i < pos.count; i++) {
+    const z = pos.getZ(i);
+    const taper = 1.0 - (z / depthTotal) * 0.16;
+    pos.setX(i, pos.getX(i) * taper);
+    pos.setY(i, pos.getY(i) * taper);
+  }
+  geom.computeVertexNormals();
+  return geom;
+}
+
+// 创建高精度激光微刻质感纹理（印压：SGE、AU 999.9、FINE GOLD 1000g）
+function createGoldEngravingTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+
+  // 金属底色渐变
+  const grad = ctx.createLinearGradient(0, 0, 1024, 512);
+  grad.addColorStop(0, '#fef08a');
+  grad.addColorStop(0.25, '#fbbf24');
+  grad.addColorStop(0.55, '#f59e0b');
+  grad.addColorStop(0.85, '#d97706');
+  grad.addColorStop(1, '#b45309');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // 细腻拉丝金属微噪
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < 512; y += 3) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(1024, y);
+    ctx.stroke();
+  }
+
+  // 铸造凹凸边框
+  ctx.strokeStyle = 'rgba(120, 55, 5, 0.55)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(32, 32, 960, 448);
+  ctx.strokeRect(42, 42, 940, 428);
+
+  // 四角金印防伪角花
+  ctx.fillStyle = 'rgba(110, 50, 5, 0.7)';
+  ctx.fillRect(48, 48, 16, 16);
+  ctx.fillRect(960, 48, 16, 16);
+  ctx.fillRect(48, 448, 16, 16);
+  ctx.fillRect(960, 448, 16, 16);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // 1. 上标：上海黄金交易所
+  ctx.font = '600 24px "Inter", sans-serif';
+  ctx.fillStyle = 'rgba(95, 45, 5, 0.75)';
+  ctx.fillText('SHANGHAI GOLD EXCHANGE · SGE PHYSICAL ANCHOR', 512, 100);
+
+  // 2. 主标：AU 999.9 (宏伟粗衬线)
+  ctx.font = '900 86px "Archivo", "Inter", sans-serif';
+  ctx.fillStyle = 'rgba(80, 35, 5, 0.9)';
+  ctx.fillText('AU 999.9', 512, 215);
+
+  // 3. 副标：FINE GOLD 1000g
+  ctx.font = '700 32px "Inter", sans-serif';
+  ctx.fillStyle = 'rgba(95, 45, 5, 0.8)';
+  ctx.fillText('FINE GOLD 1000g · NET PURITY 99.99%', 512, 305);
+
+  // 4. 底标：验金师印章与量化序列号
+  ctx.font = '500 20px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(105, 50, 5, 0.65)';
+  ctx.fillText('MELTER ASSAYER · NO. 2026-QUANT-ALPHA-001', 512, 385);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.anisotropy = 8;
+  return tex;
+}
+
+// 初始化 3D 黄金金条展示场景
+function initThreeGoldScene() {
+  const canvas = adv3dCanvasRef.value;
+  if (!canvas) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const width = rect.width || window.innerWidth;
+  const height = rect.height || window.innerHeight;
+
+  threeScene = new THREE.Scene();
+  threeCamera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+  threeCamera.position.set(0, 0, 7.2);
+
+  threeRenderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance',
+  });
+  threeRenderer.setSize(width, height, false);
+  threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+  threeRenderer.toneMappingExposure = 1.25;
+
+  // 3D 金条材质
+  const engravingTex = createGoldEngravingTexture();
+  const goldMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0xf5b835,
+    emissive: 0x241400,
+    metalness: 0.96,
+    roughness: 0.16,
+    clearcoat: 0.5,
+    clearcoatRoughness: 0.1,
+    map: engravingTex,
+    reflectivity: 0.96,
+  });
+
+  const geom = createGoldIngotGeometry();
+  goldIngotMesh = new THREE.Mesh(geom, goldMaterial);
+  goldIngotMesh.castShadow = true;
+  goldIngotMesh.receiveShadow = true;
+  threeScene.add(goldIngotMesh);
+
+  // 3D 悬浮金尘粒子系统 (160 颗闪耀微粒)
+  const particleCount = 160;
+  const particleGeom = new THREE.BufferGeometry();
+  const posArray = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    posArray[i] = (Math.random() - 0.5) * 8.5;
+    posArray[i + 1] = (Math.random() - 0.5) * 6.5;
+    posArray[i + 2] = (Math.random() - 0.5) * 4.5;
+  }
+  particleGeom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+  const particleMat = new THREE.PointsMaterial({
+    size: 0.045,
+    color: 0xfde047,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending,
+  });
+  sparklePoints = new THREE.Points(particleGeom, particleMat);
+  threeScene.add(sparklePoints);
+
+  // 专业影棚级照明系统 (金黄主光 + 极客蓝边缘光 + 紫罗兰漫反射)
+  const keyLight = new THREE.DirectionalLight(0xfffae8, 3.2);
+  keyLight.position.set(4.5, 5.0, 5.0);
+  threeScene.add(keyLight);
+
+  const rimBlueLight = new THREE.DirectionalLight(0x38bdf8, 2.6);
+  rimBlueLight.position.set(-5.5, 2.0, -2.5);
+  threeScene.add(rimBlueLight);
+
+  const fillPurpleLight = new THREE.DirectionalLight(0xa855f7, 1.8);
+  fillPurpleLight.position.set(0.5, -4.5, 3.0);
+  threeScene.add(fillPurpleLight);
+
+  const ambient = new THREE.AmbientLight(0x281c0f, 1.2);
+  threeScene.add(ambient);
+
+  // 窗口重置自适应
+  function onResize() {
+    if (!canvas || !threeRenderer || !threeCamera) return;
+    const r = canvas.getBoundingClientRect();
+    const w = r.width || window.innerWidth;
+    const h = r.height || window.innerHeight;
+    threeCamera.aspect = w / h;
+    threeCamera.updateProjectionMatrix();
+    threeRenderer.setSize(w, h, false);
+  }
+  window.addEventListener('resize', onResize);
+}
+
+// 全局 2D/Canvas 黄金粒子与流体能量波
+function initGlobalGoldCanvas() {
+  const canvas = bgCanvasRef.value;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  const particles = Array.from({ length: 48 }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    radius: Math.random() * 2.2 + 0.8,
+    speedX: (Math.random() - 0.5) * 0.45,
+    speedY: -Math.random() * 0.55 - 0.2,
+    alpha: Math.random() * 0.5 + 0.25,
+    hue: Math.random() > 0.3 ? 42 : 210, // 金色为主，间杂微量冷蓝
+  }));
+
+  function render() {
+    ctx.clearRect(0, 0, width, height);
+
+    // 绘制暗夜金底流体光晕
+    const g1 = ctx.createRadialGradient(
+      width * 0.5,
+      height * 0.35,
+      10,
+      width * 0.5,
+      height * 0.35,
+      width * 0.65
+    );
+    g1.addColorStop(0, 'rgba(245, 158, 11, 0.08)');
+    g1.addColorStop(0.5, 'rgba(59, 130, 246, 0.03)');
+    g1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = g1;
+    ctx.fillRect(0, 0, width, height);
+
+    // 粒子上浮动效
+    particles.forEach((p) => {
+      p.x += p.speedX;
+      p.y += p.speedY;
+      if (p.y < -10) {
+        p.y = height + 10;
+        p.x = Math.random() * width;
+      }
+      if (p.x < -10) p.x = width + 10;
+      if (p.x > width + 10) p.x = -10;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle =
+        p.hue === 42
+          ? `rgba(251, 191, 36, ${p.alpha})`
+          : `rgba(96, 165, 250, ${p.alpha * 0.8})`;
+      ctx.fill();
+    });
+
+    bgAnimId = requestAnimationFrame(render);
+  }
+
+  function handleResize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', handleResize);
+  render();
+}
 
 onMounted(() => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // 1. Split character lines in Section 3
+  // 1. 初始化背景能量流
+  initGlobalGoldCanvas();
+
+  // 2. 初始化 Section 3 核心 3D 金条
+  initThreeGoldScene();
+
+  // 鼠标交互微幅视差倾角追踪
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX / window.innerWidth;
+    mouseY = e.clientY / window.innerHeight;
+  });
+
+  // 3. 逐字错峰动画拆分
   document.querySelectorAll('.adv-head .line').forEach((line) => {
     const text = line.getAttribute('data-text') || '';
     line.innerHTML = '';
@@ -267,7 +507,7 @@ onMounted(() => {
     });
   });
 
-  // 2. Panel Scroll & Reveal Management (#hero, #recipe, #ess)
+  // 4. Panel Scroll & Reveal Management (#hero, #recipe, #ess)
   const panels = Array.from(document.querySelectorAll('.panel'));
   const revealedPanels = new WeakSet();
 
@@ -277,7 +517,6 @@ onMounted(() => {
     panel.classList.add('revealed');
 
     if (prefersReducedMotion) {
-      panel.classList.add('revealed');
       panel.querySelectorAll('.clip, .rv, .callout').forEach((el) => {
         el.classList.add('in');
         el.querySelectorAll?.('.rv')?.forEach((sub) => sub.classList.add('in'));
@@ -298,38 +537,12 @@ onMounted(() => {
     });
   }
 
-  // Immediately activate and reveal hero on load
+  // 首屏立即激活
   const heroPanel = document.getElementById('hero');
   if (heroPanel) {
     heroPanel.classList.add('is-active');
     triggerPanelReveal(heroPanel);
   }
-
-  // Hero video loaded
-  const heroVideo = heroVideoRef.value;
-  if (heroVideo) {
-    if (heroVideo.readyState >= 2) {
-      heroVideo.classList.add('loaded');
-    } else {
-      heroVideo.addEventListener('loadeddata', () => {
-        heroVideo.classList.add('loaded');
-      }, { once: true });
-    }
-
-    heroObserver = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          heroVideo.play().catch(() => {});
-        } else {
-          heroVideo.pause();
-        }
-      });
-    }, { threshold: 0.1 });
-    heroObserver.observe(heroVideo);
-  }
-
-  const recipeVideo = recipeVideoRef.value;
-  const essVideo = essVideoRef.value;
 
   function updateActivePanel() {
     const vh = window.innerHeight;
@@ -351,15 +564,6 @@ onMounted(() => {
         if (!p.classList.contains('is-active')) {
           p.classList.add('is-active');
           triggerPanelReveal(p);
-
-          if (p.id === 'recipe' && recipeVideo) {
-            recipeVideo.currentTime = 0;
-            recipeVideo.playbackRate = 2;
-            recipeVideo.play().catch(() => {});
-          } else if (p.id === 'ess' && essVideo) {
-            essVideo.play().catch(() => {});
-          }
-
           const id = p.id;
           document.querySelectorAll('.nav-links a').forEach((a) => {
             a.classList.toggle('active', a.getAttribute('href') === `#${id}`);
@@ -368,28 +572,14 @@ onMounted(() => {
       } else {
         if (p.classList.contains('is-active')) {
           p.classList.remove('is-active');
-
-          if (p.id === 'recipe' && recipeVideo) {
-            recipeVideo.pause();
-            recipeVideo.playbackRate = 1;
-          } else if (p.id === 'ess' && essVideo) {
-            essVideo.pause();
-          }
         }
       }
     });
   }
 
-  // 3. Section 3 Undeniable Advantages Sticky Scroll System
+  // 5. Section 3 原生粘性滚轨 3D 动力学与转场控制
   const advSection = advSectionRef.value;
-  const advStage = advStageRef.value;
-  const advVideo = advVideoRef.value;
-  const shots = [shot1Ref.value, shot2Ref.value, shot3Ref.value].filter(Boolean);
-  const slides = Array.from(advSection.querySelectorAll('.adv-slide'));
-
-  const ADV_VIDEO_END = 0.22;
-  let advStarted = false;
-  let advVideoDone = false;
+  const slides = Array.from(document.querySelectorAll('.adv-slide'));
   let activeSlide = -1;
 
   function sectionProgress(section) {
@@ -403,74 +593,69 @@ onMounted(() => {
     if (i === activeSlide) return;
     activeSlide = i;
     slides.forEach((s, n) => s.classList.toggle('on', n === i));
-    shots.forEach((s, n) => s.classList.toggle('on', n === i));
   }
 
-  function resetAdvVideo() {
-    advStarted = false;
-    advVideoDone = false;
-    if (advVideo) {
-      advVideo.pause();
-      advVideo.playbackRate = 1;
-      advVideo.currentTime = 0;
-      advVideo.style.opacity = '1';
-    }
-    setSlide(-1);
-  }
-
-  function startAdvVideo() {
-    if (advStarted || !advVideo) return;
-    advStarted = true;
-    advVideoDone = false;
-    advVideo.style.opacity = '1';
-    advVideo.playbackRate = 2;
-    const play = () => advVideo.play().catch(() => {});
-    if (advVideo.readyState >= 2) play();
-    else advVideo.addEventListener('canplay', play, { once: true });
-  }
-
-  if (advVideo) {
-    advVideo.addEventListener('ended', () => {
-      advVideo.style.opacity = '0';
-      advVideoDone = true;
-      const p = sectionProgress(advSection);
-      const t = Math.min(1, Math.max(0, (p - ADV_VIDEO_END) / (1 - ADV_VIDEO_END)));
-      setSlide(t < 0.34 ? 0 : t < 0.67 ? 1 : 2);
-    });
-  }
-
-  if (advStage) {
-    advObserver = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          startAdvVideo();
-          document.querySelectorAll('.nav-links a').forEach((a) => {
-            a.classList.toggle('active', a.getAttribute('href') === '#adv');
-          });
-        } else if (e.boundingClientRect.top > 0) {
-          resetAdvVideo();
-        }
-      });
-    }, { threshold: 0.35 });
-    advObserver.observe(advStage);
-  }
-
-  function updateAdv() {
-    if (!advVideoDone || !advSection) return;
+  function updateAdv3D() {
+    if (!advSection || !goldIngotMesh) return;
     const p = sectionProgress(advSection);
-    const t = Math.min(1, Math.max(0, (p - ADV_VIDEO_END) / (1 - ADV_VIDEO_END)));
-    setSlide(t < 0.34 ? 0 : t < 0.67 ? 1 : 2);
-    const local = t < 0.34 ? t / 0.34 : t < 0.67 ? (t - 0.34) / 0.33 : (t - 0.67) / 0.33;
-    const shot = shots[activeSlide];
-    if (!shot) return;
-    const clamped = Math.min(1, Math.max(0, local));
-    const k = 1 + (1 - clamped) * 0.075;
-    shot.style.transform = 'translate(-50%,-50%) scale(' + k.toFixed(4) + ') rotate(' + ((local - 0.5) * 1.1).toFixed(3) + 'deg)';
+
+    // 0.0 ~ 0.22 为进入过渡，0.22 ~ 1.0 为 3 幕动态轮转
+    const t = Math.min(1, Math.max(0, (p - 0.15) / 0.85));
+
+    // 计算当前活动 Slide (0: 结构纯度, 1: 跨市套利, 2: 12因子共振)
+    const slideIdx = t < 0.34 ? 0 : t < 0.67 ? 1 : 2;
+    setSlide(slideIdx);
+
+    // 基于滚动进度的 3D 黄金金条姿态渐变目标
+    if (slideIdx === 0) {
+      // 第一幕：经典 35° 等轴俯瞰金条，展现顶部 SGE 与纯金印标
+      const sub = t / 0.34;
+      targetRotX = 0.36 + sub * 0.08;
+      targetRotY = 0.58 + sub * 0.25;
+      targetRotZ = 0.1;
+      targetScale = 1.05;
+    } else if (slideIdx === 1) {
+      // 第二幕：平滑切至水平轮廓侧刃视角，展现双市厚度与冷蓝切光
+      const sub = (t - 0.34) / 0.33;
+      targetRotX = 0.18 + sub * 0.05;
+      targetRotY = 1.57 + (sub - 0.5) * 0.35; // 约 90 度侧视
+      targetRotZ = -0.08;
+      targetScale = 1.18;
+    } else {
+      // 第三幕：央行金库庄严正视角度，金色光环与粒子群环绕
+      const sub = (t - 0.67) / 0.33;
+      targetRotX = 0.55 + (sub - 0.5) * 0.12;
+      targetRotY = 0.05 + (sub - 0.5) * 0.25;
+      targetRotZ = 0.0;
+      targetScale = 1.25;
+    }
+
+    // 叠加鼠标交互平滑倾角差
+    const mouseTiltX = (mouseY - 0.5) * 0.32;
+    const mouseTiltY = (mouseX - 0.5) * 0.42;
+
+    currentRotX += (targetRotX + mouseTiltX - currentRotX) * 0.08;
+    currentRotY += (targetRotY + mouseTiltY - currentRotY) * 0.08;
+    currentRotZ += (targetRotZ - currentRotZ) * 0.08;
+    currentScale += (targetScale - currentScale) * 0.08;
+
+    goldIngotMesh.rotation.set(currentRotX, currentRotY, currentRotZ);
+    goldIngotMesh.scale.set(currentScale, currentScale, currentScale);
+
+    // 粒子群缓动旋转
+    if (sparklePoints) {
+      sparklePoints.rotation.y += 0.0025;
+      sparklePoints.rotation.x = currentRotX * 0.3;
+    }
+
+    if (threeRenderer && threeScene && threeCamera) {
+      threeRenderer.render(threeScene, threeCamera);
+    }
   }
 
   function onFrame() {
     updateActivePanel();
-    updateAdv();
+    updateAdv3D();
     rafId = requestAnimationFrame(onFrame);
   }
 
@@ -479,8 +664,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (rafId) cancelAnimationFrame(rafId);
+  if (bgAnimId) cancelAnimationFrame(bgAnimId);
   if (advObserver) advObserver.disconnect();
-  if (heroObserver) heroObserver.disconnect();
+  if (threeRenderer) threeRenderer.dispose();
 });
 </script>
 
@@ -500,6 +686,7 @@ onUnmounted(() => {
   width: 100%;
   background: #000000;
   color: #ffffff;
+  position: relative;
 }
 
 @media (max-width: 900px), (max-height: 540px) {
@@ -508,57 +695,14 @@ onUnmounted(() => {
   }
 }
 
-/* Gradient Text Utility */
-.grad-text {
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Small Copy (.body-sm) */
-.body-sm {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: clamp(12px, 1vw, 16px);
-  line-height: 1.55;
-  color: var(--dim);
-  letter-spacing: 0.002em;
-}
-
-/* Button solid */
-.btn-solid {
-  background: #f1f1f2;
-  color: #0b0b0b;
-  border: none;
-  border-radius: 6px;
-  padding: 1.15em 2.1em;
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(11px, 0.88vw, 14px);
-  font-weight: 400;
-  letter-spacing: 0.005em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.35s ease, transform 0.35s ease;
-  text-decoration: none;
-}
-.btn-solid:hover {
-  background: #ffffff;
-  transform: translateY(-2px);
-}
-
-/* Full bleed video utility */
-.video-cover {
-  position: absolute;
+/* 全局全景动态金光背景画布 */
+.global-gold-canvas {
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  max-width: none;
-  object-fit: cover;
-  object-position: center;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Display Titles */
@@ -609,21 +753,13 @@ onUnmounted(() => {
   position: relative;
   height: 100vh;
   overflow: hidden;
-  background: #000000;
+  background: transparent;
+  z-index: 2;
 }
 
 /* ============================================================
    SECTION 1 — HERO
    ============================================================ */
-.hero .hero-video {
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 1.6s ease;
-}
-.hero .hero-video.loaded {
-  opacity: 1;
-}
-
 .hero-content {
   position: relative;
   z-index: 10;
@@ -663,6 +799,7 @@ onUnmounted(() => {
 .quote-gold { color: var(--gold-3); font-weight: 700; }
 .quote-sep { margin: 0 4px; opacity: 0.4; }
 .quote-intl { color: #60a5fa; font-weight: 700; }
+.quote-premium { margin-left: 6px; color: #ef4444; font-weight: 600; font-size: 11px; }
 
 .h-strong {
   position: absolute;
@@ -703,10 +840,6 @@ onUnmounted(() => {
 /* ============================================================
    SECTION 2 — RECIPE
    ============================================================ */
-.recipe .recipe-video {
-  z-index: 1;
-}
-
 .recipe-content {
   position: relative;
   z-index: 10;
@@ -801,51 +934,33 @@ onUnmounted(() => {
 }
 
 /* ============================================================
-   SECTION 3 — UNDENIABLE ADVANTAGES (NATIVE STICKY PIN)
+   SECTION 3 — UNDENIABLE ADVANTAGES (NATIVE STICKY PIN 460vh)
    ============================================================ */
 .adv {
   position: relative;
   height: 460vh;
-  background: #000000;
-  overflow: visible; /* CRITICAL */
+  background: transparent;
+  overflow: visible; /* CRITICAL: 必须保持 visible，取消 position:sticky 拦截 */
+  z-index: 5;
 }
 .adv-stage {
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: hidden;
-  background: #000000;
+  overflow: hidden; /* Section 3 唯一允许 overflow:hidden 的粘性外框 */
+  background: radial-gradient(circle at 50% 50%, rgba(30, 20, 10, 0.85) 0%, #000000 80%);
 }
-.adv-video {
+
+/* 核心 3D 黄金 WebGL 视窗 */
+.adv-3d-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  max-width: none;
-  object-fit: cover;
-  object-position: center;
-  z-index: 2;
-  transition: opacity 0.75s ease;
-}
-.adv-shots {
-  position: absolute;
-  inset: 0;
   z-index: 3;
+  display: block;
 }
-.adv-shot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(78vw, 1340px);
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: opacity 0.7s ease;
-  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.85));
-  will-change: opacity, transform;
-}
-.adv-shot.on {
-  opacity: 1;
-}
+
 .adv-label {
   position: absolute;
   left: 0;
@@ -859,6 +974,7 @@ onUnmounted(() => {
 .adv-label span {
   display: inline-block;
 }
+
 .adv-head {
   position: absolute;
   left: 0;
@@ -898,6 +1014,7 @@ onUnmounted(() => {
   transform: none;
   opacity: 1;
 }
+
 .adv-copy {
   position: absolute;
   left: 0;
@@ -910,6 +1027,7 @@ onUnmounted(() => {
   margin: 0 auto;
   max-width: 58ch;
 }
+
 .adv-slide {
   position: absolute;
   inset: 0;
@@ -924,10 +1042,6 @@ onUnmounted(() => {
 /* ============================================================
    SECTION 4 — ESSENTIALS
    ============================================================ */
-.ess .ess-video {
-  z-index: 1;
-}
-
 .ess-content {
   position: relative;
   z-index: 10;
@@ -1005,7 +1119,7 @@ onUnmounted(() => {
     order: -1;
     align-self: flex-end;
     text-align: right;
-    max-width: 22ch;
+    max-width: 24ch;
     font-size: clamp(13px, 3.4vw, 20px);
   }
 
@@ -1065,6 +1179,8 @@ onUnmounted(() => {
     align-self: center;
     transform: none;
     margin-top: auto;
+    text-align: center;
+    padding: 1.1em 1.6em;
   }
 
   .adv-stage {
@@ -1085,12 +1201,6 @@ onUnmounted(() => {
     font-stretch: 100%;
     letter-spacing: -0.03em;
     line-height: 1.12;
-  }
-  .adv-shot {
-    width: auto;
-    max-width: min(88vw, 640px);
-    max-height: 42vh;
-    height: auto;
   }
 }
 

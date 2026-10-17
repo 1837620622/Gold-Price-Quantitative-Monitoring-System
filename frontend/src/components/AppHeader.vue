@@ -1,16 +1,18 @@
 <template>
   <header class="top-nav">
-    <!-- Left: Wordmark PLUME -->
-    <a href="#hero" class="nav-logo" @click.prevent="scrollTo('#hero')">PLUME</a>
+    <!-- Left: Wordmark AURUM -->
+    <a href="#hero" class="nav-logo" @click.prevent="scrollTo('#hero')">
+      AURUM <span class="nav-logo-sub">QUANT</span>
+    </a>
 
     <!-- Center: Links -->
     <ul class="nav-links" :class="{ open: mobileOpen }" ref="navLinksRef">
-      <li><a href="#hero" :class="{ active: activeId === 'hero' }" @click.prevent="navClick('#hero')">Product</a></li>
-      <li><a href="#recipe" :class="{ active: activeId === 'recipe' }" @click.prevent="navClick('#recipe')">Structure</a></li>
-      <li><a href="#recipe" @click.prevent="navClick('#recipe')">Materials</a></li>
-      <li><a href="#adv" :class="{ active: activeId === 'adv' }" @click.prevent="navClick('#adv')">Engineering</a></li>
+      <li><a href="#hero" :class="{ active: activeId === 'hero' }" @click.prevent="navClick('#hero')">Overview</a></li>
+      <li><a href="#recipe" :class="{ active: activeId === 'recipe' }" @click.prevent="navClick('#recipe')">Dual Engine</a></li>
+      <li><a href="#adv" :class="{ active: activeId === 'adv' }" @click.prevent="navClick('#adv')">Advantages</a></li>
+      <li><a href="#ess" :class="{ active: activeId === 'ess' }" @click.prevent="navClick('#ess')">Synthesis</a></li>
       <li><a href="#workspace" :class="{ active: activeId === 'workspace' }" @click.prevent="navClick('#workspace')">Terminal</a></li>
-      <li class="mobile-only-action"><a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">Explore PLUME</a></li>
+      <li class="mobile-only-action"><a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">Launch Terminal</a></li>
     </ul>
 
     <!-- Right: Actions & Pill -->
@@ -52,13 +54,13 @@
         </svg>
       </button>
 
-      <!-- Pill button label “Explore PLUME” -->
+      <!-- Pill button label “Launch Terminal” -->
       <a
         href="#workspace"
         class="pill nav-pill"
         @click.prevent="navClick('#workspace')"
       >
-        Explore PLUME
+        Launch Terminal
       </a>
 
       <!-- 44x44 Hamburger (.nav-toggle) -->
@@ -151,6 +153,14 @@ onUnmounted(() => {
   text-decoration: none;
   cursor: pointer;
   flex-shrink: 0;
+}
+.nav-logo-sub {
+  font-size: 0.52em;
+  letter-spacing: 0.18em;
+  color: var(--gold-3);
+  font-weight: 700;
+  margin-left: -2px;
+  vertical-align: super;
 }
 
 .nav-links {
