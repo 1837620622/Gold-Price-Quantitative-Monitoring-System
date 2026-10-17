@@ -425,9 +425,13 @@ onUnmounted(() => {
   align-items: stretch;
 }
 
-@media (max-width: 1100px) {
-  .prefs-toggle-text {
-    display: none;
-  }
+/* 图标按钮只保留读屏文本，避免桌面端文字挤出 36px 圆形按钮 */
+.prefs-toggle-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 </style>

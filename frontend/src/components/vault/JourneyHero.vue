@@ -675,7 +675,9 @@ onBeforeUnmount(() => {
 
   .eyebrow {
     left: 28px;
-    top: 4vh;
+    top: max(4vh, 84px);
+    max-width: 200px;
+    line-height: 1.5;
   }
 
   .title {
