@@ -141,7 +141,7 @@ function fillStyle(value) {
 }
 
 .verdict-score {
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   font-stretch: 110%;
   font-size: 21px;
   font-weight: 700;
@@ -176,9 +176,9 @@ function fillStyle(value) {
   flex: 1;
 }
 
-.zone-down { background: linear-gradient(90deg, rgba(16, 185, 129, 0.85), rgba(16, 185, 129, 0.35)); }
+.zone-down { background: rgba(16, 185, 129, 0.55); }
 .zone-mid { background: var(--surface-2); flex: 0.8; }
-.zone-up { background: linear-gradient(90deg, rgba(239, 68, 68, 0.35), rgba(239, 68, 68, 0.85)); }
+.zone-up { background: rgba(239, 68, 68, 0.55); }
 
 .meter-marker {
   position: absolute;

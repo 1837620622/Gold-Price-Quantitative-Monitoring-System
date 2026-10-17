@@ -183,8 +183,8 @@ const rows = computed(() => {
 }
 
 .rung-now {
-  border-color: rgba(251, 191, 36, 0.45);
-  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(232, 199, 125, 0.45);
+  background: rgba(232, 199, 125, 0.08);
 }
 
 .rung-now .rung-label,

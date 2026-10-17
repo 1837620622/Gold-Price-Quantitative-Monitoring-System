@@ -215,7 +215,7 @@ const countdownText = computed(() => {
 <style scoped>
 .ticker-bar {
   background: rgba(13, 16, 24, 0.95);
-  border-bottom: 1px solid rgba(251, 191, 36, 0.12);
+  border-bottom: 1px solid rgba(232, 199, 125, 0.12);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   font-size: 12px;
@@ -251,7 +251,7 @@ const countdownText = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   font-stretch: 108%;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
@@ -268,10 +268,10 @@ const countdownText = computed(() => {
 }
 .ticker-tag.cn {
   color: var(--gold-3);
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
 }
 .ticker-tag.intl {
-  color: #60a5fa;
+  color: #7aa2ff;
   background: rgba(59, 130, 246, 0.12);
 }
 .ticker-tag.silver {
@@ -328,15 +328,15 @@ const countdownText = computed(() => {
 .tool-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
-  border-color: rgba(251, 191, 36, 0.3);
+  border-color: rgba(232, 199, 125, 0.3);
 }
 .tool-btn.active {
   color: var(--gold-3);
-  border-color: rgba(251, 191, 36, 0.4);
-  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(232, 199, 125, 0.4);
+  background: rgba(232, 199, 125, 0.08);
 }
 .tool-btn.has-alerts {
-  color: #38bdf8;
+  color: #7aa2ff;
   border-color: rgba(56, 189, 248, 0.4);
 }
 

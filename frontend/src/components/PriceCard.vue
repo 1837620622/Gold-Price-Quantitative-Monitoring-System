@@ -122,12 +122,12 @@ watch(
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  background: var(--gold);
   opacity: 0.7;
 }
 
 .price-card.accent-blue::before {
-  background: linear-gradient(90deg, transparent, var(--info), transparent);
+  background: var(--info);
 }
 
 .price-head {
@@ -149,9 +149,9 @@ watch(
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: rgba(251, 191, 36, 0.1);
+  background: rgba(232, 199, 125, 0.1);
   color: var(--gold);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   flex-shrink: 0;
 }
 
@@ -206,7 +206,7 @@ watch(
 
 .price-value {
   display: inline-block;
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   font-stretch: 110%;
   font-size: clamp(36px, 4.2vw, 46px);
   font-weight: 700;
@@ -254,7 +254,7 @@ watch(
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   letter-spacing: -0.01em;
   background: var(--surface-2);
   border: 1px solid var(--border);

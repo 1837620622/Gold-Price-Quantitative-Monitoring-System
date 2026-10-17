@@ -173,8 +173,8 @@ onUnmounted(() => {
   margin-top: 56px;
   padding: 0 0 48px;
   position: relative;
-  border-top: 1px solid rgba(251, 191, 36, 0.14);
-  background: linear-gradient(180deg, rgba(8, 10, 15, 0.6) 0%, rgba(5, 6, 9, 0.98) 100%);
+  border-top: 1px solid rgba(232, 199, 125, 0.14);
+  background: var(--surface-card);
 }
 
 /* 顶部金融终端系统状态微条 */
@@ -184,7 +184,7 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 10px 18px;
   margin: -1px 0 24px;
-  background: rgba(13, 16, 24, 0.95);
+  background: var(--surface-card);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0 0 12px 12px;
   font-family: var(--mono);
@@ -210,12 +210,11 @@ onUnmounted(() => {
   height: 7px;
   border-radius: 50%;
   background: var(--down);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
   animation: pulse-ring 2s infinite;
 }
 
 .indicator-title {
-  color: #ffffff;
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -249,8 +248,8 @@ onUnmounted(() => {
   gap: 6px;
   padding: 2px 10px;
   border-radius: 999px;
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: rgba(232, 199, 125, 0.08);
+  border: 1px solid rgba(232, 199, 125, 0.25);
   color: var(--gold-3);
   font-size: 11px;
 }
@@ -263,8 +262,8 @@ onUnmounted(() => {
 .footer-main-card {
   padding: 28px;
   border-radius: 16px;
-  background: linear-gradient(165deg, rgba(18, 22, 32, 0.7) 0%, rgba(10, 12, 18, 0.9) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.15);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.15);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 }
 
@@ -294,15 +293,14 @@ onUnmounted(() => {
   font-family: var(--mono);
   font-weight: 900;
   font-size: 17px;
-  color: #000000;
-  background: linear-gradient(135deg, var(--gold-3) 0%, var(--gold-2) 100%);
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
+  color: var(--gold-ink);
+  background: var(--gold);
 }
 
 .brand-name {
   font-size: 15px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text);
   letter-spacing: 0.04em;
 }
 
@@ -334,10 +332,9 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 .dev-pill:hover:not(.static) {
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   border-color: var(--gold-2);
   color: var(--gold-3);
-  transform: translateY(-1px);
 }
 .dev-pill.static {
   cursor: default;
@@ -359,7 +356,7 @@ onUnmounted(() => {
 .sources-list {
   padding: 8px 12px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.04);
   color: var(--text-3);
   font-size: 10px;
@@ -388,18 +385,15 @@ onUnmounted(() => {
   display: grid;
   place-items: center;
   background: rgba(20, 24, 36, 0.9);
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  border: 1px solid rgba(232, 199, 125, 0.35);
   color: var(--gold-3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(251, 191, 36, 0.2);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(8px);
 }
 .back-to-top-btn:hover {
   background: var(--gold-btn);
-  color: #000000;
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 12px 30px rgba(251, 191, 36, 0.4);
+  color: var(--gold-ink);
 }
 
 .fade-enter-active,

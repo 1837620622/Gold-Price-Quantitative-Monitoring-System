@@ -173,10 +173,9 @@ async function copyText() {
 .modal-card {
   width: 100%;
   max-width: 520px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.98) 0%, rgba(13, 16, 24, 0.99) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.3);
   border-radius: var(--radius-lg);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(251, 191, 36, 0.15);
   padding: 24px;
 }
 
@@ -199,10 +198,10 @@ async function copyText() {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(232, 199, 125, 0.15);
   color: var(--gold-3);
   font-size: 18px;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(232, 199, 125, 0.3);
 }
 
 .modal-title {
@@ -239,8 +238,8 @@ async function copyText() {
   gap: 14px;
   padding: 20px;
   border-radius: 14px;
-  background: radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.12) 0%, transparent 70%), #0c0e15;
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: #0c0e15;
+  border: 1px solid rgba(232, 199, 125, 0.35);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   margin-bottom: 20px;
 }
@@ -263,8 +262,8 @@ async function copyText() {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--gold-3), var(--gold-2));
-  color: #000000;
+  background: var(--gold);
+  color: var(--gold-ink);
   font-weight: 900;
   font-size: 16px;
   display: grid;
@@ -389,8 +388,8 @@ async function copyText() {
   justify-content: space-between;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(251, 191, 36, 0.06);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  background: rgba(232, 199, 125, 0.06);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   font-size: 11px;
 }
 .poster-levels span {

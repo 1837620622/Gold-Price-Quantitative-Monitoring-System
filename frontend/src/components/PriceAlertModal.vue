@@ -186,10 +186,9 @@ function testSound() {
 .modal-card {
   width: 100%;
   max-width: 580px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.98) 0%, rgba(13, 16, 24, 0.99) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.3);
   border-radius: var(--radius-lg);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(251, 191, 36, 0.15);
   padding: 24px;
 }
 
@@ -213,7 +212,7 @@ function testSound() {
   height: 38px;
   border-radius: 10px;
   background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
+  color: var(--info);
   border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
@@ -261,7 +260,7 @@ function testSound() {
 .perm-btn {
   padding: 4px 10px;
   background: var(--gold-2);
-  color: #000000;
+  color: var(--gold-ink);
   border: none;
   border-radius: 6px;
   font-weight: 700;
@@ -312,7 +311,7 @@ function testSound() {
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.4);
-  color: #ffffff;
+  color: var(--text);
   font-size: 13px;
   font-family: var(--mono);
 }
@@ -403,12 +402,12 @@ function testSound() {
   border-radius: 4px;
 }
 .row-badge.cn {
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(232, 199, 125, 0.15);
   color: var(--gold-3);
 }
 .row-badge.intl {
   background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  color: var(--info);
 }
 
 .row-cond {
@@ -452,7 +451,7 @@ function testSound() {
 }
 .row-btn.reset:hover {
   background: var(--gold-2);
-  color: #000000;
+  color: var(--gold-ink);
 }
 .row-btn.del:hover {
   background: rgba(239, 68, 68, 0.2);

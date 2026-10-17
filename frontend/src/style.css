@@ -1,185 +1,132 @@
 /* ============================================================
-   Gold Monitor · 专业金融量化终端设计系统
-   - 风格：黑金科技 / 机构级金融交易终端 (Dark Luxury Cyber Terminal)
-   - 涨跌：中国金融市场惯例（红涨绿跌）
-   - 排版：专业等宽字体对齐、微交互光晕、硬件加速流畅动画
+   Gold Monitor · 金融量化黄金终端 · 设计系统（Vault Noir）
+   - 基调：金库暗场。金色只做强调：关键数值、焦点、主按钮
+   - 字体：Anton 大写展示字 · JetBrains Mono 等宽数值 · Inter 正文
+   - 涨跌：中国市场惯例，红涨绿跌（语义色，不做装饰）
+   - 动效：统一缓动与时长；滚动与入场交给 GSAP，CSS 只做微交互
    ============================================================ */
 
-/* ---------- 深色主题（机构级黑金终端，默认） ---------- */
+/* ---------- 深色（默认） ---------- */
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #08090d;
-  --bg-grad: radial-gradient(1000px 460px at 50% -14%, rgba(245, 158, 11, 0.09), transparent 70%);
-  --surface: #0f1117;
-  --surface-card: #12141b;
-  --surface-2: #171a22;
-  --surface-hover: #1d2129;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --border-hover: rgba(251, 191, 36, 0.4);
+  --bg: #050507;
+  --bg-2: #08090c;
+  --surface: #0a0c10;
+  --surface-card: #0e1116;
+  --surface-2: #13161d;
+  --surface-hover: #191d26;
 
-  --text: #f3f4f6;
-  --text-2: #9ca3af;
-  --text-3: #6b7280;
+  --line: rgba(232, 199, 125, 0.12);
+  --line-strong: rgba(232, 199, 125, 0.26);
+  --line-faint: rgba(255, 255, 255, 0.05);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --border-hover: rgba(232, 199, 125, 0.45);
+
+  --text: #f3efe6;
+  --text-2: #a9a399;
+  --text-3: #6e6a62;
   --ink: #ffffff;
-  --dim: #c7c7c9;
-  --dimmer: #8a8a8f;
-  --blue: #4b4ce6;
-  --pink: #ef5a7f;
-  --pad: 3.6vw;
-  --grad: linear-gradient(90deg, #3c3cf0 0%, #6a4cdd 22%, #a85ab4 42%, #df5473 62%, #ec4a4a 80%, #f2602c 100%);
+  --dim: #cfc8b9;
+  --dimmer: #8b867b;
 
-  --gold: #fbbf24;
-  --gold-2: #f59e0b;
-  --gold-3: #fcd34d;
-  --gold-glow: 0 0 20px rgba(251, 191, 36, 0.25);
-  --gold-btn: linear-gradient(135deg, #fcd34d 0%, #fbbf24 50%, #f59e0b 100%);
-  --gold-btn-hover: linear-gradient(135deg, #fef08a 0%, #fcd34d 50%, #fbbf24 100%);
-  --gold-btn-ink: #000000;
-  --gold-ink: #000000;
-  --gold-grad: linear-gradient(90deg, #fef08a 0%, #fcd34d 25%, #fbbf24 50%, #f59e0b 75%, #d97706 100%);
-  --grad-neon: linear-gradient(90deg, #3c3cf0 0%, #6a4cdd 22%, #a85ab4 42%, #df5473 62%, #ec4a4a 80%, #f2602c 100%);
+  --gold: #e8c77d;
+  --gold-2: #c9a14a;
+  --gold-3: #f6dea4;
+  --gold-deep: #8c6a2b;
+  --gold-btn: linear-gradient(135deg, #f6dea4 0%, #e8c77d 48%, #c9a14a 100%);
+  --gold-btn-hover: linear-gradient(135deg, #fff2cc 0%, #f6dea4 48%, #e8c77d 100%);
+  --gold-btn-ink: #0a0907;
+  --gold-ink: #0a0907;
+  --gold-grad: linear-gradient(90deg, #f6dea4 0%, #e8c77d 45%, #b8892e 100%);
 
   --up: #ef4444;
-  --up-bg: rgba(239, 68, 68, 0.14);
-  --up-glow: 0 0 16px rgba(239, 68, 68, 0.25);
+  --up-bg: rgba(239, 68, 68, 0.12);
   --down: #10b981;
-  --down-bg: rgba(16, 185, 129, 0.14);
-  --down-glow: 0 0 16px rgba(16, 185, 129, 0.25);
-  --flat: #94a3b8;
-  --info: #60a5fa;
-  --warn: #f59e0b;
-  --warn-bg: rgba(245, 158, 11, 0.14);
+  --down-bg: rgba(16, 185, 129, 0.12);
+  --flat: #a9a399;
+  --info: #7aa2ff;
+  --info-bg: rgba(122, 162, 255, 0.12);
+  --warn: #f5a524;
+  --warn-bg: rgba(245, 165, 36, 0.12);
   --danger: #f87171;
-  --danger-bg: rgba(248, 113, 113, 0.14);
+  --danger-bg: rgba(248, 113, 113, 0.12);
 
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.8);
-  --shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 18px 36px -16px rgba(0, 0, 0, 0.9);
-  --radius-lg: 16px;
-  --radius: 12px;
+  --shadow: 0 30px 70px -44px rgba(0, 0, 0, 0.95);
+  --shadow-hover: 0 36px 80px -44px rgba(0, 0, 0, 0.98);
 
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", Roboto, sans-serif;
-  --font-display: 'Archivo', 'Inter', -apple-system, sans-serif;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+
+  --font-display: 'Anton', 'Impact', 'Arial Narrow Bold', sans-serif;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Segoe UI', Roboto, sans-serif;
   --mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', Consolas, ui-monospace, Menlo, monospace;
+
+  --pad: clamp(16px, 3.2vw, 44px);
+
+  /* 动效令牌：全站共用，组件不再各自定义曲线 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-pill: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 0.18s;
+  --dur: 0.36s;
+  --dur-slow: 0.8s;
 }
 
-@media (max-width: 900px), (max-height: 540px) {
-  :root {
-    --pad: 5.2vw;
-  }
-}
-
-/* ---------- 浅色主题：极简白金 ---------- */
+/* ---------- 浅色：纸本金 ---------- */
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #f5f4ef;
-  --bg-grad:
-    radial-gradient(1100px 520px at 50% -12%, rgba(217, 119, 6, 0.1), transparent 60%),
-    radial-gradient(900px 480px at 90% -8%, rgba(37, 99, 235, 0.05), transparent 60%);
-  --surface: #ffffff;
+  --bg: #f6f3ec;
+  --bg-2: #efeadf;
+  --surface: #fbf9f4;
   --surface-card: #ffffff;
-  --surface-2: #f8f7f2;
-  --surface-hover: #f1efe8;
-  --border: rgba(217, 119, 6, 0.18);
-  --border-strong: rgba(217, 119, 6, 0.35);
-  --border-hover: rgba(217, 119, 6, 0.5);
+  --surface-2: #f3efe5;
+  --surface-hover: #ece6d8;
 
-  --text: #111827;
-  --text-2: #4b5563;
-  --text-3: #9ca3af;
+  --line: rgba(122, 88, 24, 0.16);
+  --line-strong: rgba(122, 88, 24, 0.32);
+  --line-faint: rgba(20, 16, 8, 0.06);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --border-hover: rgba(122, 88, 24, 0.5);
 
-  --gold: #d97706;
-  --gold-2: #b45309;
-  --gold-3: #f59e0b;
-  --gold-glow: 0 0 16px rgba(217, 119, 6, 0.2);
-  --gold-btn: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --gold-btn-hover: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --text: #15130e;
+  --text-2: #5d5749;
+  --text-3: #8f887a;
+  --ink: #15130e;
+  --dim: #3f3a2f;
+  --dimmer: #6d6758;
+
+  --gold: #a77a24;
+  --gold-2: #8c6a2b;
+  --gold-3: #b8892e;
+  --gold-deep: #6b4f18;
+  --gold-btn: linear-gradient(135deg, #c9a14a 0%, #a77a24 100%);
+  --gold-btn-hover: linear-gradient(135deg, #d9b35f 0%, #b8892e 100%);
   --gold-btn-ink: #ffffff;
   --gold-ink: #ffffff;
+  --gold-grad: linear-gradient(90deg, #b8892e 0%, #8c6a2b 100%);
 
   --up: #dc2626;
-  --up-bg: rgba(220, 38, 38, 0.1);
-  --up-glow: 0 0 12px rgba(220, 38, 38, 0.2);
+  --up-bg: rgba(220, 38, 38, 0.09);
   --down: #059669;
-  --down-bg: rgba(5, 150, 105, 0.1);
-  --down-glow: 0 0 12px rgba(5, 150, 105, 0.2);
-  --flat: #4b5563;
+  --down-bg: rgba(5, 150, 105, 0.09);
+  --flat: #5d5749;
   --info: #2563eb;
-  --warn: #d97706;
-  --warn-bg: rgba(217, 119, 6, 0.1);
+  --info-bg: rgba(37, 99, 235, 0.09);
+  --warn: #b45309;
+  --warn-bg: rgba(180, 83, 9, 0.1);
   --danger: #dc2626;
-  --danger-bg: rgba(220, 38, 38, 0.1);
+  --danger-bg: rgba(220, 38, 38, 0.09);
 
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 24px -10px rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.06), 0 16px 32px -10px rgba(217, 119, 6, 0.15);
-
-  --ink: #111827;
-  --dim: #4b5563;
-  --dimmer: #9ca3af;
-  --blue: #3b82f6;
-  --pink: #ec4899;
-  --pad: 3.6vw;
-  --grad: linear-gradient(90deg, #3c3cf0 0%, #6a4cdd 22%, #a85ab4 42%, #df5473 62%, #ec4a4a 80%, #f2602c 100%);
+  --shadow: 0 30px 60px -44px rgba(60, 40, 10, 0.28);
+  --shadow-hover: 0 36px 70px -44px rgba(60, 40, 10, 0.34);
 }
 
-/* ---------- PLUME 电影级排版与按钮系统 ---------- */
-.grad-text {
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-.body-sm {
-  font-family: 'Inter', -apple-system, sans-serif;
-  font-weight: 400;
-  font-size: clamp(12px, 1vw, 16px);
-  line-height: 1.55;
-  color: var(--dim);
-  letter-spacing: 0.002em;
-}
-
-.display {
-  font-family: 'Archivo', -apple-system, sans-serif;
-  font-weight: 400;
-  text-transform: uppercase;
-  line-height: 0.94;
-  letter-spacing: -0.022em;
-}
-
-@media (max-width: 900px), (max-height: 540px) {
-  .body-sm {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  .pill, .btn-solid {
-    min-height: 44px;
-  }
-}
-@media (max-height: 540px) {
-  .body-sm {
-    font-size: 13px;
-  }
-}
-@media (max-width: 380px) {
-  .pill {
-    padding: 0.7em 1em;
-  }
-}
-
-.workspace-section {
-  position: relative;
-  z-index: 20;
-  background: var(--bg);
-  border-top: 1px solid rgba(251, 191, 36, 0.18);
-  box-shadow: 0 -24px 48px rgba(0, 0, 0, 0.9);
-}
-
-/* ---------- 基础设置 ---------- */
+/* ---------- 基础 ---------- */
 *,
 *::before,
 *::after {
@@ -192,16 +139,21 @@ html {
   overflow-x: clip;
 }
 
+/* 全站细网格：坐标纸质感，只作底纹，向下逐渐淡出 */
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: clip;
   font-family: var(--font);
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--text);
   background-color: var(--bg);
-  background-image: var(--bg-grad);
+  background-image:
+    radial-gradient(ellipse 80% 55% at 50% 0%, transparent 0%, var(--bg) 100%),
+    linear-gradient(var(--line-faint) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-faint) 1px, transparent 1px);
+  background-size: auto, 120px 120px, 120px 120px;
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -220,10 +172,15 @@ p {
   margin: 0;
 }
 
+::selection {
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
 :where(button, a, [role="tab"]):focus-visible {
   outline: 2px solid var(--gold);
-  outline-offset: 2px;
-  border-radius: 8px;
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .app {
@@ -240,9 +197,9 @@ p {
 
 .container {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--pad);
 }
 
 .skip-link {
@@ -251,7 +208,7 @@ p {
   top: 8px;
   z-index: 100;
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: 6px;
   background: var(--gold-btn);
   color: var(--gold-btn-ink);
   font-weight: 600;
@@ -261,34 +218,52 @@ p {
   left: 16px;
 }
 
-/* ---------- 卡片容器 (黑金科技高质感) ---------- */
-.card {
+.workspace-section {
   position: relative;
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: 20px;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  z-index: 20;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
 }
 
-.card:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-hover);
+/* ---------- 排版 ---------- */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.9;
+  letter-spacing: 0.005em;
 }
 
-@media (max-width: 767px) {
-  .container {
-    padding: 0 14px;
-  }
-
-  .card {
-    padding: 16px;
-    border-radius: 14px;
-  }
+.label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
 }
 
-/* ---------- 涨跌色彩体系 (红涨绿跌) ---------- */
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.body-sm {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+
+.grad-text {
+  background: var(--gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 .tone-up {
   color: var(--up);
 }
@@ -301,54 +276,107 @@ p {
   color: var(--flat);
 }
 
-/* ---------- 标签与徽章 ---------- */
+/* ---------- 卡片：实体面板 + 指针高光（不位移、不发光） ---------- */
+.card {
+  position: relative;
+  isolation: isolate;
+  --spot-opacity: 0;
+  background: var(--surface-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  transition: border-color var(--dur) var(--ease-out);
+}
+
+/* 指针高光层：useSpotlight 写入 --mx / --my；层本身即卡片内框，不会溢出 */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(232, 199, 125, 0.09), transparent 70%);
+  opacity: var(--spot-opacity);
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.card:hover {
+  --spot-opacity: 1;
+  border-color: var(--line-strong);
+}
+
+@media (max-width: 767px) {
+  .card {
+    padding: 16px;
+    border-radius: 8px;
+  }
+}
+
+/* ---------- 标签 ---------- */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.4;
-  white-space: nowrap;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
   color: var(--text-2);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
   font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .chip-gold {
-  color: #000;
-  background: linear-gradient(135deg, var(--gold-3), var(--gold));
+  background: var(--gold);
   border-color: transparent;
+  color: var(--gold-ink);
   font-weight: 700;
 }
 
 .chip-warn {
-  color: var(--warn);
+  border-color: transparent;
   background: var(--warn-bg);
-  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--warn);
 }
 
-/* ---------- 按钮系统 ---------- */
+/* 实时状态点：仅绿色呼吸，表示数据在更新 */
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--down);
+  animation: dot-pulse 2.4s var(--ease-out) infinite;
+}
+
+/* ---------- 按钮 ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 42px;
-  padding: 0 20px;
+  height: 40px;
+  padding: 0 18px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius);
   font: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--dur-fast) var(--ease-pill),
+    background var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
 }
 
 .btn:active {
@@ -356,205 +384,204 @@ p {
 }
 
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
 }
 
 .btn-sm {
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 8px;
-  font-size: 13px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.btn-xs {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
 }
 
 .btn-primary {
   background: var(--gold-btn);
   color: var(--gold-btn-ink);
-  box-shadow: 0 6px 20px -4px rgba(251, 191, 36, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--gold-btn-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px -2px rgba(251, 191, 36, 0.5);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--text);
-  border-color: var(--border-strong);
+  border-color: var(--line-strong);
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: var(--surface-hover);
   border-color: var(--gold);
-}
-
-/* ---------- 高级胶囊与实体按钮 (PLUME 极致工艺) ---------- */
-.pill {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  padding: 0.6em 1.3em;
-  font-family: var(--font);
-  font-size: clamp(11px, 0.88vw, 13px);
-  font-weight: 500;
-  color: #ffffff;
-  white-space: nowrap;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  text-decoration: none;
-  transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.3s ease,
-              color 0.3s ease,
-              transform 0.25s ease;
-}
-
-.pill:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(251, 191, 36, 0.45);
-  color: #ffffff;
-  transform: translateY(-1px);
-}
-
-.pill.pill-gold {
-  border-color: rgba(251, 191, 36, 0.35);
   color: var(--gold-3);
-  background: rgba(251, 191, 36, 0.08);
 }
 
-.pill.pill-gold:hover {
-  background: var(--gold-btn);
-  color: #000000;
-  border-color: var(--gold);
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
-}
-
-.btn-solid {
-  background: #f1f1f2;
-  color: #0b0b0b;
-  border: none;
-  border-radius: 8px;
-  padding: 0.85em 1.6em;
-  font-family: var(--font);
-  font-size: clamp(11px, 0.88vw, 13px);
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  cursor: pointer;
+/* 胶囊按钮：半透明毛玻璃，悬停时描金边 */
+.pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface-card) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
   text-decoration: none;
-  transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform var(--dur-fast) var(--ease-pill),
+    border-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out);
 }
 
-.btn-solid:hover:not(:disabled) {
-  background: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+.pill:hover {
+  border-color: var(--gold);
+  color: var(--gold-3);
+  transform: translateY(-1px);
+}
+
+.pill-gold {
+  background: var(--gold-btn);
+  border-color: transparent;
+  color: var(--gold-btn-ink);
+  font-weight: 600;
+}
+
+.pill-gold:hover {
+  background: var(--gold-btn-hover);
+  color: var(--gold-btn-ink);
+}
+
+/* 旧类名保留为别名，避免破坏尚未迁移的组件 */
+.btn-solid {
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 18px;
+  height: 40px;
+  cursor: pointer;
 }
 
 .icon-btn {
-  width: 38px;
-  height: 38px;
   display: inline-grid;
   place-items: center;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
   color: var(--text-2);
   cursor: pointer;
-  transition: all 0.22s ease;
+  transition: color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    transform var(--dur-fast) var(--ease-pill);
 }
 
 .icon-btn:hover {
   color: var(--gold);
   border-color: var(--gold);
-  background: var(--surface-hover);
-  transform: translateY(-1px);
 }
 
 .icon-btn:active {
   transform: translateY(1px);
 }
 
-/* ---------- 分段控件 (页签与周期切换) ---------- */
+/* ---------- 分段控件：等宽字体 + 金色下划线指示当前项 ---------- */
 .seg {
   display: inline-flex;
-  padding: 3px;
-  gap: 3px;
-  border-radius: 10px;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px solid var(--border);
 }
 
 .seg button {
+  padding: 7px 12px;
   border: 0;
-  padding: 7px 15px;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
   color: var(--text-2);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.22s ease;
+  transition: color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
 }
 
 .seg button:hover {
-  color: #ffffff;
+  color: var(--text);
 }
 
 .seg button.active,
 .seg button[aria-selected="true"] {
-  background: linear-gradient(135deg, var(--gold), var(--gold-2));
-  color: #000000;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.35);
+  background: var(--surface-hover);
+  color: var(--gold-3);
+  box-shadow: inset 0 -2px 0 var(--gold);
 }
 
 .seg-sm button {
-  padding: 5px 11px;
-  font-size: 12px;
+  padding: 5px 9px;
+  font-size: 11px;
 }
 
-/* ---------- 骨架屏与载入动画 ---------- */
+/* ---------- 骨架屏、加载与提示 ---------- */
 .skeleton {
   display: inline-block;
-  border-radius: 6px;
-  background: linear-gradient(90deg, var(--surface-2) 20%, var(--surface-hover) 50%, var(--surface-2) 80%);
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-hover) 50%, var(--surface-2) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 1.6s linear infinite;
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .spinner {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid var(--line-strong);
   border-top-color: currentColor;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* 呼吸光环动画 */
-@keyframes pulse-ring {
+@keyframes dot-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
   }
   70% {
     box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
@@ -564,26 +591,57 @@ p {
   }
 }
 
-/* 价格跳动闪烁 */
+/* 金色脉冲环：用于告警与提示的呼吸标记 */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(232, 199, 125, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(232, 199, 125, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 199, 125, 0);
+  }
+}
+
+/* 价格变化闪烁：只改文字颜色，不铺背景 */
 @keyframes flash-up {
-  0% { background-color: rgba(239, 68, 68, 0.35); }
-  100% { background-color: transparent; }
+  0% {
+    color: var(--up);
+  }
+  100% {
+    color: inherit;
+  }
 }
 
 @keyframes flash-down {
-  0% { background-color: rgba(16, 185, 129, 0.35); }
-  100% { background-color: transparent; }
+  0% {
+    color: var(--down);
+  }
+  100% {
+    color: inherit;
+  }
 }
 
-/* ---------- 状态通知横幅 ---------- */
 .alert {
-  border-radius: var(--radius);
-  padding: 12px 18px;
-  font-size: 14px;
-  border: 1px solid transparent;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.alert-partial,
+.alert-stale {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.alert-error {
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 /* ---------- AI 研报 Markdown 排版 ---------- */
@@ -606,8 +664,8 @@ p {
 .md h2 {
   margin: 1.4em 0 0.5em;
   font-size: 19px;
-  color: var(--gold);
   font-weight: 700;
+  color: var(--gold);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -616,10 +674,10 @@ p {
 .md h3 {
   margin: 1.4em 0 0.45em;
   padding-left: 10px;
-  border-left: 3px solid var(--gold);
+  border-left: 2px solid var(--gold);
   font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
 }
 
 .md p {
@@ -649,9 +707,9 @@ p {
 
 .md code {
   padding: 2px 6px;
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
   font-family: var(--mono);
   font-size: 0.9em;
   color: var(--gold);
@@ -660,16 +718,15 @@ p {
 .md blockquote {
   margin: 1em 0;
   padding: 0.8em 1.2em;
-  border-left: 4px solid var(--gold);
-  border-radius: 0 10px 10px 0;
-  background: linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, transparent 100%);
+  border-left: 2px solid var(--gold);
+  background: var(--surface-2);
   color: var(--text);
 }
 
 .md hr {
   margin: 1.4em 0;
   border: 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
 }
 
 .md table {
@@ -684,7 +741,7 @@ p {
 .md th,
 .md td {
   padding: 10px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   text-align: left;
 }
 
@@ -694,7 +751,14 @@ p {
   font-weight: 700;
 }
 
-/* 动效偏好适配 */
+/* ---------- 响应式细节 ---------- */
+@media (max-width: 767px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+
+/* ---------- 减少动态效果：关闭所有 CSS 动画与过渡，GSAP 侧也会读取同一偏好 ---------- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

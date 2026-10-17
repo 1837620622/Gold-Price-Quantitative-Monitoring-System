@@ -141,7 +141,7 @@ function toneClass(rate) {
 .range-card {
   padding: 24px;
   background: var(--surface-card);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
 }
@@ -165,9 +165,9 @@ function toneClass(rate) {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   color: var(--gold-3);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(232, 199, 125, 0.3);
 }
 
 .range-title {
@@ -253,7 +253,7 @@ function toneClass(rate) {
 .track-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #10b981 0%, #fbbf24 60%, #ef4444 100%);
+  background: linear-gradient(90deg, #10b981 0%, #e8c77d 60%, #ef4444 100%);
 }
 
 .track-pointer {
@@ -264,7 +264,6 @@ function toneClass(rate) {
   height: 18px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
   display: grid;
   place-items: center;
   transition: left 0.3s ease;
@@ -295,7 +294,7 @@ function toneClass(rate) {
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   color: var(--gold-3);
 }
 

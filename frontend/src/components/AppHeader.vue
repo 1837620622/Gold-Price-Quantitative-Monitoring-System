@@ -204,7 +204,7 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--dim);
   font-size: 11px;
-  font-family: 'Archivo', var(--mono);
+  font-family: var(--font-display), var(--mono);
   cursor: pointer;
   transition: all 0.25s ease;
 }
@@ -221,7 +221,6 @@ onUnmounted(() => {
 }
 .tool-dot.ok {
   background: var(--down);
-  box-shadow: 0 0 6px var(--down);
 }
 
 .tool-icon-btn {
@@ -239,7 +238,7 @@ onUnmounted(() => {
 .tool-icon-btn:hover {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  border-color: rgba(251, 191, 36, 0.4);
+  border-color: rgba(232, 199, 125, 0.4);
 }
 
 .tool-icon-btn.spinning svg {

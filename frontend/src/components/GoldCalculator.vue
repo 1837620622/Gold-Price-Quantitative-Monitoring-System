@@ -513,7 +513,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 .calc-card {
   padding: 24px;
   background: var(--surface-card);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(232, 199, 125, 0.2);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
 }
@@ -539,9 +539,9 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   color: var(--gold-3);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(232, 199, 125, 0.3);
 }
 
 .calc-title {
@@ -579,9 +579,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 }
 .calc-tab-btn.active {
   background: var(--gold-btn);
-  color: #000000;
+  color: var(--gold-ink);
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
 }
 
 .current-price-badge {
@@ -590,8 +589,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   align-items: flex-end;
   padding: 6px 14px;
   border-radius: 8px;
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: rgba(232, 199, 125, 0.08);
+  border: 1px solid rgba(232, 199, 125, 0.25);
 }
 .current-price-badge span {
   font-size: 11px;
@@ -665,7 +664,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   border-color: var(--border-hover);
 }
 .type-btn.active {
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(232, 199, 125, 0.12);
   border-color: var(--gold);
   color: var(--gold-3);
 }
@@ -698,7 +697,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 }
 .preset-chip.active {
   background: var(--gold);
-  color: #000;
+  color: var(--gold-ink);
   border-color: var(--gold);
   font-weight: 700;
 }
@@ -768,8 +767,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   border: 1px solid var(--border);
 }
 .res-item.highlight {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.05) 100%);
-  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(232, 199, 125, 0.08);
+  border-color: rgba(232, 199, 125, 0.35);
 }
 
 .res-label {

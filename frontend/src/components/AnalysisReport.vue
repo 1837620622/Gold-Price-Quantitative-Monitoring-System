@@ -118,8 +118,8 @@ function copyReport() {
 <style scoped>
 .report {
   scroll-margin-top: 80px;
-  background: linear-gradient(145deg, rgba(22, 26, 40, 0.95) 0%, rgba(13, 16, 25, 0.98) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.22);
+  background: var(--surface-card);
+  border: 1px solid rgba(232, 199, 125, 0.22);
 }
 
 .card-head {
@@ -140,7 +140,7 @@ function copyReport() {
 }
 
 .card-title {
-  font-family: 'Archivo', var(--font);
+  font-family: var(--font-display), var(--font);
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
@@ -152,8 +152,8 @@ function copyReport() {
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 4px;
-  background: linear-gradient(135deg, var(--gold-3), var(--gold));
-  color: #000;
+  background: var(--gold);
+  color: var(--gold-ink);
 }
 
 .card-sub {
@@ -202,8 +202,8 @@ function copyReport() {
 .loading-animation {
   padding: 24px;
   border-radius: 12px;
-  background: rgba(251, 191, 36, 0.04);
-  border: 1px dashed rgba(251, 191, 36, 0.25);
+  background: rgba(232, 199, 125, 0.04);
+  border: 1px dashed rgba(232, 199, 125, 0.25);
   display: flex;
   flex-direction: column;
   align-items: center;

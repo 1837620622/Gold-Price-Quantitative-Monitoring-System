@@ -246,7 +246,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);
-  background: #1a1a24;
+  background: var(--surface-2);
 }
 
 .chart-iframe {
@@ -366,7 +366,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);
-  background: #08090e;
+  background: var(--surface-2);
   position: relative;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }

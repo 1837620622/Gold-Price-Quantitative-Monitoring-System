@@ -2,6 +2,11 @@
   <div class="app">
     <a class="skip-link" href="#main">跳到主要内容</a>
 
+    <!-- 页面滚动进度：顶部一条金色细线 -->
+    <div class="scroll-meter" aria-hidden="true">
+      <span ref="meterRef" class="scroll-meter-fill"></span>
+    </div>
+
     <!-- 顶部主导航栏 -->
     <AppHeader
       :status="status"
@@ -21,16 +26,22 @@
       @alert="showAlerts = true"
     />
 
-    <!-- 四幕电影级全景叙事与粘性滚轨 (Hero -> Recipe -> Adv 460vh 粘性滚轨 -> Essentials) -->
-    <PlumeCinematicTrack
-      :domestic-price="domestic?.price"
-      :intl-price="international?.price"
-      :premium-rate="snapshot?.premiumPercent"
+    <!-- 金库开场：首屏只有大字与金条/金币，向下滚动进入金库，远墙为实时 K 线 -->
+    <JourneyHero
+      :domestic-price="domestic?.price ?? null"
+      :intl-price="international?.price ?? null"
+      :premium-percent="premiumPercent"
+      :bars="cnQuant?.bars ?? []"
     />
 
-    <!-- 第五部分：实盘量化投研终端工作台 (#workspace) -->
+    <!-- 模块索引：每个模块对应下方一个仪表盘区块 -->
+    <div class="container">
+      <ModulesIndex :cn="cnQuant" />
+    </div>
+
+    <!-- 仪表盘工作台 (#workspace) -->
     <div id="workspace" class="workspace-section">
-      <!-- 实时全景跑马灯与快捷控制条 -->
+      <!-- 实时跑马灯与快捷控制条 -->
       <GlobalTickerBar
         :snapshot="snapshot"
         :countdown="countdown"
@@ -41,181 +52,202 @@
         @open-calc="scrollToCalc"
       />
 
-      <!-- 浮动实时告警 Toast -->
+      <!-- 浮动实时告警 -->
       <transition name="toast-fade">
         <div v-if="activeNotice" class="toast-alert" role="alert">
-          <div class="toast-icon">🚨</div>
+          <span class="toast-dot" aria-hidden="true"></span>
           <div class="toast-content">
             <b class="toast-title">{{ activeNotice.title }}</b>
             <p class="toast-desc">{{ activeNotice.body }}</p>
           </div>
-          <button type="button" class="toast-close" @click="activeNotice = null">✕</button>
+          <button type="button" class="toast-close" aria-label="关闭提醒" @click="activeNotice = null">✕</button>
         </div>
       </transition>
 
       <main id="main" class="container main">
-      <div v-if="message && status !== 'live'" class="alert" :class="`alert-${status}`" role="status">
-        {{ message }}
-      </div>
-
-      <!-- 01 行情全景看板 -->
-      <section id="sec-overview" class="block" aria-labelledby="sec-overview">
-        <div class="section-header">
-          <div class="section-title">
-            <span class="sec-badge">01</span>
-            <h2>实时行情矩阵 · MARKET OVERVIEW</h2>
-          </div>
-          <div class="header-action-row">
-            <button type="button" class="btn btn-ghost btn-xs" @click="showPoster = true">
-              ✦ 分享研报海报
-            </button>
-          </div>
+        <div v-if="message && status !== 'live'" class="alert" :class="`alert-${status}`" role="status">
+          {{ message }}
         </div>
 
-        <div class="hero-grid">
-          <PriceCard
-            class="hero-cn"
-            code="AU9999"
-            name="上海黄金交易所 · 国内现货"
-            :tag="domestic?.estimated ? '估算' : 'CNY'"
-            unit="元 / 克"
-            currency="CNY"
-            :price="domestic?.price ?? null"
-            :change="domestic?.change ?? null"
-            :change-percent="domestic?.changePercent ?? null"
-            :stats="domesticStats"
-            :sparkline="cnSpark"
-            :estimated="Boolean(domestic?.estimated)"
-            :loading="loading"
-            :note="domesticNote"
-            accent="gold"
+        <!-- 01 实时行情 -->
+        <section id="sec-overview" class="block" data-reveal aria-labelledby="title-overview">
+          <SectionHead
+            index="01"
+            tag="实时行情"
+            title="Market"
+            title-id="title-overview"
+            sub="国内 AU9999 与国际 XAU/USD 的实时价格、涨跌与盘口统计。"
+          >
+            <button type="button" class="btn btn-ghost btn-sm" @click="showPoster = true">分享研报海报</button>
+          </SectionHead>
+
+          <div class="hero-grid">
+            <PriceCard
+              class="hero-cn"
+              data-reveal-item
+              code="AU9999"
+              name="上海黄金交易所 · 国内现货"
+              :tag="domestic?.estimated ? '估算' : 'CNY'"
+              unit="元 / 克"
+              currency="CNY"
+              :price="domestic?.price ?? null"
+              :change="domestic?.change ?? null"
+              :change-percent="domestic?.changePercent ?? null"
+              :stats="domesticStats"
+              :sparkline="cnSpark"
+              :estimated="Boolean(domestic?.estimated)"
+              :loading="loading"
+              :note="domesticNote"
+              accent="gold"
+            />
+            <PriceCard
+              class="hero-intl"
+              data-reveal-item
+              code="XAU/USD"
+              name="伦敦现货黄金"
+              tag="SPOT"
+              unit="美元 / 盎司"
+              currency="USD"
+              :price="international?.price ?? null"
+              :change="international?.change ?? null"
+              :change-percent="international?.changePercent ?? null"
+              :stats="internationalStats"
+              :sparkline="intlSpark"
+              :loading="loading"
+              :note="internationalNote"
+              accent="blue"
+            />
+            <AiCard
+              class="hero-ai"
+              data-reveal-item
+              :state="analysis.state"
+              :timestamp="analysis.timestamp"
+              :cached="analysis.cached"
+              :error="analysis.error"
+              :unavailable="aiUnavailable"
+              @run="runAnalysis"
+            />
+          </div>
+        </section>
+
+        <!-- AI 研报（运行分析后出现） -->
+        <section v-if="analysis.state !== 'idle'" id="sec-report" class="block" aria-labelledby="title-report">
+          <SectionHead
+            index="AI"
+            tag="研报"
+            title="Brief"
+            title-id="title-report"
+            sub="机构级量化推演与实战策略报告。"
           />
-          <PriceCard
-            class="hero-intl"
-            code="XAU/USD"
-            name="伦敦现货黄金"
-            tag="SPOT"
-            unit="美元 / 盎司"
-            currency="USD"
-            :price="international?.price ?? null"
-            :change="international?.change ?? null"
-            :change-percent="international?.changePercent ?? null"
-            :stats="internationalStats"
-            :sparkline="intlSpark"
-            :loading="loading"
-            :note="internationalNote"
-            accent="blue"
-          />
-          <AiCard
-            class="hero-ai"
+          <AnalysisReport
+            id="report"
             :state="analysis.state"
+            :text="analysis.text"
+            :model="analysis.model"
             :timestamp="analysis.timestamp"
             :cached="analysis.cached"
             :error="analysis.error"
-            :unavailable="aiUnavailable"
-            @run="runAnalysis"
+            :quant="analysis.quant"
           />
-        </div>
-      </section>
+        </section>
 
-      <!-- 02 AI 量化深度研报（分析运行后展示） -->
-      <section v-if="analysis.state !== 'idle'" class="block" aria-labelledby="sec-report">
-        <div class="section-header">
-          <div class="section-title">
-            <span class="sec-badge">AI</span>
-            <h2>机构级量化推演与实战策略报告</h2>
-          </div>
-        </div>
-        <AnalysisReport
-          id="report"
-          :state="analysis.state"
-          :text="analysis.text"
-          :model="analysis.model"
-          :timestamp="analysis.timestamp"
-          :cached="analysis.cached"
-          :error="analysis.error"
-          :quant="analysis.quant"
-        />
-      </section>
-
-      <!-- 03 多因子量化技术面全景矩阵 -->
-      <section class="block" aria-labelledby="sec-quant">
-        <div class="section-header">
-          <div class="section-title">
-            <span class="sec-badge">02</span>
-            <h2>多因子量化技术矩阵 · TECHNICAL MATRIX</h2>
-          </div>
-        </div>
-
-        <TechnicalMatrix :quant="cnQuant" />
-
-        <div class="analytics-grid">
-          <SignalPanel
-            v-if="cnQuant?.available"
-            class="an-signal"
-            :signal="cnQuant.signal"
-            :levels="cnQuant.levels"
-            :as-of="cnQuant.asOf"
+        <!-- 02 技术矩阵与信号 -->
+        <section id="sec-quant" class="block" data-reveal aria-labelledby="title-quant">
+          <SectionHead
+            index="02"
+            tag="技术矩阵"
+            title="Signals"
+            title-id="title-quant"
+            sub="八项技术因子逐一判定多空，综合评分、风险状态与枢轴位一并给出。"
           />
-          <div v-else class="card notice-card an-signal">
-            {{ cnError || '量化信号计算中…' }}
+
+          <TechnicalMatrix :quant="cnQuant" data-reveal-item />
+
+          <div class="analytics-grid" data-reveal-item>
+            <SignalPanel
+              v-if="cnQuant?.available"
+              class="an-signal"
+              :signal="cnQuant.signal"
+              :levels="cnQuant.levels"
+              :as-of="cnQuant.asOf"
+            />
+            <div v-else class="card notice-card an-signal">
+              {{ cnError || '量化信号计算中…' }}
+            </div>
+            <div v-if="cnQuant?.available" class="an-side">
+              <RiskTiles :quant="cnQuant" />
+              <PivotLadder
+                v-if="cnQuant.levels?.pivots"
+                :pivots="cnQuant.levels.pivots"
+                :price="domestic?.price ?? null"
+              />
+            </div>
           </div>
-          <div v-if="cnQuant?.available" class="an-side">
-            <RiskTiles :quant="cnQuant" />
-            <PivotLadder
-              v-if="cnQuant.levels?.pivots"
-              :pivots="cnQuant.levels.pivots"
-              :price="domestic?.price ?? null"
+        </section>
+
+        <!-- 03 图表与回测 -->
+        <section id="sec-charts" class="block" data-reveal aria-labelledby="title-charts">
+          <SectionHead
+            index="03"
+            tag="图表回测"
+            title="Charts"
+            title-id="title-charts"
+            sub="K 线、均线、量价与指标联动；国内溢价与金银比；策略回测与权益曲线。"
+          />
+          <div data-reveal-item>
+            <ChartWorkspace
+              :cn="cnQuant"
+              :intl="intlQuant"
+              :cn-error="cnError"
+              :intl-error="intlError"
+              :loading-cn="loadingCn"
+              :loading-intl="loadingIntl"
+              :theme="resolved"
             />
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- 04 图表工作台与实盘回测 -->
-      <section class="block" aria-labelledby="sec-charts">
-        <div class="section-header">
-          <div class="section-title">
-            <span class="sec-badge">03</span>
-            <h2>交互图表与实盘回测 · CHARTS & BACKTESTING</h2>
-          </div>
-        </div>
-        <ChartWorkspace
-          :cn="cnQuant"
-          :intl="intlQuant"
-          :cn-error="cnError"
-          :intl-error="intlError"
-          :loading-cn="loadingCn"
-          :loading-intl="loadingIntl"
-          :theme="resolved"
-        />
-      </section>
-
-      <!-- 05 黄金投资变现计算器与 52 周极值 -->
-      <section class="block" aria-labelledby="sec-tools">
-        <div class="section-header">
-          <div class="section-title">
-            <span class="sec-badge">04</span>
-            <h2>实战工具与周期极值 · TOOLS & RANGE</h2>
-          </div>
-        </div>
-
-        <div class="tools-grid">
-          <!-- 黄金持仓与跨市套利精算器 -->
-          <GoldCalculator
-            :domestic-price="domestic?.price"
-            :intl-price="international?.price"
-            :fx-rate="snapshot?.fx?.usdCny"
-            :premium-percent="snapshot?.premiumPercent"
+        <!-- 04 实战工具 -->
+        <section id="sec-tools" class="block" data-reveal aria-labelledby="title-tools">
+          <SectionHead
+            index="04"
+            tag="实战工具"
+            title="Tools"
+            title-id="title-tools"
+            sub="持仓变现与盈亏平衡，52 周区间与周期收益率。"
           />
-          <!-- 52周区间与多周期收益率阶梯 -->
-          <HistoricalRange :bars="cnQuant?.bars" :current-price="domestic?.price" />
-        </div>
-      </section>
-    </main>
+
+          <div class="tools-grid" data-reveal-item>
+            <GoldCalculator
+              :domestic-price="domestic?.price"
+              :intl-price="international?.price"
+              :fx-rate="snapshot?.fx?.usdCny"
+              :premium-percent="snapshot?.premiumPercent"
+            />
+            <HistoricalRange :bars="cnQuant?.bars" :current-price="domestic?.price" />
+          </div>
+        </section>
+
+        <!-- 05 提醒与推送：金币落在一行上，点击即设置预警 -->
+        <section id="contact" class="block contact" data-reveal aria-labelledby="title-contact">
+          <SectionHead
+            index="05"
+            tag="提醒推送"
+            title="Alerts"
+            title-id="title-contact"
+            sub="价格突破预警与微信推送。点击下方金币即可设置预警。"
+          />
+          <div class="contact-actions" data-reveal-item>
+            <button type="button" class="pill pill-gold" @click="showAlerts = true">设置价格预警 ↗</button>
+            <button type="button" class="pill" @click="showSubscribe = true">订阅微信推送 ↗</button>
+          </div>
+          <CoinRow :labels="COIN_LABELS" @select="showAlerts = true" />
+        </section>
+      </main>
+    </div>
 
     <!-- 底部状态与版权 -->
     <AppFooter :latency="latency" />
-    </div>
 
     <!-- 弹窗组件群 -->
     <SubscribeModal :open="showSubscribe" @close="showSubscribe = false" />
@@ -239,9 +271,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import AppHeader from './components/AppHeader.vue';
-import PlumeCinematicTrack from './components/PlumeCinematicTrack.vue';
+import JourneyHero from './components/vault/JourneyHero.vue';
+import CoinRow from './components/vault/CoinRow.vue';
+import ModulesIndex from './components/ModulesIndex.vue';
+import SectionHead from './components/SectionHead.vue';
 import GlobalTickerBar from './components/GlobalTickerBar.vue';
 import PriceCard from './components/PriceCard.vue';
 import AiCard from './components/AiCard.vue';
@@ -265,6 +300,9 @@ import { useTheme } from './composables/useTheme';
 import { useAlerts } from './composables/useAlerts';
 import { requestAnalysis } from './api';
 import { fmtNumber, fmtInt, fmtPercent, toneOf } from './format';
+import { gsap, prefersReducedMotion } from './lib/motion';
+
+const COIN_LABELS = ['AU9999', 'XAU/USD', 'USD/CNY'];
 
 const {
   snapshot,
@@ -301,7 +339,7 @@ function refreshAll() {
 function scrollToCalc() {
   const el = document.getElementById('gold-calculator');
   if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
   }
 }
 
@@ -387,7 +425,7 @@ async function runAnalysis(requestedModel) {
       // 平滑滚到研报区域
       setTimeout(() => {
         const el = document.getElementById('report');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (el) el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
       }, 100);
     } else {
       analysis.value = { ...analysis.value, state: 'error', error: data.message || '分析暂不可用，请稍后重试' };
@@ -397,66 +435,84 @@ async function runAnalysis(requestedModel) {
     analysis.value = { ...analysis.value, state: 'error', error: text };
   }
 }
+
+// ------------------------------------------------------------
+// 滚动进度条与分区入场动效（GSAP ScrollTrigger，只播放一次）
+// ------------------------------------------------------------
+const meterRef = ref(null);
+let meterFrame = 0;
+
+function updateMeter() {
+  meterFrame = 0;
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const ratio = max > 0 ? Math.min(1, window.scrollY / max) : 0;
+  if (meterRef.value) meterRef.value.style.transform = `scaleX(${ratio})`;
+}
+
+function onScrollMeter() {
+  if (!meterFrame) meterFrame = requestAnimationFrame(updateMeter);
+}
+
+function setupReveals() {
+  if (prefersReducedMotion()) return;
+  document.querySelectorAll('[data-reveal]').forEach((section) => {
+    const masks = section.querySelectorAll('.mask > span');
+    const items = section.querySelectorAll('[data-reveal-item]');
+    gsap
+      .timeline({ scrollTrigger: { trigger: section, start: 'top 82%', once: true } })
+      .fromTo(masks, { yPercent: 110 }, { yPercent: 0, duration: 1, ease: 'power4.out', stagger: 0.08 })
+      .fromTo(
+        items,
+        { autoAlpha: 0, y: 24 },
+        { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.06, clearProps: 'transform' },
+        '-=0.6'
+      );
+  });
+}
+
+onMounted(async () => {
+  window.addEventListener('scroll', onScrollMeter, { passive: true });
+  updateMeter();
+  await nextTick();
+  setupReveals();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScrollMeter);
+  if (meterFrame) cancelAnimationFrame(meterFrame);
+});
 </script>
 
 <style scoped>
+.scroll-meter {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.scroll-meter-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--gold);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
 .main {
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding: 0;
 }
 
 .block {
-  margin-top: 36px;
-}
-.block:first-child {
-  margin-top: 0;
+  padding-top: clamp(56px, 8vw, 104px);
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.sec-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  font-stretch: 115%;
-  font-family: 'Archivo', var(--mono);
-  color: #000000;
-  background: var(--gold-btn);
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.35);
-}
-
-.section-title h2 {
-  margin: 0;
-  font-family: 'Archivo', var(--font);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--text);
-}
-
-.btn-xs {
-  height: 28px;
-  padding: 0 10px;
-  font-size: 11px;
-  border-radius: 6px;
+.block + .block {
+  border-top: 1px solid var(--line);
 }
 
 .hero-grid {
@@ -476,6 +532,7 @@ async function runAnalysis(requestedModel) {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
+  margin-top: 16px;
   align-items: start;
 }
 
@@ -504,6 +561,13 @@ async function runAnalysis(requestedModel) {
   padding: 36px 20px;
 }
 
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -4px 0 clamp(24px, 3vw, 40px);
+}
+
 .alert {
   margin-bottom: 20px;
   padding: 12px 16px;
@@ -523,43 +587,51 @@ async function runAnalysis(requestedModel) {
   color: var(--danger);
 }
 
-/* 浮动预警 Toast */
+/* 浮动预警：实体面板 + 红色细边，入场由 transition 完成 */
 .toast-alert {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 20px;
+  right: 20px;
   z-index: 99;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(30, 20, 20, 0.98), rgba(20, 10, 10, 0.98));
-  border: 1px solid rgba(239, 68, 68, 0.45);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(239, 68, 68, 0.25);
-  backdrop-filter: blur(12px);
-  max-width: 420px;
+  max-width: 380px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  border: 1px solid color-mix(in srgb, var(--up) 40%, transparent);
+  box-shadow: var(--shadow);
 }
 
-.toast-icon {
-  font-size: 24px;
-  animation: pulse-ring 1s infinite;
+.toast-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--up);
+  animation: pulse-ring 1.6s var(--ease-out) infinite;
 }
 
 .toast-content {
   flex: 1;
+  min-width: 0;
 }
 
 .toast-title {
   display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: #ffffff;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
 }
 
 .toast-desc {
-  margin: 2px 0 0;
-  font-size: 11px;
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--text-2);
 }
 
@@ -567,22 +639,25 @@ async function runAnalysis(requestedModel) {
   background: transparent;
   border: none;
   color: var(--text-3);
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
-  padding: 4px;
+  padding: 2px 4px;
+  transition: color var(--dur) var(--ease-out);
 }
+
 .toast-close:hover {
-  color: #ffffff;
+  color: var(--text);
 }
 
 .toast-fade-enter-active,
 .toast-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur-slow) var(--ease-out);
 }
+
 .toast-fade-enter-from,
 .toast-fade-leave-to {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(12px);
 }
 
 @media (min-width: 768px) {
@@ -593,14 +668,8 @@ async function runAnalysis(requestedModel) {
 }
 
 @media (min-width: 1024px) {
-  .hero-cn {
-    grid-column: span 4;
-  }
-
-  .hero-intl {
-    grid-column: span 4;
-  }
-
+  .hero-cn,
+  .hero-intl,
   .hero-ai {
     grid-column: span 4;
   }

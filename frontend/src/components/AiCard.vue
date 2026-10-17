@@ -152,7 +152,7 @@ function handleRun() {
   justify-content: space-between;
   gap: 14px;
   background: var(--surface-card);
-  border-color: rgba(251, 191, 36, 0.22);
+  border-color: rgba(232, 199, 125, 0.22);
   position: relative;
 }
 
@@ -168,10 +168,9 @@ function handleRun() {
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+  background: rgba(232, 199, 125, 0.12);
   color: var(--gold);
-  border: 1px solid rgba(251, 191, 36, 0.35);
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(232, 199, 125, 0.35);
   flex-shrink: 0;
 }
 
@@ -207,7 +206,6 @@ function handleRun() {
 
 .model-select-group:focus-within {
   border-color: var(--gold);
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.15);
 }
 
 .select-label {
@@ -226,7 +224,6 @@ function handleRun() {
   height: 5px;
   border-radius: 50%;
   background: var(--gold);
-  box-shadow: 0 0 6px var(--gold);
 }
 
 .select-wrapper {
@@ -260,12 +257,11 @@ function handleRun() {
 
 .custom-select:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
 }
 
 .custom-select option {
-  background: #141824;
-  color: #f3f4f6;
+  background: var(--surface-card);
+  color: var(--text);
   padding: 8px;
 }
 
@@ -320,8 +316,8 @@ function handleRun() {
 .ai-analyzing-box {
   padding: 14px;
   border-radius: 10px;
-  background: rgba(251, 191, 36, 0.05);
-  border: 1px dashed rgba(251, 191, 36, 0.3);
+  background: rgba(232, 199, 125, 0.05);
+  border: 1px dashed rgba(232, 199, 125, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
