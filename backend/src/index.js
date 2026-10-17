@@ -223,19 +223,19 @@ app.get('/api/signals', async (c) => {
 
 // AI 分析：公开接口，支持指定模型或智能调度，结果缓存以控制模型调用成本
 app.post('/api/analyze', async (c) => {
+  let body = {};
   try {
-    let body = {};
-    try {
-      body = await c.req.json();
-    } catch {}
+    body = await c.req.json();
+  } catch {}
+  // 语言只接受 zh / en，其它取值一律按中文处理；放在 try 之外，异常分支也要用到
+  const lang = body?.lang === 'en' ? 'en' : 'zh';
+  try {
     const requestedModel = body?.model || 'auto';
     const force = Boolean(body?.force);
-    // 语言只接受 zh / en，其它取值一律按中文处理
-    const lang = body?.lang === 'en' ? 'en' : 'zh';
     const result = await getAnalysis(c.env, { requestedModel, force, lang });
     return c.json(result, result.success ? 200 : 503);
   } catch (error) {
-    return serverError(c, 'AI 分析失败', error);
+    return serverError(c, lang === 'en' ? 'AI analysis failed' : 'AI 分析失败', error);
   }
 });
 
@@ -338,7 +338,7 @@ app.get('/api/push/status', async (c) => {
 // 兜底
 // ------------------------------------------------------------
 app.notFound((c) => c.json({ success: false, message: '接口不存在' }, 404));
-app.onError((error, c) => serverError(c, '服务器内部错误', error));
+app.onError((error, c) => serverError(c, '服务器内部错误 · Internal server error', error));
 
 // ------------------------------------------------------------
 // Cloudflare 入口：HTTP + Cron Trigger（每 30 分钟）

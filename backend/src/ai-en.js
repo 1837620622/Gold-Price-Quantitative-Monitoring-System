@@ -49,7 +49,8 @@ const fmtStrategyEn = (st) =>
   `${enLabel(st.name)}: total return ${signedPercent(st.totalReturn)}, CAGR ${signedPercent(st.cagr)}, Sharpe ${fmt(st.sharpe)}, Sortino ${fmt(st.sortino)}, Calmar ${fmt(st.calmar)}, profit factor ${fmt(st.profitFactor)}, win rate ${fmt(st.winRate)}%, max drawdown ${fmt(st.maxDrawdown)}%`;
 
 function quantBlockEn(quant) {
-  if (!quant?.available) return `(Quant data unavailable: ${quant?.reason ?? 'unknown reason'})`;
+  // 只用引擎给出的英文原因，缺失时用英文兜底，不回退到中文 reason
+  if (!quant?.available) return `(Quant data unavailable: ${quant?.reasonEn ?? 'unknown reason'})`;
   const { signal: s, levels: l, risk: r, backtest: bt, premium: p } = quant;
   const lines = [
     `Signal: ${enLabel(s.label)} (score ${signed(s.score, 1)}, confidence ${s.confidence}%)`,

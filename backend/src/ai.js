@@ -284,7 +284,7 @@ export function cleanAiReport(text) {
 }
 
 // Cloudflare Workers AI 内置大模型矩阵（支持指定模型优先 + 智能容灾降级）
-async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system = SYSTEM_PROMPT) {
+async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system = SYSTEM_PROMPT, lang = 'zh') {
   if (!aiBinding || typeof aiBinding.run !== 'function') throw new Error('Workers AI 未绑定');
 
   const MODEL_MAP = {
@@ -321,11 +321,11 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system 
 
   // 2. 兜底梯队（按质量与配额平滑降级，保证输出完整）
   const fallbackList = [
-    { model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'deepseek-r1-distill-qwen-32b (深度推理)', maxTokens: 3500 },
-    { model: '@cf/qwen/qwen2.5-72b-instruct', name: 'qwen2.5-72b-instruct (全能旗舰)', maxTokens: 2600 },
-    { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'llama-3.3-70b (顶尖研报)', maxTokens: 2600 },
-    { model: '@cf/qwen/qwen2.5-14b-instruct', name: 'qwen2.5-14b-instruct (均衡低耗)', maxTokens: 2200 },
-    { model: '@cf/qwen/qwen2.5-7b-instruct', name: 'qwen2.5-7b-instruct (极速兜底)', maxTokens: 1800 },
+    { model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'deepseek-r1-distill-qwen-32b (深度推理)', nameEn: 'deepseek-r1-distill-qwen-32b (deep reasoning)', maxTokens: 3500 },
+    { model: '@cf/qwen/qwen2.5-72b-instruct', name: 'qwen2.5-72b-instruct (全能旗舰)', nameEn: 'qwen2.5-72b-instruct (flagship all-round)', maxTokens: 2600 },
+    { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'llama-3.3-70b (顶尖研报)', nameEn: 'llama-3.3-70b (top-tier research)', maxTokens: 2600 },
+    { model: '@cf/qwen/qwen2.5-14b-instruct', name: 'qwen2.5-14b-instruct (均衡低耗)', nameEn: 'qwen2.5-14b-instruct (balanced, low cost)', maxTokens: 2200 },
+    { model: '@cf/qwen/qwen2.5-7b-instruct', name: 'qwen2.5-7b-instruct (极速兜底)', nameEn: 'qwen2.5-7b-instruct (fast fallback)', maxTokens: 1800 },
   ];
 
   for (const item of fallbackList) {
@@ -342,7 +342,8 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto', system 
       const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
       const cleaned = cleanAiReport(text);
       if (cleaned && cleaned.length > 20) {
-        return { content: cleaned, modelName: `Workers AI · ${item.name}` };
+        const name = lang === 'en' ? item.nameEn : item.name;
+        return { content: cleaned, modelName: `Workers AI · ${name}` };
       }
     } catch (e) {
       console.warn(`Workers AI 兜底模型 ${item.model} 失败:`, e.message);
@@ -361,7 +362,7 @@ export async function generateAnalysis(env, snapshot, quant, requestedModel = 'a
   // 1. 首选：Cloudflare Workers AI 原生内置大模型（免 Key、零外部延迟、分级省流）
   if (env?.AI) {
     try {
-      const result = await callWorkersAi(env.AI, prompt, requestedModel, system);
+      const result = await callWorkersAi(env.AI, prompt, requestedModel, system, lang);
       return { success: true, analysis: result.content, model: result.modelName, timestamp: new Date().toISOString() };
     } catch (error) {
       console.warn('Cloudflare Workers AI 尝试后转入备用模型:', error.message);
@@ -438,6 +439,8 @@ function summarizeQuant(quant) {
 // 并发合并按“语言 + 模型”分开：中英文请求不会共用同一份在途结果
 const inflight = new Map();
 const cacheKeyOf = (lang, model) => `analysisCache:${lang}:${model || 'auto'}`;
+// 旧版缓存键只属于中文 auto 结果：指定模型与英文结果都不读写它，避免串模型或串语言
+const usesLegacyCache = (lang, model) => lang === 'zh' && (!model || model === 'auto');
 
 async function buildAnalysis(env, { requestedModel = 'auto', lang = 'zh' } = {}) {
   const snapshot = await getSnapshot();
@@ -459,15 +462,14 @@ async function buildAnalysis(env, { requestedModel = 'auto', lang = 'zh' } = {})
   };
   if (analysis.model !== 'auto-analysis') {
     await setState(env, cacheKeyOf(lang, requestedModel), { at: Date.now(), payload });
-    // 旧版缓存键只属于中文结果，英文结果不写入
-    if (lang === 'zh') await setState(env, 'analysisCache', { at: Date.now(), payload });
+    if (usesLegacyCache(lang, requestedModel)) await setState(env, 'analysisCache', { at: Date.now(), payload });
   }
   return payload;
 }
 
 export async function getAnalysis(env, { requestedModel = 'auto', force = false, lang = 'zh' } = {}) {
   const key = cacheKeyOf(lang, requestedModel);
-  const cached = await getState(env, key) || (lang === 'zh' ? await getState(env, 'analysisCache') : null);
+  const cached = await getState(env, key) || (usesLegacyCache(lang, requestedModel) ? await getState(env, 'analysisCache') : null);
   if (!force && cached && Date.now() - cached.at < TTL.analysis) {
     return { ...cached.payload, cached: true };
   }
