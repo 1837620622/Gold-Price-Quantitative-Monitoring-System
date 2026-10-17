@@ -2,6 +2,7 @@
   <div class="app">
     <a class="skip-link" href="#main">跳到主要内容</a>
 
+    <!-- 顶部主导航栏 -->
     <AppHeader
       :status="status"
       :theme="resolved"
@@ -15,16 +16,53 @@
       @toggle-theme="toggle"
       @subscribe="showSubscribe = true"
       @sources="showSources = true"
+      @poster="showPoster = true"
+      @calc="scrollToCalc"
+      @alert="showAlerts = true"
     />
+
+    <!-- 实时全景跑马灯与快捷控制条 -->
+    <GlobalTickerBar
+      :snapshot="snapshot"
+      :countdown="countdown"
+      :poll-interval="pollInterval"
+      :alert-count="alerts.length"
+      @set-interval="setPollInterval"
+      @open-alert="showAlerts = true"
+      @open-calc="scrollToCalc"
+    />
+
+    <!-- 浮动实时告警 Toast -->
+    <transition name="toast-fade">
+      <div v-if="activeNotice" class="toast-alert" role="alert">
+        <div class="toast-icon">🚨</div>
+        <div class="toast-content">
+          <b class="toast-title">{{ activeNotice.title }}</b>
+          <p class="toast-desc">{{ activeNotice.body }}</p>
+        </div>
+        <button type="button" class="toast-close" @click="activeNotice = null">✕</button>
+      </div>
+    </transition>
 
     <main id="main" class="container main">
       <div v-if="message && status !== 'live'" class="alert" :class="`alert-${status}`" role="status">
         {{ message }}
       </div>
 
-      <!-- 01 行情概览 -->
+      <!-- 01 行情全景看板 -->
       <section class="block" aria-labelledby="sec-overview">
-        <h2 id="sec-overview" class="section-title"><span>01</span>行情概览</h2>
+        <div class="section-header">
+          <div class="section-title">
+            <span class="sec-badge">01</span>
+            <h2>实时行情矩阵 · MARKET OVERVIEW</h2>
+          </div>
+          <div class="header-action-row">
+            <button type="button" class="btn btn-ghost btn-xs" @click="showPoster = true">
+              ✦ 分享研报海报
+            </button>
+          </div>
+        </div>
+
         <div class="hero-grid">
           <PriceCard
             class="hero-cn"
@@ -71,10 +109,38 @@
         </div>
       </section>
 
-      <!-- 02 量化信号与指标 -->
+      <!-- 02 AI 量化深度研报（分析运行后展示） -->
+      <section v-if="analysis.state !== 'idle'" class="block" aria-labelledby="sec-report">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="sec-badge">AI</span>
+            <h2>机构级量化推演与实战策略报告</h2>
+          </div>
+        </div>
+        <AnalysisReport
+          id="report"
+          :state="analysis.state"
+          :text="analysis.text"
+          :model="analysis.model"
+          :timestamp="analysis.timestamp"
+          :cached="analysis.cached"
+          :error="analysis.error"
+          :quant="analysis.quant"
+        />
+      </section>
+
+      <!-- 03 多因子量化技术面全景矩阵 -->
       <section class="block" aria-labelledby="sec-quant">
-        <h2 id="sec-quant" class="section-title"><span>02</span>量化信号与指标</h2>
-        <div class="analytics-grid">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="sec-badge">02</span>
+            <h2>多因子量化技术矩阵 · TECHNICAL MATRIX</h2>
+          </div>
+        </div>
+
+        <TechnicalMatrix :quant="cnQuant" />
+
+        <div class="analytics-grid" style="margin-top: 16px;">
           <SignalPanel
             v-if="cnQuant?.available"
             class="an-signal"
@@ -89,9 +155,14 @@
         </div>
       </section>
 
-      <!-- 03 图表工作台 -->
+      <!-- 04 图表工作台与实盘回测 -->
       <section class="block" aria-labelledby="sec-charts">
-        <h2 id="sec-charts" class="section-title"><span>03</span>图表与回测</h2>
+        <div class="section-header">
+          <div class="section-title">
+            <span class="sec-badge">03</span>
+            <h2>交互图表与实盘回测 · CHARTS & BACKTESTING</h2>
+          </div>
+        </div>
         <ChartWorkspace
           :cn="cnQuant"
           :intl="intlQuant"
@@ -103,57 +174,111 @@
         />
       </section>
 
-      <!-- 04 AI 报告 -->
-      <section v-if="analysis.state !== 'idle'" class="block" aria-labelledby="sec-report">
-        <h2 id="sec-report" class="section-title"><span>04</span>AI 分析报告</h2>
-        <AnalysisReport
-          id="report"
-          :state="analysis.state"
-          :text="analysis.text"
-          :model="analysis.model"
-          :timestamp="analysis.timestamp"
-          :cached="analysis.cached"
-          :error="analysis.error"
-          :quant="analysis.quant"
-        />
+      <!-- 05 黄金投资变现计算器与 52 周极值 -->
+      <section class="block" aria-labelledby="sec-tools">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="sec-badge">04</span>
+            <h2>实战工具与周期极值 · TOOLS & RANGE</h2>
+          </div>
+        </div>
+
+        <div class="tools-grid">
+          <!-- 黄金计算器 -->
+          <GoldCalculator :domestic-price="domestic?.price" />
+          <!-- 52周区间与多周期收益率阶梯 -->
+          <HistoricalRange :bars="cnQuant?.bars" :current-price="domestic?.price" />
+        </div>
       </section>
     </main>
 
+    <!-- 底部状态与版权 -->
     <AppFooter :latency="latency" />
 
+    <!-- 弹窗组件群 -->
     <SubscribeModal :open="showSubscribe" @close="showSubscribe = false" />
     <SourcesDrawer :open="showSources" :sources="sources" :checks="crossChecks" @close="showSources = false" />
+    <PriceAlertModal
+      :open="showAlerts"
+      :alerts="alerts"
+      @close="showAlerts = false"
+      @add="addAlert"
+      @remove="removeAlert"
+      @toggle="toggleAlert"
+      @clear="clearTriggered"
+    />
+    <SharePosterModal
+      :open="showPoster"
+      :snapshot="snapshot"
+      :quant="cnQuant"
+      @close="showPoster = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AppHeader from './components/AppHeader.vue';
+import GlobalTickerBar from './components/GlobalTickerBar.vue';
 import PriceCard from './components/PriceCard.vue';
 import AiCard from './components/AiCard.vue';
 import SignalPanel from './components/SignalPanel.vue';
 import RiskTiles from './components/RiskTiles.vue';
+import TechnicalMatrix from './components/TechnicalMatrix.vue';
+import GoldCalculator from './components/GoldCalculator.vue';
+import HistoricalRange from './components/HistoricalRange.vue';
 import ChartWorkspace from './components/ChartWorkspace.vue';
 import AnalysisReport from './components/AnalysisReport.vue';
 import SourcesDrawer from './components/SourcesDrawer.vue';
 import AppFooter from './components/AppFooter.vue';
 import SubscribeModal from './components/SubscribeModal.vue';
+import PriceAlertModal from './components/PriceAlertModal.vue';
+import SharePosterModal from './components/SharePosterModal.vue';
+
 import { useMarket } from './composables/useMarket';
 import { useQuant } from './composables/useQuant';
 import { useTheme } from './composables/useTheme';
+import { useAlerts } from './composables/useAlerts';
 import { requestAnalysis } from './api';
 import { fmtNumber, fmtInt, fmtPercent, toneOf } from './format';
 
-const { snapshot, status, message, ageSeconds, now, latency, refresh: refreshPrices } = useMarket();
+const {
+  snapshot,
+  status,
+  message,
+  ageSeconds,
+  now,
+  latency,
+  pollInterval,
+  countdown,
+  setPollInterval,
+  refresh: refreshPrices,
+} = useMarket();
+
 const { cn: cnQuant, intl: intlQuant, cnError, intlError, loadingCn, loadingIntl, refreshQuant } = useQuant();
 const { resolved, toggle } = useTheme();
+const { alerts, activeNotice, addAlert, removeAlert, toggleAlert, clearTriggered, checkPrice } = useAlerts();
+
+// 自动对碰价格预警规则
+watch(snapshot, (val) => {
+  if (val) checkPrice(val);
+}, { immediate: true });
 
 const showSubscribe = ref(false);
 const showSources = ref(false);
+const showAlerts = ref(false);
+const showPoster = ref(false);
 
 function refreshAll() {
   refreshPrices();
   refreshQuant();
+}
+
+function scrollToCalc() {
+  const el = document.getElementById('gold-calculator');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 // ------------------------------------------------------------
@@ -235,6 +360,11 @@ async function runAnalysis(requestedModel) {
         error: '',
         quant: data.quant ?? null,
       };
+      // 平滑滚到研报区域
+      setTimeout(() => {
+        const el = document.getElementById('report');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } else {
       analysis.value = { ...analysis.value, state: 'error', error: data.message || '分析暂不可用，请稍后重试' };
     }
@@ -248,43 +378,59 @@ async function runAnalysis(requestedModel) {
 <style scoped>
 .main {
   padding-top: 24px;
-  padding-bottom: 8px;
+  padding-bottom: 24px;
 }
 
 .block {
   margin-top: 36px;
 }
-
 .block:first-child {
   margin-top: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .section-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 16px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #ffffff;
-  text-transform: uppercase;
 }
 
-.section-title span {
-  display: inline-grid;
-  place-items: center;
-  min-width: 28px;
+.sec-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 22px;
-  padding: 0 6px;
+  padding: 0 7px;
   border-radius: 6px;
   font-size: 11px;
   font-weight: 800;
   font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
   color: #000000;
   background: linear-gradient(135deg, var(--gold-3), var(--gold));
   box-shadow: 0 2px 8px rgba(251, 191, 36, 0.35);
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+}
+
+.btn-xs {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
+  border-radius: 6px;
 }
 
 .hero-grid {
@@ -313,6 +459,18 @@ async function runAnalysis(requestedModel) {
   min-width: 0;
 }
 
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .tools-grid {
+    grid-template-columns: 1.15fr 1fr;
+  }
+}
+
 .notice-card {
   color: var(--text-2);
   font-size: 14px;
@@ -337,6 +495,68 @@ async function runAnalysis(requestedModel) {
 .alert-error {
   background: var(--danger-bg);
   color: var(--danger);
+}
+
+/* 浮动预警 Toast */
+.toast-alert {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(30, 20, 20, 0.98), rgba(20, 10, 10, 0.98));
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(239, 68, 68, 0.25);
+  backdrop-filter: blur(12px);
+  max-width: 420px;
+}
+
+.toast-icon {
+  font-size: 24px;
+  animation: pulse-ring 1s infinite;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.toast-desc {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+}
+.toast-close:hover {
+  color: #ffffff;
+}
+
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translateY(16px);
 }
 
 @media (min-width: 768px) {

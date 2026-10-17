@@ -43,6 +43,35 @@
           <span class="sources-text">数据源 {{ sourcesOk }}/{{ sourcesTotal }}</span>
         </button>
 
+        <!-- 黄金计算器快捷键 -->
+        <button
+          type="button"
+          class="icon-btn"
+          title="黄金投资盈亏与变现计算器"
+          @click="$emit('calc')"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="16" y1="14" x2="16" y2="18"></line>
+            <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"></path>
+          </svg>
+        </button>
+
+        <!-- 海报卡片分享 -->
+        <button
+          type="button"
+          class="icon-btn"
+          title="生成并分享精美量化研报海报"
+          @click="$emit('poster')"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+            <polyline points="16 6 12 2 8 6"></polyline>
+            <line x1="12" y1="2" x2="12" y2="15"></line>
+          </svg>
+        </button>
+
         <!-- 一键复制快报 -->
         <button
           type="button"
@@ -122,7 +151,7 @@ const props = defineProps({
   quant: { type: Object, default: null },
 });
 
-defineEmits(['refresh', 'subscribe', 'toggle-theme', 'sources']);
+defineEmits(['refresh', 'subscribe', 'toggle-theme', 'sources', 'poster', 'calc']);
 
 const copied = ref(false);
 
