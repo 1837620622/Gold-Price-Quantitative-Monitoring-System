@@ -221,7 +221,7 @@ function testSound() {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .modal-sub {
@@ -240,7 +240,7 @@ function testSound() {
   border-radius: 6px;
 }
 .close-btn:hover {
-  color: #ffffff;
+  color: var(--text);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -418,7 +418,7 @@ function testSound() {
 
 .row-price {
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .status-tag {

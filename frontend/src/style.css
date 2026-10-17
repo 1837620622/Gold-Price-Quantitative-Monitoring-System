@@ -10,18 +10,15 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #08090e;
-  --bg-grad:
-    radial-gradient(1200px 560px at 50% -12%, rgba(245, 158, 11, 0.12), transparent 70%),
-    radial-gradient(900px 480px at 92% 10%, rgba(59, 130, 246, 0.05), transparent 60%),
-    radial-gradient(800px 400px at 8% 25%, rgba(239, 68, 68, 0.04), transparent 60%);
-  --surface: #10121a;
-  --surface-card: linear-gradient(145deg, rgba(22, 26, 38, 0.95) 0%, rgba(13, 16, 24, 0.98) 100%);
-  --surface-2: #161a26;
-  --surface-hover: #1c2234;
-  --border: rgba(251, 191, 36, 0.14);
-  --border-strong: rgba(251, 191, 36, 0.28);
-  --border-hover: rgba(251, 191, 36, 0.45);
+  --bg: #08090d;
+  --bg-grad: radial-gradient(1000px 460px at 50% -14%, rgba(245, 158, 11, 0.09), transparent 70%);
+  --surface: #0f1117;
+  --surface-card: #12141b;
+  --surface-2: #171a22;
+  --surface-hover: #1d2129;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-hover: rgba(251, 191, 36, 0.4);
 
   --text: #f3f4f6;
   --text-2: #9ca3af;
@@ -58,9 +55,9 @@
   --danger: #f87171;
   --danger-bg: rgba(248, 113, 113, 0.14);
 
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -8px rgba(0, 0, 0, 0.7);
-  --shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 18px 40px -10px rgba(0, 0, 0, 0.85), 0 0 24px rgba(251, 191, 36, 0.14);
-  --radius-lg: 18px;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.8);
+  --shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 18px 36px -16px rgba(0, 0, 0, 0.9);
+  --radius-lg: 16px;
   --radius: 12px;
 
   --font: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", Roboto, sans-serif;
@@ -152,51 +149,6 @@
   text-transform: uppercase;
   line-height: 0.94;
   letter-spacing: -0.022em;
-}
-
-.pill {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  border-radius: 999px;
-  padding: 0.85em 1.55em;
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(11px, 0.88vw, 14px);
-  font-weight: 400;
-  color: #ffffff;
-  white-space: nowrap;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
-}
-.pill:hover {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
-}
-
-.btn-solid {
-  background: #f1f1f2;
-  color: #0b0b0b;
-  border: none;
-  border-radius: 6px;
-  padding: 1.15em 2.1em;
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(11px, 0.88vw, 14px);
-  font-weight: 400;
-  letter-spacing: 0.005em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  transition: background 0.35s ease, transform 0.35s ease;
-}
-.btn-solid:hover {
-  background: #ffffff;
-  transform: translateY(-2px);
 }
 
 @media (max-width: 900px), (max-height: 540px) {
@@ -316,17 +268,12 @@ p {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 22px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.28s ease,
-              box-shadow 0.28s ease;
+  padding: 20px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-hover);
+  border-color: var(--border-strong);
   box-shadow: var(--shadow-hover);
 }
 

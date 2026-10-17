@@ -467,6 +467,7 @@ function serialize(ind, scores) {
     dif: r(ind.dif, 3),
     dea: r(ind.dea, 3),
     hist: r(ind.hist, 3),
+    kdj: { k: r(ind.kdj.k, 2), d: r(ind.kdj.d, 2), j: r(ind.kdj.j, 2) },
     rsi14: r(ind.rsi14, 2),
     atr14: r(ind.atr14, 2),
     vol20: r(ind.vol20, 2),

@@ -149,7 +149,7 @@
 
         <TechnicalMatrix :quant="cnQuant" />
 
-        <div class="analytics-grid" style="margin-top: 16px;">
+        <div class="analytics-grid">
           <SignalPanel
             v-if="cnQuant?.available"
             class="an-signal"
@@ -160,7 +160,14 @@
           <div v-else class="card notice-card an-signal">
             {{ cnError || '量化信号计算中…' }}
           </div>
-          <RiskTiles v-if="cnQuant?.available" class="an-tiles" :quant="cnQuant" />
+          <div v-if="cnQuant?.available" class="an-side">
+            <RiskTiles :quant="cnQuant" />
+            <PivotLadder
+              v-if="cnQuant.levels?.pivots"
+              :pivots="cnQuant.levels.pivots"
+              :price="domestic?.price ?? null"
+            />
+          </div>
         </div>
       </section>
 
@@ -240,6 +247,7 @@ import PriceCard from './components/PriceCard.vue';
 import AiCard from './components/AiCard.vue';
 import SignalPanel from './components/SignalPanel.vue';
 import RiskTiles from './components/RiskTiles.vue';
+import PivotLadder from './components/PivotLadder.vue';
 import TechnicalMatrix from './components/TechnicalMatrix.vue';
 import GoldCalculator from './components/GoldCalculator.vue';
 import HistoricalRange from './components/HistoricalRange.vue';
@@ -441,7 +449,7 @@ async function runAnalysis(requestedModel) {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.05em;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .btn-xs {
@@ -472,21 +480,21 @@ async function runAnalysis(requestedModel) {
 }
 
 .an-signal,
-.an-tiles {
+.an-side {
   grid-column: span 12;
   min-width: 0;
+}
+
+.an-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .tools-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
-}
-
-@media (min-width: 1024px) {
-  .tools-grid {
-    grid-template-columns: 1.15fr 1fr;
-  }
 }
 
 .notice-card {
@@ -582,11 +590,6 @@ async function runAnalysis(requestedModel) {
   .hero-intl {
     grid-column: span 6;
   }
-
-  .an-signal,
-  .an-tiles {
-    grid-column: span 6;
-  }
 }
 
 @media (min-width: 1024px) {
@@ -606,7 +609,7 @@ async function runAnalysis(requestedModel) {
     grid-column: span 5;
   }
 
-  .an-tiles {
+  .an-side {
     grid-column: span 7;
   }
 }

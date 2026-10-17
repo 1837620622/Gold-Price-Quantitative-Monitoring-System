@@ -512,7 +512,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 <style scoped>
 .calc-card {
   padding: 24px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.95) 0%, rgba(13, 16, 24, 0.98) 100%);
+  background: var(--surface-card);
   border: 1px solid rgba(251, 191, 36, 0.2);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
@@ -548,7 +548,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .calc-sub {
@@ -560,7 +560,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 .calc-tab-group {
   display: flex;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--surface-2);
   padding: 4px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -600,7 +600,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 .current-price-badge b {
   font-size: 16px;
   font-family: var(--mono);
-  color: #ffffff;
+  color: var(--text);
 }
 
 .calc-body {
@@ -722,7 +722,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   border-radius: 8px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  color: #ffffff;
+  color: var(--text);
   font-family: var(--mono);
   font-size: 14px;
   outline: none;
@@ -781,7 +781,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   font-size: 20px;
   font-weight: 700;
   font-family: var(--mono);
-  color: #ffffff;
+  color: var(--text);
   margin: 6px 0 2px;
 }
 .res-num.gold {
@@ -797,7 +797,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   padding: 14px 16px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--surface-2);
 }
 .arb-strategy-guide.action-positive {
   border-color: rgba(239, 68, 68, 0.4);
@@ -823,7 +823,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 .guide-title {
   font-size: 13px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
   margin: 4px 0;
 }
 

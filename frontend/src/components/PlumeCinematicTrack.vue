@@ -16,11 +16,8 @@
 
         <!-- 右上材质/行情锁定位 -->
         <div class="h-mats rv">
-          <div class="h-mat-line"><span class="mat-pink">SGE Physical Bullion.</span></div>
-          <div class="h-mat-line">
-            <span class="mat-blue">London Spot</span>
-            <span class="mat-pink"> XAU/USD.</span>
-          </div>
+          <div class="h-mat-line">SGE Physical Bullion.</div>
+          <div class="h-mat-line">London Spot XAU/USD.</div>
           <div v-if="domesticPrice" class="h-mat-quote">
             <span class="quote-gold">AU9999 ¥{{ fmt(domesticPrice) }}</span>
             <span class="quote-sep">/</span>
@@ -95,7 +92,7 @@
     </section>
 
     <!-- ============================================================
-         SECTION 3 — UNDENIABLE ADVANTAGES (NATIVE STICKY PIN 460vh)
+         SECTION 3 — UNDENIABLE ADVANTAGES (NATIVE STICKY PIN 380vh)
          ============================================================ -->
     <section class="adv" id="adv" ref="advSectionRef">
       <div class="adv-stage" ref="advStageRef">
@@ -780,26 +777,26 @@ onUnmounted(() => {
   right: var(--pad);
   top: 24.5%;
   text-align: right;
-  font-size: clamp(13px, 1.62vw, 26px);
+  font-size: clamp(13px, 1.62vw, 24px);
   line-height: 1.42;
   letter-spacing: -0.005em;
+  color: var(--dim);
 }
 .h-mat-line {
   white-space: nowrap;
 }
-.mat-pink { color: var(--pink); }
-.mat-blue { color: var(--blue); }
 
 .h-mat-quote {
-  margin-top: 6px;
-  font-family: 'Archivo', var(--mono);
-  font-size: clamp(11px, 1.1vw, 15px);
-  color: var(--dim);
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: clamp(12px, 1.05vw, 15px);
+  color: var(--dimmer);
+  font-variant-numeric: tabular-nums;
 }
-.quote-gold { color: var(--gold-3); font-weight: 700; }
-.quote-sep { margin: 0 4px; opacity: 0.4; }
-.quote-intl { color: #60a5fa; font-weight: 700; }
-.quote-premium { margin-left: 6px; color: #ef4444; font-weight: 600; font-size: 11px; }
+.quote-gold { color: var(--gold-3); font-weight: 600; }
+.quote-sep { margin: 0 8px; color: var(--text-3); }
+.quote-intl { color: var(--text); font-weight: 600; }
+.quote-premium { margin-left: 8px; color: var(--up); font-weight: 600; font-size: 0.9em; }
 
 .h-strong {
   position: absolute;
@@ -814,7 +811,8 @@ onUnmounted(() => {
   position: absolute;
   left: 27%;
   top: 50.5%;
-  max-width: 24ch;
+  max-width: 28ch;
+  color: var(--dim);
 }
 
 .h-copy-1 {
@@ -934,11 +932,11 @@ onUnmounted(() => {
 }
 
 /* ============================================================
-   SECTION 3 — UNDENIABLE ADVANTAGES (NATIVE STICKY PIN 460vh)
+   SECTION 3 — UNDENIABLE ADVANTAGES (NATIVE STICKY PIN 380vh)
    ============================================================ */
 .adv {
   position: relative;
-  height: 460vh;
+  height: 380vh;
   background: transparent;
   overflow: visible; /* CRITICAL: 必须保持 visible，取消 position:sticky 拦截 */
   z-index: 5;
@@ -1069,6 +1067,45 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   bottom: 8.5%;
+}
+
+/* ============================================================
+   DESKTOP GRID：用 12 栅格代替百分比绝对定位，文字对齐随视口比例稳定
+   ============================================================ */
+@media (min-width: 901px) and (min-height: 541px) {
+  .hero-content,
+  .recipe-content {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto 1fr auto;
+    column-gap: 24px;
+    padding-top: 118px;
+    padding-bottom: 56px;
+  }
+
+  .hero-content > *,
+  .recipe-content > * {
+    position: relative;
+    inset: auto;
+    margin: 0;
+  }
+
+  .h-title { grid-column: 1 / span 8; grid-row: 1; align-self: start; }
+  .h-mats { grid-column: 9 / span 4; grid-row: 1; align-self: start; justify-self: end; }
+  .h-model { grid-column: 1 / span 4; grid-row: 2; align-self: start; margin-top: 0.75rem; }
+  .h-strong { grid-column: 5 / span 8; grid-row: 2; align-self: end; justify-self: end; }
+  .h-copy-1 { grid-column: 1 / span 4; grid-row: 3; align-self: end; }
+  .h-copy-2 { grid-column: 5 / span 4; grid-row: 3; align-self: end; }
+  .h-scroll { grid-column: 9 / span 4; grid-row: 3; align-self: end; justify-self: end; }
+
+  .r-title { grid-column: 1 / span 8; grid-row: 1; align-self: start; }
+  .r-lede { grid-column: 9 / span 4; grid-row: 1; align-self: start; justify-self: end; text-align: right; }
+  .co-core { grid-column: 1 / span 5; grid-row: 2; align-self: center; }
+  .co-steel { grid-column: 7 / span 6; grid-row: 3; align-self: end; justify-self: end; text-align: right; }
+  .callout {
+    position: relative;
+    padding-bottom: 3vh;
+  }
 }
 
 /* ============================================================

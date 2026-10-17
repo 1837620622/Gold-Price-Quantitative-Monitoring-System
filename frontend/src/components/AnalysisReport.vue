@@ -143,7 +143,7 @@ function copyReport() {
   font-family: 'Archivo', var(--font);
   font-size: 18px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
   letter-spacing: -0.01em;
 }
 

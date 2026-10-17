@@ -140,7 +140,7 @@ function toneClass(rate) {
 <style scoped>
 .range-card {
   padding: 24px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.95) 0%, rgba(13, 16, 24, 0.98) 100%);
+  background: var(--surface-card);
   border: 1px solid rgba(251, 191, 36, 0.2);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
@@ -174,7 +174,7 @@ function toneClass(rate) {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .range-sub {
@@ -201,7 +201,7 @@ function toneClass(rate) {
   gap: 12px;
   padding: 16px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -234,7 +234,7 @@ function toneClass(rate) {
 .meta-val {
   font-size: 14px;
   font-family: var(--mono);
-  color: #ffffff;
+  color: var(--text);
 }
 .meta-val.highlight {
   color: var(--gold-3);
@@ -246,7 +246,7 @@ function toneClass(rate) {
   position: relative;
   height: 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-hover);
   margin: 8px 0;
 }
 
@@ -317,7 +317,7 @@ function toneClass(rate) {
   justify-content: center;
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.06);
   gap: 4px;
 }

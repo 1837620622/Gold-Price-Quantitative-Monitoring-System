@@ -1,21 +1,12 @@
 <template>
   <div class="card matrix-card">
     <header class="matrix-head">
-      <div class="head-left">
-        <div class="matrix-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-        </div>
-        <div>
-          <h3 class="matrix-title">多因子量化技术全景矩阵</h3>
-          <p class="matrix-sub">12 核心维度因子审计 · 均线 / 动量 / 动能 / 波动与资金流向</p>
-        </div>
+      <div class="matrix-intro">
+        <h3 class="matrix-title">因子面板</h3>
+        <p class="matrix-sub">均线 · 动量 · 动能 · 波动 · 枢轴点，逐项给出多空判定</p>
       </div>
 
-      <!-- 多空综合博弈力量胶囊 -->
+      <!-- 多空综合博弈力量 -->
       <div class="power-summary">
         <div class="power-text">
           <span class="power-bull">多头 {{ bullPct }}%</span>
@@ -192,14 +183,14 @@ const factors = computed(() => {
     name: 'KDJ 摆动指标',
     status: kdjStatus,
     bias: kdjBias,
-    value: k !== null ? `K:${fmtNumber(k, 1)} D:${fmtNumber(d, 1)}` : '--',
-    detail: `J线读数 ${fmtNumber(j, 1)}，短线进出节奏指示`,
+    value: k !== null ? `K ${fmtNumber(k, 1)} · D ${fmtNumber(d, 1)}` : '--',
+    detail: `J 线 ${fmtNumber(j, 1)}，短线进出节奏指示`,
   });
 
-  // 5. MACD 柱与离差 (12,26,9)
+  // 5. MACD 柱与离差 (12,26,9)：柱线取 hist 序列（后端字段 indicators.hist）
   const dif = lastVal(ind.value.dif);
   const dea = lastVal(ind.value.dea);
-  const macdHist = lastVal(ind.value.macd);
+  const macdHist = lastVal(ind.value.hist);
   let macdStatus = '中性离差';
   let macdBias = 'flat';
   if (dif !== null && dea !== null) {
@@ -253,7 +244,7 @@ const factors = computed(() => {
     name: 'Bollinger 布林带',
     status: bbStatus,
     bias: bbBias,
-    value: pctB !== null ? `%B: ${(pctB * 100).toFixed(1)}%` : '--',
+    value: pctB !== null ? `%B ${(pctB * 100).toFixed(1)}%` : '--',
     detail: bbDetail,
   });
 
@@ -280,7 +271,7 @@ const factors = computed(() => {
     name: '枢轴点多空界河',
     status: pStatus,
     bias: pBias,
-    value: p ? `P: ¥${fmtNumber(p.pivot)}` : '--',
+    value: p ? `P ¥${fmtNumber(p.pivot)}` : '--',
     detail: p ? `上方第一阻力 R1 ¥${fmtNumber(p.r1)} | 支撑 S1 ¥${fmtNumber(p.s1)}` : '计算中',
   });
 
@@ -317,126 +308,117 @@ const bearPct = computed(() => 100 - bullPct.value);
 
 <style scoped>
 .matrix-card {
-  padding: 24px;
-  background: linear-gradient(165deg, rgba(22, 26, 38, 0.95) 0%, rgba(13, 16, 24, 0.98) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
+  padding: 22px;
 }
 
 .matrix-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 20px;
+  gap: 16px 24px;
   flex-wrap: wrap;
-  gap: 16px;
-}
-
-.head-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.matrix-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(251, 191, 36, 0.12);
-  color: var(--gold-3);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  margin-bottom: 18px;
 }
 
 .matrix-title {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--text);
 }
 
 .matrix-sub {
-  margin: 3px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 12.5px;
   color: var(--text-2);
 }
 
 .power-summary {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-width: 180px;
+  gap: 8px;
+  min-width: 220px;
 }
 
 .power-text {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12.5px;
-  font-family: 'Archivo', var(--mono);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
+
 .power-bull {
   color: var(--up);
 }
+
 .power-bear {
   color: var(--down);
 }
+
 .power-vs {
   font-size: 10px;
+  letter-spacing: 0.12em;
   color: var(--text-3);
 }
 
 .power-bar {
   display: flex;
-  height: 8px;
+  height: 6px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
 }
+
 .power-bull-fill {
-  background: linear-gradient(90deg, #ef4444, #f87171);
+  background: var(--up);
   transition: width 0.4s ease;
 }
+
 .power-bear-fill {
-  background: linear-gradient(90deg, #34d399, #10b981);
+  background: var(--down);
   transition: width 0.4s ease;
 }
 
 .factor-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 
 @media (min-width: 640px) {
   .factor-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (min-width: 1024px) {
+
+@media (min-width: 1100px) {
   .factor-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 .factor-item {
+  --tone: var(--text-3);
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 14px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.2s ease;
+  min-width: 0;
+  padding: 14px 14px 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: inset 3px 0 0 var(--tone);
 }
-.factor-item:hover {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(251, 191, 36, 0.3);
-  transform: translateY(-2px);
+
+.factor-item.tone-bull {
+  --tone: var(--up);
+}
+
+.factor-item.tone-bear {
+  --tone: var(--down);
 }
 
 .factor-top {
@@ -453,40 +435,42 @@ const bearPct = computed(() => 100 - bullPct.value);
 }
 
 .factor-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
+
 .factor-badge.bull {
-  background: rgba(239, 68, 68, 0.15);
   color: var(--up);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--up-bg);
 }
+
 .factor-badge.bear {
-  background: rgba(16, 185, 129, 0.15);
   color: var(--down);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--down-bg);
 }
+
 .factor-badge.flat {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-2);
+  background: var(--surface-hover);
 }
 
 .factor-val {
+  font-family: var(--mono);
   font-size: 15px;
-  font-weight: 700;
-  font-family: 'Archivo', var(--mono);
-  font-stretch: 110%;
-  letter-spacing: -0.015em;
-  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .factor-detail {
   margin: 0;
-  font-size: 11px;
+  font-size: 11.5px;
+  line-height: 1.5;
   color: var(--text-3);
-  line-height: 1.4;
 }
 </style>

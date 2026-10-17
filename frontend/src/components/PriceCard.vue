@@ -176,7 +176,7 @@ watch(
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.5px;
-  color: #ffffff;
+  color: var(--text);
   font-family: var(--mono);
 }
 
@@ -213,18 +213,16 @@ watch(
   letter-spacing: -0.025em;
   line-height: 1.02;
   font-variant-numeric: tabular-nums;
-  color: #ffffff;
+  color: var(--text);
   transition: color 0.3s ease;
 }
 
 .price-main.tone-up .price-value {
   color: var(--up);
-  text-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
 }
 
 .price-main.tone-down .price-value {
   color: var(--down);
-  text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
 .price-value.is-empty {
@@ -300,8 +298,8 @@ watch(
   padding-top: 14px;
   border-top: 1px solid var(--border);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 12px 10px;
 }
 
 .stat-item {
@@ -344,7 +342,7 @@ watch(
 
 @media (max-width: 600px) {
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 </style>

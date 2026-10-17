@@ -151,7 +151,7 @@ function handleRun() {
   flex-direction: column;
   justify-content: space-between;
   gap: 14px;
-  background: linear-gradient(145deg, rgba(26, 30, 48, 0.95) 0%, rgba(14, 17, 28, 0.98) 100%);
+  background: var(--surface-card);
   border-color: rgba(251, 191, 36, 0.22);
   position: relative;
 }
@@ -183,7 +183,7 @@ function handleRun() {
 .ai-title {
   font-size: 16px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text);
   letter-spacing: 0.5px;
 }
 
@@ -199,7 +199,7 @@ function handleRun() {
   flex-direction: column;
   gap: 6px;
   padding: 10px 12px;
-  background: rgba(10, 12, 18, 0.6);
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 10px;
   transition: border-color 0.2s ease;
@@ -242,7 +242,7 @@ function handleRun() {
   border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
-  color: #ffffff;
+  color: var(--text);
   font-family: var(--font);
   font-size: 12.5px;
   font-weight: 600;
