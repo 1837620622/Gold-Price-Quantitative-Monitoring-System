@@ -76,6 +76,16 @@
               <span>官网 chuankangkk.top</span>
             </a>
 
+            <a
+              href="/plume.html"
+              target="_blank"
+              class="dev-pill"
+              title="查看 PLUME 极简工艺与原生粘性滚动实现"
+            >
+              <span style="color: var(--gold-3)">✦</span>
+              <span>PLUME 极致工艺</span>
+            </a>
+
             <span class="dev-pill static">
               <span>微信: 1837620622</span>
             </span>

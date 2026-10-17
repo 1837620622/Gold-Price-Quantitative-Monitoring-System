@@ -20,15 +20,15 @@
         <button
           v-if="state === 'done'"
           type="button"
-          class="btn btn-ghost btn-sm copy-btn"
+          class="pill copy-pill"
           :class="{ copied }"
           @click="copyReport"
         >
-          <svg v-if="!copied" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg v-if="!copied" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
-          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--down)">
+          <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--down)">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
           <span>{{ copied ? '已复制' : '复制研报' }}</span>
@@ -140,10 +140,11 @@ function copyReport() {
 }
 
 .card-title {
+  font-family: 'Archivo', var(--font);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: #ffffff;
-  letter-spacing: 0.5px;
+  letter-spacing: -0.01em;
 }
 
 .report-badge {

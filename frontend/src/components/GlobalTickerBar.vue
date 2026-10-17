@@ -251,7 +251,9 @@ const countdownText = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--mono);
+  font-family: 'Archivo', var(--mono);
+  font-stretch: 108%;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }

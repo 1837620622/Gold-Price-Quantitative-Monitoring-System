@@ -408,21 +408,23 @@ async function runAnalysis(requestedModel) {
   align-items: center;
   justify-content: center;
   height: 22px;
-  padding: 0 7px;
+  padding: 0 8px;
   border-radius: 6px;
   font-size: 11px;
-  font-weight: 800;
-  font-family: var(--mono);
+  font-weight: 700;
+  font-stretch: 115%;
+  font-family: 'Archivo', var(--mono);
   color: #000000;
-  background: linear-gradient(135deg, var(--gold-3), var(--gold));
+  background: var(--gold-btn);
   box-shadow: 0 2px 8px rgba(251, 191, 36, 0.35);
 }
 
 .section-title h2 {
   margin: 0;
+  font-family: 'Archivo', var(--font);
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   color: #ffffff;
 }
 

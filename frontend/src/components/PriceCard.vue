@@ -206,12 +206,13 @@ watch(
 
 .price-value {
   display: inline-block;
-  font-size: clamp(34px, 3.8vw, 42px);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  font-family: 'Archivo', var(--mono);
+  font-stretch: 110%;
+  font-size: clamp(36px, 4.2vw, 46px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
   font-variant-numeric: tabular-nums;
-  font-family: var(--mono);
   color: #ffffff;
   transition: color 0.3s ease;
 }
@@ -231,11 +232,11 @@ watch(
 }
 
 .flash {
-  animation: price-pulse 0.8s ease-out;
+  animation: price-pulse 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes price-pulse {
-  0% { transform: scale(1.03); opacity: 0.6; }
+  0% { transform: scale(1.035); opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -251,11 +252,12 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
   font-size: 13px;
-  font-weight: 700;
-  font-family: var(--mono);
+  font-weight: 600;
+  font-family: 'Archivo', var(--mono);
+  letter-spacing: -0.01em;
   background: var(--surface-2);
   border: 1px solid var(--border);
 }

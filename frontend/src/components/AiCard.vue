@@ -237,9 +237,9 @@ function handleRun() {
 
 .custom-select {
   width: 100%;
-  height: 34px;
-  padding: 0 28px 0 10px;
-  border-radius: 6px;
+  height: 36px;
+  padding: 0 32px 0 14px;
+  border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
   color: #ffffff;
@@ -250,16 +250,17 @@ function handleRun() {
   appearance: none;
   -webkit-appearance: none;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .custom-select:hover {
   border-color: var(--gold);
+  background: var(--surface-hover);
 }
 
 .custom-select:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
 }
 
 .custom-select option {

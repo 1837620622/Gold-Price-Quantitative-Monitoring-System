@@ -374,9 +374,10 @@ const bearPct = computed(() => 100 - bullPct.value);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
-  font-family: var(--mono);
+  font-size: 12.5px;
+  font-family: 'Archivo', var(--mono);
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .power-bull {
   color: var(--up);
@@ -476,7 +477,9 @@ const bearPct = computed(() => 100 - bullPct.value);
 .factor-val {
   font-size: 15px;
   font-weight: 700;
-  font-family: var(--mono);
+  font-family: 'Archivo', var(--mono);
+  font-stretch: 110%;
+  letter-spacing: -0.015em;
   color: #ffffff;
 }
 

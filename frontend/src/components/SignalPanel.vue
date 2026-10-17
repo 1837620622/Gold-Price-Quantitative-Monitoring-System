@@ -162,8 +162,10 @@ function fillStyle(value) {
 
 .title {
   margin: 0;
+  font-family: 'Archivo', var(--font);
   font-size: 17px;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .sub {
@@ -192,9 +194,12 @@ function fillStyle(value) {
 }
 
 .verdict-score {
-  font-size: 20px;
+  font-family: 'Archivo', var(--mono);
+  font-stretch: 110%;
+  font-size: 21px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .verdict-conf {

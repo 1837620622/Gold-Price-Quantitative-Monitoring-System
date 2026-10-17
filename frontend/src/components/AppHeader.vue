@@ -119,6 +119,17 @@
           </svg>
         </button>
 
+        <!-- 体验 PLUME 视界 -->
+        <a
+          href="/plume.html"
+          target="_blank"
+          class="pill pill-gold plume-pill"
+          title="点击体验 PLUME 极致黑金全屏视效与原生粘性滚动"
+        >
+          <span class="pill-spark">✦</span>
+          <span>PLUME 视界</span>
+        </a>
+
         <!-- 订阅推送主按钮 -->
         <button
           type="button"
@@ -249,17 +260,31 @@ const sourcesHealthy = computed(() => props.sourcesTotal > 0 && props.sourcesOk 
 }
 
 .logo-text {
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 300;
   color: #ffffff;
-  letter-spacing: 2px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
   line-height: 1.2;
 }
 
 .logo-sub {
-  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
   color: var(--text-3);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
+}
+
+.plume-pill {
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.pill-spark {
+  color: var(--gold-3);
 }
 
 .market-status {
