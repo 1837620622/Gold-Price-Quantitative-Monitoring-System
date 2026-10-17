@@ -275,7 +275,7 @@ function testSound() {
   gap: 14px;
   padding: 16px;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 20px;
 }
@@ -310,7 +310,7 @@ function testSound() {
   padding: 0 10px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--surface-2);
   color: var(--text);
   font-size: 13px;
   font-family: var(--mono);

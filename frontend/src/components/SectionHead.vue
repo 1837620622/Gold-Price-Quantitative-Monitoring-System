@@ -63,6 +63,16 @@ defineProps({
   overflow-wrap: anywhere;
 }
 
+/* 中文界面：Anton 不含中文字形，标题改用中文字体 */
+:global(html:lang(zh)) .section-title {
+  font-family: var(--font);
+  font-size: clamp(48px, 7.2vw, 112px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  line-height: 1.12;
+}
+
 /* 遮罩入场：文字只在遮罩内上移，遮罩外不可见 */
 .mask {
   display: block;

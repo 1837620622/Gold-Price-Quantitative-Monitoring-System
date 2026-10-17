@@ -21,7 +21,7 @@
       <button
         type="button"
         class="tool-pill"
-        :title="`数据源健康度 ${sourcesOk}/${sourcesTotal}`"
+        :title="t('appHeader.sourcesHealth', { ok: sourcesOk, total: sourcesTotal })"
         @click="$emit('sources')"
       >
         <span class="tool-dot" :class="{ ok: sourcesHealthy }"></span>
@@ -31,7 +31,7 @@
       <button
         type="button"
         class="tool-icon-btn"
-        title="黄金计算器"
+        :title="t('appHeader.calc')"
         @click="$emit('calc')"
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -45,7 +45,7 @@
         type="button"
         class="tool-icon-btn"
         :class="{ spinning: status === 'loading' }"
-        title="刷新行情"
+        :title="t('appHeader.refresh')"
         @click="$emit('refresh')"
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -63,6 +63,23 @@
         Launch Terminal
       </a>
 
+      <!-- 显示与语言：按钮展开 PrefsMenu 面板，桌面与手机通用 -->
+      <button
+        ref="prefsBtnRef"
+        type="button"
+        class="tool-icon-btn prefs-toggle"
+        :aria-expanded="prefsOpen ? 'true' : 'false'"
+        aria-controls="prefs-panel"
+        :title="t('appHeader.prefs')"
+        @click.stop="prefsOpen = !prefsOpen"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <span class="prefs-toggle-text">{{ t('appHeader.prefsShort') }}</span>
+      </button>
+
       <!-- 44x44 Hamburger (.nav-toggle) -->
       <button
         class="nav-toggle"
@@ -76,11 +93,18 @@
         <span></span>
       </button>
     </div>
+    <div v-if="prefsOpen" id="prefs-panel" ref="prefsRef" class="prefs-panel" role="dialog" :aria-label="t('appHeader.prefs')">
+      <PrefsMenu />
+    </div>
   </header>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import PrefsMenu from './PrefsMenu.vue';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   status: { type: String, default: 'live' },
@@ -91,11 +115,14 @@ const props = defineProps({
   sourcesTotal: { type: Number, default: 0 },
 });
 
-const emit = defineEmits(['refresh', 'toggle-theme', 'subscribe', 'sources', 'poster', 'calc', 'alert']);
+const emit = defineEmits(['refresh', 'subscribe', 'sources', 'poster', 'calc', 'alert']);
 
 const mobileOpen = ref(false);
 const activeId = ref('hero');
 const navLinksRef = ref(null);
+const prefsOpen = ref(false);
+const prefsRef = ref(null);
+const prefsBtnRef = ref(null);
 
 const sourcesHealthy = computed(() => props.sourcesTotal > 0 && props.sourcesOk === props.sourcesTotal);
 
@@ -115,14 +142,24 @@ function onClickOutside(e) {
   if (navLinksRef.value && !navLinksRef.value.contains(e.target)) {
     mobileOpen.value = false;
   }
+  const inPrefs = (prefsRef.value && prefsRef.value.contains(e.target)) || (prefsBtnRef.value && prefsBtnRef.value.contains(e.target));
+  if (prefsOpen.value && !inPrefs) {
+    prefsOpen.value = false;
+  }
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape') prefsOpen.value = false;
 }
 
 onMounted(() => {
   document.addEventListener('click', onClickOutside);
+  document.addEventListener('keydown', onKeydown);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', onClickOutside);
+  document.removeEventListener('keydown', onKeydown);
 });
 </script>
 
@@ -367,6 +404,30 @@ onUnmounted(() => {
 @media (max-width: 380px) {
   .nav-actions {
     gap: 6px;
+  }
+}
+/* 显示与语言面板：挂在导航栏下方，颜色跟随主题令牌 */
+.prefs-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: var(--pad);
+  z-index: 50;
+  width: min(360px, calc(100vw - 2 * var(--pad)));
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow);
+}
+
+.prefs-panel :deep(.prefs) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .prefs-toggle-text {
+    display: none;
   }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="ticker-bar" role="region" aria-label="实时多资产快报">
+  <div class="ticker-bar" role="region" :aria-label="t('globalTicker.aria')">
     <div class="container ticker-inner">
       <!-- 滚动走马灯 / 资产小卡片 -->
       <div class="ticker-scroll">
@@ -35,7 +35,7 @@
 
         <!-- 金银比 -->
         <div class="ticker-item">
-          <span class="ticker-tag ratio">金银比</span>
+          <span class="ticker-tag ratio">{{ t('globalTicker.ratio') }}</span>
           <span class="ticker-price">{{ ratioText }}</span>
         </div>
 
@@ -43,7 +43,7 @@
 
         <!-- 溢价率 -->
         <div class="ticker-item" :class="premiumTone">
-          <span class="ticker-tag premium">国内溢价</span>
+          <span class="ticker-tag premium">{{ t('globalTicker.premium') }}</span>
           <span class="ticker-price">{{ premiumText }}</span>
         </div>
 
@@ -63,7 +63,7 @@
           type="button"
           class="tool-btn"
           :class="{ active: soundEnabled }"
-          :title="soundEnabled ? '音效已开启（价格变动有轻微金融提示音）' : '点击开启行情变动音效'"
+          :title="soundEnabled ? t('globalTicker.soundOn') : t('globalTicker.soundOff')"
           @click="toggleSound"
         >
           <svg v-if="soundEnabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -75,7 +75,7 @@
             <line x1="23" y1="9" x2="17" y2="15"></line>
             <line x1="17" y1="9" x2="23" y2="15"></line>
           </svg>
-          <span class="tool-label">{{ soundEnabled ? '音效开' : '静音' }}</span>
+          <span class="tool-label">{{ soundEnabled ? t('globalTicker.soundOnShort') : t('globalTicker.muted') }}</span>
         </button>
 
         <!-- 价格预警弹窗按钮 -->
@@ -83,21 +83,21 @@
           type="button"
           class="tool-btn"
           :class="{ 'has-alerts': alertCount > 0 }"
-          title="设置价格突破/跌破告警阈值"
+          :title="t('globalTicker.alertThreshold')"
           @click="$emit('open-alert')"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span class="tool-label">预警{{ alertCount > 0 ? ` (${alertCount})` : '' }}</span>
+          <span class="tool-label">{{ t('globalTicker.alerts') }}{{ alertCount > 0 ? ` (${alertCount})` : '' }}</span>
         </button>
 
         <!-- 黄金计算器快捷开关 -->
         <button
           type="button"
           class="tool-btn"
-          title="快速打开黄金持仓盈亏与变现计算器"
+          :title="t('globalTicker.calcHint')"
           @click="$emit('open-calc')"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -106,12 +106,12 @@
             <line x1="16" y1="14" x2="16" y2="18"></line>
             <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"></path>
           </svg>
-          <span class="tool-label">计算器</span>
+          <span class="tool-label">{{ t('globalTicker.calc') }}</span>
         </button>
 
         <!-- 刷新倒计时与下拉 -->
         <div class="refresh-control">
-          <div class="countdown-badge" :title="`距离下次刷新还有 ${countdown} 秒`">
+          <div class="countdown-badge" :title="t('globalTicker.nextRefresh', { countdown })">
             <svg class="ring-svg" width="16" height="16" viewBox="0 0 24 24">
               <circle class="ring-bg" cx="12" cy="12" r="10" />
               <circle
@@ -129,13 +129,13 @@
           <select
             v-model="currentInterval"
             class="interval-select"
-            title="选择自动刷新频率"
+            :title="t('globalTicker.intervalHint')"
             @change="handleIntervalChange"
           >
-            <option :value="10">10s (极速)</option>
-            <option :value="30">30s (标准)</option>
-            <option :value="60">60s (省流)</option>
-            <option :value="0">手动 (暂停)</option>
+            <option :value="10">{{ t('globalTicker.fast') }}</option>
+            <option :value="30">{{ t('globalTicker.standard') }}</option>
+            <option :value="60">{{ t('globalTicker.saver') }}</option>
+            <option :value="0">{{ t('globalTicker.paused') }}</option>
           </select>
         </div>
       </div>
@@ -144,6 +144,8 @@
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { computed } from 'vue';
 import { soundEnabled, toggleSound } from '../lib/sound';
 import { fmtNumber } from '../format';

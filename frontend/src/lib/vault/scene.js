@@ -1,10 +1,12 @@
 /**
  * ============================================================
  * 金库场景（Three.js r186）
- * - 大厅：暗色金库走廊。建筑在 p 0.16→0.45 之间由黑色渐显（与页面背景同色起步）
+ * - 大厅：金库走廊。建筑在 p 0.16→0.45 之间由背景色渐显（与页面背景同色起步）
  * - 远墙：最近 60 根日K 画布贴图，p 0.42→0.66 渐显
  * - 墙面投影字：p 0.12 起渐显，深度测试开启
  * - 金条：程序化圆角金条，位于独立的透视通道，p 0.025→0.115 折叠退场
+ * - 昼夜：夜间为 #050507 黑色调；日间以纸本背景（--bg）为底、淡色石材
+ *   金条与金币保持金色材质，setTheme() 可在运行时切换而无需重载
  * 同一画布两遍渲染：先大厅（清屏），再金条（只清深度）
  * ============================================================
  */
@@ -14,16 +16,33 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { paintCandleChart, paintIngotLabel, paintLettering, GOLD } from './textures';
 
-const INK = new THREE.Color(0x050507); // 与页面背景同一色值
+const GOLD_BAR = new THREE.Color(0xd9b26a);
 
-const TONE = {
+// 夜间调色板：建筑从 #050507 渐显到石材色
+const NIGHT = {
+  base: new THREE.Color(0x050507),
   floor: new THREE.Color(0x17130d),
   wall: new THREE.Color(0x120f0a),
   ceiling: new THREE.Color(0x0c0a07),
   shelf: new THREE.Color(0x1e180f),
   light: new THREE.Color(0xfff1d0),
-  gold: new THREE.Color(0xd9b26a),
+  line: new THREE.Color(GOLD),
+  letter: GOLD,
 };
+
+// 日间调色板：底色取运行时读取的 --bg（纸本色），墙面与地面为淡色石材
+function dayPalette(baseHex) {
+  return {
+    base: new THREE.Color(baseHex),
+    floor: new THREE.Color(0xe4dccb),
+    wall: new THREE.Color(0xdcd3bf),
+    ceiling: new THREE.Color(0xefe8d8),
+    shelf: new THREE.Color(0xd6cbb2),
+    light: new THREE.Color(0xfffaf0),
+    line: new THREE.Color(0xb8892e),
+    letter: '#8c6a2b',
+  };
+}
 
 const HERO_FOV = 30;
 const HERO_DIST = 10;
@@ -51,7 +70,7 @@ export function webglAvailable() {
 export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.autoClear = false;
-  renderer.setClearColor(INK, 1);
+  renderer.setClearColor(NIGHT.base, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1;
@@ -65,10 +84,12 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     disposables.push(obj);
     return obj;
   };
-  const archMats = []; // [{ mat, tone }]：随建筑进度从 INK 渐变到各自的色调
-  const arch = (mat, tone) => {
+
+  let palette = NIGHT;
+  const archMats = []; // [{ mat, key }]：随建筑进度从底色渐变到调色板中对应的色调
+  const arch = (mat, key) => {
     mat.toneMapped = false;
-    archMats.push({ mat, tone });
+    archMats.push({ mat, key });
     return mat;
   };
 
@@ -76,13 +97,13 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   const hall = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 140);
 
-  const floorMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0 })), TONE.floor);
+  const floorMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0 })), 'floor');
   const floor = new THREE.Mesh(track(new THREE.PlaneGeometry(12.6, 110)), floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, -1.2, -36);
   hall.add(floor);
 
-  const wallMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.88, metalness: 0 })), TONE.wall);
+  const wallMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.88, metalness: 0 })), 'wall');
   const wallGeo = track(new THREE.BoxGeometry(0.4, 7.4, 110));
   for (const side of [-1, 1]) {
     const wall = new THREE.Mesh(wallGeo, wallMat);
@@ -90,7 +111,7 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     hall.add(wall);
   }
 
-  const ceilingMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 })), TONE.ceiling);
+  const ceilingMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 })), 'ceiling');
   const ceiling = new THREE.Mesh(track(new THREE.PlaneGeometry(12.6, 110)), ceilingMat);
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.set(0, 6.2, -36);
@@ -104,7 +125,7 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   }
 
   // 货架与金条：实例化渲染，数量固定，不随滚动增加
-  const boardMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0 })), TONE.shelf);
+  const boardMat = arch(track(new THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0 })), 'shelf');
   const barMat = track(
     new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 1, roughness: 0.28, envMap: env, envMapIntensity: 0 })
   );
@@ -138,7 +159,7 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   bars3d.instanceMatrix.needsUpdate = true;
   hall.add(boards, bars3d);
 
-  // 地面金线网格：透明度随建筑渐显
+  // 地面金线网格：透明度随建筑渐显，颜色随昼夜切换
   const gridMat = track(new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
   const gridPoints = [];
   for (let z = 14; z >= -80; z -= 2) gridPoints.push(-6, -1.19, z, 6, -1.19, z);
@@ -157,31 +178,33 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   warmB.position.set(0, 5.6, -40);
   hall.add(ambient, key, key.target, warmA, warmB);
 
-  // 远墙：K 线画布贴图
+  // 远墙：K 线画布贴图（监控屏保持深色，与昼夜无关）
   const chartCanvas = document.createElement('canvas');
   paintCandleChart(bars, 1024, 512, chartCanvas);
   const chartTex = track(new THREE.CanvasTexture(chartCanvas));
   chartTex.colorSpace = THREE.SRGBColorSpace;
   const farMat = track(new THREE.MeshBasicMaterial({ map: chartTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
-  const far = new THREE.Mesh(track(new THREE.PlaneGeometry(13.6, 7.4)), farMat);
-  far.position.set(0, 1.7, -80);
+  const far = new THREE.Mesh(track(new THREE.PlaneGeometry(13.6, 10)), farMat);
+  far.position.set(0, 2.2, -80);
   hall.add(far);
 
-  // 墙面投影字：贴在墙内侧 0.02 处，避免与墙面 z-fighting
-  const letterMats = [
+  // 墙面投影字：贴在墙内侧 0.02 处，避免与墙面 z-fighting；颜色随昼夜重绘
+  const letters = [
     { word: 'SHANGHAI', x: -5.96, z: -16, ry: Math.PI / 2 },
     { word: 'LONDON', x: 5.96, z: -30, ry: -Math.PI / 2 },
     { word: 'BASIS', x: -5.96, z: -44, ry: Math.PI / 2 },
     { word: 'SIGNAL', x: 5.96, z: -58, ry: -Math.PI / 2 },
   ].map(({ word, x, z, ry }) => {
-    const tex = track(new THREE.CanvasTexture(paintLettering(word)));
+    const letterCanvas = document.createElement('canvas');
+    paintLettering(word, 1024, 256, letterCanvas, NIGHT.letter);
+    const tex = track(new THREE.CanvasTexture(letterCanvas));
     tex.colorSpace = THREE.SRGBColorSpace;
     const mat = track(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
     const mesh = new THREE.Mesh(track(new THREE.PlaneGeometry(4.2, 1.05)), mat);
     mesh.position.set(x, 2, z);
     mesh.rotation.y = ry;
     hall.add(mesh);
-    return mat;
+    return { word, canvas: letterCanvas, tex, mat };
   });
 
   // ---------------- 金条（Hero 通道） ----------------
@@ -221,10 +244,10 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   function layoutHero() {
     heroPerPx = (2 * Math.tan(THREE.MathUtils.degToRad(HERO_FOV / 2)) * HERO_DIST) / height;
     const cx = mobile ? width * 0.5 : width * 0.66;
-    const cy = mobile ? height * 0.42 : height * 0.44;
+    const cy = mobile ? height * 0.49 : height * 0.44;
     heroBaseX = (cx - width / 2) * heroPerPx;
     heroBaseY = (height / 2 - cy) * heroPerPx;
-    const targetPx = mobile ? Math.min(width * 0.62, height * 0.36) : Math.min(width * 0.34, height * 0.5);
+    const targetPx = mobile ? Math.min(width * 0.5, height * 0.24) : Math.min(width * 0.34, height * 0.5);
     heroBaseScale = (targetPx * heroPerPx) / 2.2;
   }
 
@@ -245,9 +268,20 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     chartTex.needsUpdate = true;
   }
 
+  // 昼夜切换：mode 为 'light'（日间）或 'dark'（夜间）；baseHex 为日间底色（--bg 的运行时值）
+  // 只更新颜色与贴图，不重建几何体，因此无需重载页面
+  function setTheme(mode, baseHex) {
+    palette = mode === 'light' ? dayPalette(baseHex) : NIGHT;
+    renderer.setClearColor(palette.base, 1);
+    gridMat.color.copy(palette.line);
+    for (const letter of letters) {
+      paintLettering(letter.word, 1024, 256, letter.canvas, palette.letter);
+      letter.tex.needsUpdate = true;
+    }
+  }
+
   // ---------------- 每帧渲染 ----------------
   const target = new THREE.Vector3();
-  const barColor = new THREE.Color();
 
   // state: { p, reduced, time, look: {x,y}（已乘动效强度）, tunnelLook: {x,y}（-1..1，y 向上为正） }
   function render(state = {}) {
@@ -259,20 +293,22 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
 
     // 建筑渐显：p 0.16 → 0.45；减少动态时固定为 0.6
     const a = reduced ? 0.6 : smooth(0.16, 0.45, p);
-    for (const { mat, tone } of archMats) mat.color.copy(INK).lerp(tone, a);
-    barMat.color.copy(INK).lerp(TONE.gold, a);
+    for (const { mat, key: tone } of archMats) mat.color.copy(palette.base).lerp(palette[tone], a);
+    barMat.color.copy(palette.base).lerp(GOLD_BAR, a);
     barMat.envMapIntensity = a * 1.25;
-    stripMat.color.copy(INK).lerp(TONE.light, a);
+    stripMat.color.copy(palette.base).lerp(palette.light, a * 0.5);
     gridMat.opacity = 0.18 * a;
     ambient.intensity = 0.5 * a;
     key.intensity = 1.6 * a;
-    warmA.intensity = 90 * a;
-    warmB.intensity = 90 * a;
+    // 日间的暖光减弱，避免淡色墙面被染成黄色
+    const warm = palette === NIGHT ? 1 : 0.45;
+    warmA.intensity = 90 * a * warm;
+    warmB.intensity = 90 * a * warm;
 
     // 远墙与投影字
     farMat.opacity = reduced ? 1 : smooth(0.42, 0.66, p);
     const letter = reduced ? 1 : smooth(0.12, 0.3, p);
-    for (const mat of letterMats) mat.opacity = letter;
+    for (const item of letters) item.mat.opacity = letter;
 
     // 相机路径：travel 沿 p 0.16 → 0.985 缓动；turn 负责小幅偏航
     const travelRaw = reduced ? 0.5 : clamp01((p - TRAVEL_START) / (TRAVEL_END - TRAVEL_START));
@@ -311,8 +347,9 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
       -look.x * 0.018
     );
 
+    // 建筑、远墙与投影字都不可见时跳过大厅绘制（首屏常态），只绘制金条
     renderer.clear(true, true, true);
-    renderer.render(hall, camera);
+    if (a > 0 || letter > 0 || farMat.opacity > 0) renderer.render(hall, camera);
     renderer.clearDepth();
     renderer.render(heroScene, heroCam);
   }
@@ -328,5 +365,5 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   setBars(bars);
   setSize(1, 1, 1);
 
-  return { setSize, setBars, render, dispose, barColor };
+  return { setSize, setBars, setTheme, render, dispose };
 }

@@ -1,11 +1,13 @@
 <template>
   <div class="ratio-chart">
-    <div ref="el" class="echart" role="img" aria-label="国际金银比率历史序列图"></div>
-    <div v-if="!hasData" class="overlay">金银比样本数据加载中…</div>
+    <div ref="el" class="echart" role="img" :aria-label="t('ratioChart.aria')"></div>
+    <div v-if="!hasData" class="overlay">{{ t('ratioChart.loading') }}</div>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
 
@@ -41,17 +43,18 @@ function buildOption() {
 
   return {
     animationDuration: 300,
+    textStyle: { fontFamily: pal.font },
     grid: { left: 58, right: 24, top: 18, bottom: 34 },
     tooltip: {
       trigger: 'axis',
       backgroundColor: pal.tipBg,
-      borderColor: pal.axis,
+      borderColor: pal.tipBorder,
       textStyle: { color: pal.text, fontSize: 12 },
       formatter: (params) => {
         const item = params[0];
         if (!item) return '';
         const v = item.value;
-        return `<div style="font-weight:600;margin-bottom:4px">${item.axisValue}</div>金银比率: <b>${fmtVal(v, 2)}</b>`;
+        return `<div style="font-weight:600;margin-bottom:4px">${item.axisValue}</div>${t('ratioChart.name')}: <b>${fmtVal(v, 2)}</b>`;
       },
     },
     xAxis: {
@@ -70,20 +73,20 @@ function buildOption() {
     },
     series: [
       {
-        name: '金银比率',
+        name: t('ratioChart.name'),
         type: 'line',
         data: values,
         showSymbol: false,
         smooth: false,
-        lineStyle: { width: 2, color: '#38bdf8' },
-        itemStyle: { color: '#38bdf8' },
-        areaStyle: { color: '#38bdf8', opacity: 0.08 },
+        lineStyle: { width: 2, color: pal.ratio },
+        itemStyle: { color: pal.ratio },
+        areaStyle: { color: pal.ratio, opacity: 0.08 },
         markArea,
         markLine: mean !== null
           ? {
               symbol: 'none',
               silent: true,
-              label: { color: pal.muted, fontSize: 11, formatter: `均值 ${fmtVal(mean, 1)}`, position: 'insideStartTop' },
+              label: { color: pal.muted, fontSize: 11, formatter: `${t('ratioChart.mean')} ${fmtVal(mean, 1)}`, position: 'insideStartTop' },
               lineStyle: { color: pal.mean, type: 'dashed' },
               data: [{ yAxis: mean }, { yAxis: 80, lineStyle: { color: pal.axis, type: 'dotted' } }],
             }
@@ -91,7 +94,7 @@ function buildOption() {
         markPoint: {
           symbol: 'circle',
           symbolSize: 8,
-          itemStyle: { color: '#38bdf8' },
+          itemStyle: { color: pal.ratio },
           label: { show: false },
           data: [{ coord: [last, values[last]] }],
         },

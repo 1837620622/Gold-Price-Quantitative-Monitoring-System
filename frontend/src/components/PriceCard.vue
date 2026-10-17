@@ -28,7 +28,7 @@
 
     <!-- 价格大字与闪烁动效 -->
     <div class="price-main" :class="toneClass">
-      <span v-if="loading" class="skeleton skeleton-price" aria-label="加载中"></span>
+      <span v-if="loading" class="skeleton skeleton-price" :aria-label="t('priceCard.loading')"></span>
       <span v-else :key="flashKey" class="price-value" :class="{ flash: flashKey > 0, 'is-empty': !isNum(price) }">
         {{ priceText }}
       </span>
@@ -46,7 +46,7 @@
           <span class="change-pct">({{ fmtPercent(changePercent) }})</span>
         </div>
       </template>
-      <span v-else-if="isNum(price)" class="change-none">暂无涨跌幅</span>
+      <span v-else-if="isNum(price)" class="change-none">{{ t('priceCard.noChange') }}</span>
     </div>
 
     <!-- 迷你走势折线 -->
@@ -70,6 +70,8 @@
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { ref, computed, watch } from 'vue';
 import SparkLine from './SparkLine.vue';
 import { isNum, fmtNumber, fmtSigned, fmtPercent, toneOf } from '../format';
@@ -234,8 +236,8 @@ watch(
 }
 
 @keyframes price-pulse {
-  0% { transform: scale(1.035); opacity: 0.7; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { color: var(--gold-3); }
+  100% { color: inherit; }
 }
 
 /* 涨跌幅 Pill 胶囊 */

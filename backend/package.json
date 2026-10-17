@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node --test test/indicators.test.js test/engine.test.js test/providers.test.js test/api.test.js"
+    "test": "node --test test/indicators.test.js test/engine.test.js test/providers.test.js test/api.test.js test/geo.test.js test/ai-en.test.js"
   },
   "dependencies": {
     "hono": "^4.6.0"

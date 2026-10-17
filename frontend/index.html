@@ -6,6 +6,21 @@
     <meta name="description" content="黄金量化终端：国内 AU9999 与国际 XAU/USD 实时行情、多因子量化信号、跨市溢价与基差、回测、AI 研报与微信推送。" />
     <meta name="theme-color" content="#050507" />
     <title>Gold Monitor · 黄金量化终端</title>
+    <script>
+      // 首屏主题与语言：先读取访客上次保存的选择，避免闪烁；随后由应用按访客位置校正
+      (function () {
+        try {
+          var mode = localStorage.getItem('gold-monitor-theme-mode');
+          var auto = localStorage.getItem('gold-monitor-theme-auto');
+          var theme = mode === 'day' ? 'light' : mode === 'night' ? 'dark' : auto === 'light' ? 'light' : 'dark';
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+          document.documentElement.lang = localStorage.getItem('gold-monitor-locale') === 'en' ? 'en' : 'zh-CN';
+        } catch (e) {
+          // 存储不可用时保持默认深色与中文
+        }
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -2,10 +2,10 @@
   <section id="modules" class="modules" data-reveal aria-labelledby="title-modules">
     <SectionHead
       index="00"
-      tag="模块索引"
-      title="Modules"
+      :tag="t('modules.tag')"
+      :title="t('modules.title')"
       title-id="title-modules"
-      sub="每个模块对应下方的一个仪表盘区块。悬停或聚焦查看预览，点击跳转。"
+      :sub="t('modules.sub')"
     />
 
     <div ref="listRef" class="modules-list" data-reveal-item>
@@ -22,10 +22,9 @@
             @click="go(i)"
           >
             <span class="row-index label">{{ item.index }}</span>
-            <span class="row-name display">{{ item.name }}</span>
+            <span class="row-name display">{{ t(item.nameKey) }}</span>
             <span class="row-meta">
-              <span class="row-zh">{{ item.zh }}</span>
-              <span class="row-services label">{{ item.services }}</span>
+              <span class="row-services label">{{ t(item.servicesKey) }}</span>
             </span>
             <span class="row-arrow" aria-hidden="true">↗</span>
           </button>
@@ -34,7 +33,7 @@
 
       <figure ref="previewRef" class="preview" aria-hidden="true">
         <canvas ref="canvasRef" class="preview-canvas"></canvas>
-        <figcaption class="label preview-caption">{{ MODULES[active].caption }}</figcaption>
+        <figcaption class="label preview-caption">{{ t(MODULES[active].captionKey) }}</figcaption>
       </figure>
     </div>
   </section>
@@ -44,57 +43,55 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import SectionHead from './SectionHead.vue';
 import { gsap, prefersReducedMotion } from '../lib/motion';
+import { useI18n } from '../i18n';
 
 const props = defineProps({
   // 量化结果（国内 AU9999），用于生成预览序列；为空时预览显示占位
   cn: { type: Object, default: null },
 });
 
-// 每个模块对应一个仪表盘区块（target 为 section 的 id）
+const { t } = useI18n();
+
+// 每个模块对应一个仪表盘区块（target 为 section 的 id）；文案走 i18n 键
 const MODULES = [
   {
     key: 'signal',
     index: '01',
-    name: 'MULTI-FACTOR SIGNAL',
-    zh: '多因子量化信号',
-    services: 'EMA · MACD · RSI · KDJ · BOLL · PREMIUM Z',
-    caption: '综合评分 · 近 90 个交易日',
+    nameKey: 'modules.signal.name',
+    servicesKey: 'modules.signal.services',
+    captionKey: 'modules.signal.caption',
     target: 'sec-quant',
   },
   {
     key: 'basis',
     index: '02',
-    name: 'CROSS-MARKET BASIS',
-    zh: '跨市溢价与基差',
-    services: 'FX-ADJUSTED · ROLLING Z-SCORE · 60D',
-    caption: '国内溢价 · 近 90 个交易日',
+    nameKey: 'modules.basis.name',
+    servicesKey: 'modules.basis.services',
+    captionKey: 'modules.basis.caption',
     target: 'sec-charts',
   },
   {
     key: 'backtest',
     index: '03',
-    name: 'BACKTEST',
-    zh: '历史回测',
-    services: 'NEXT-DAY FILL · 0.05% COST · DRAWDOWN',
-    caption: 'AU9999 收盘 · 近 90 个交易日',
+    nameKey: 'modules.backtest.name',
+    servicesKey: 'modules.backtest.services',
+    captionKey: 'modules.backtest.caption',
     target: 'sec-charts',
   },
   {
     key: 'position',
     index: '04',
-    name: 'POSITION MATH',
-    zh: '持仓精算',
-    services: 'FEES · DISCOUNT · BREAK-EVEN',
-    caption: 'AU9999 收盘 · 近 90 个交易日',
+    nameKey: 'modules.position.name',
+    servicesKey: 'modules.position.services',
+    captionKey: 'modules.position.caption',
     target: 'sec-tools',
   },
   {
     key: 'brief',
     index: '05',
-    name: 'AI BRIEF & ALERTS',
-    zh: 'AI 研报与推送',
-    services: 'SCENARIOS · PRICE ALERTS · WECHAT PUSH',
-    caption: 'AU9999 收盘 · 近 90 个交易日',
+    nameKey: 'modules.brief.name',
+    servicesKey: 'modules.brief.services',
+    captionKey: 'modules.brief.caption',
     target: 'sec-overview',
   },
 ];
@@ -305,6 +302,15 @@ onBeforeUnmount(() => {
   color: inherit;
   transform-origin: left center;
   transition: transform var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+
+/* 中文界面：Anton 不含中文字形，模块名改用中文字体 */
+:global(html:lang(zh)) .row-name {
+  font-family: var(--font);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  line-height: 1.15;
 }
 
 .row.is-active {

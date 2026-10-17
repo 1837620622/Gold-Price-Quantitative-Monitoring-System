@@ -137,6 +137,29 @@ app.get('/api/sources', (c) => {
   return c.json({ success: true, sources: listSources(), timestamp: new Date().toISOString() });
 });
 
+// 访客地理信息：来自 Cloudflare 边缘的 request.cf，只用于默认语言与昼夜主题
+// 不返回也不记录 IP；不可用时各字段为 null，前端回退到浏览器时区
+app.get('/api/geo', (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  const cf = c.req.raw.cf ?? {};
+  const num = (v) => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const text = (v) => (typeof v === 'string' && v ? v : null);
+  const country = text(cf.country);
+  return c.json({
+    success: true,
+    country,
+    city: text(cf.city),
+    timezone: text(cf.timezone),
+    latitude: num(cf.latitude),
+    longitude: num(cf.longitude),
+    source: country ? 'cloudflare' : 'unavailable',
+  });
+});
+
 // ------------------------------------------------------------
 // 历史与量化
 // ------------------------------------------------------------
@@ -207,7 +230,9 @@ app.post('/api/analyze', async (c) => {
     } catch {}
     const requestedModel = body?.model || 'auto';
     const force = Boolean(body?.force);
-    const result = await getAnalysis(c.env, { requestedModel, force });
+    // 语言只接受 zh / en，其它取值一律按中文处理
+    const lang = body?.lang === 'en' ? 'en' : 'zh';
+    const result = await getAnalysis(c.env, { requestedModel, force, lang });
     return c.json(result, result.success ? 200 : 503);
   } catch (error) {
     return serverError(c, 'AI 分析失败', error);

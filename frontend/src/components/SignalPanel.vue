@@ -2,22 +2,22 @@
   <section class="card signal" aria-labelledby="signal-title">
     <header class="head">
       <div>
-        <h2 id="signal-title" class="title">量化信号</h2>
-        <p class="sub">多因子评分 · 基于截至 {{ asOf }} 的日K</p>
+        <h2 id="signal-title" class="title">{{ t('signalPanel.title') }}</h2>
+        <p class="sub">{{ t('signalPanel.asOf', { asOf }) }}</p>
       </div>
       <div class="chips">
-        <span class="chip">趋势 {{ signal.trend }}</span>
-        <span class="chip">波动 {{ signal.volRegime }}</span>
+        <span class="chip">{{ t('signalPanel.trend', { trend: tLabel(signal.trend) }) }}</span>
+        <span class="chip">{{ t('signalPanel.regime', { regime: tLabel(signal.volRegime) }) }}</span>
       </div>
     </header>
 
     <div class="verdict" :class="`tone-${toneKey}`">
-      <span class="verdict-label">{{ signal.label }}</span>
+      <span class="verdict-label">{{ tLabel(signal.label) }}</span>
       <span class="verdict-score">{{ scoreText }}</span>
-      <span class="verdict-conf">置信度 {{ signal.confidence }}%</span>
+      <span class="verdict-conf">{{ t('signalPanel.confidence', { confidence: signal.confidence }) }}</span>
     </div>
 
-    <div class="meter" role="img" :aria-label="`量化评分 ${scoreText}，范围 -100 到 +100`">
+    <div class="meter" role="img" :aria-label="t('signalPanel.scoreAria', { score: scoreText })">
       <div class="meter-track">
         <span class="meter-zone zone-down"></span>
         <span class="meter-zone zone-mid"></span>
@@ -30,42 +30,44 @@
     <ul class="components">
       <li v-for="c in signal.components" :key="c.key" class="comp">
         <div class="comp-head">
-          <span class="comp-name">{{ c.label }}</span>
-          <span class="comp-meta">权重 {{ c.weight }} · {{ signedScore(c.score) }}</span>
+          <span class="comp-name">{{ tLabel(c.label) }}</span>
+          <span class="comp-meta">{{ t('signalPanel.weight', { weight: c.weight, score: signedScore(c.score) }) }}</span>
         </div>
         <div class="comp-bar" aria-hidden="true">
           <span class="comp-fill" :class="c.score >= 0 ? 'pos' : 'neg'" :style="fillStyle(c.score)"></span>
         </div>
-        <p class="comp-reason">{{ c.reason }}</p>
+        <p class="comp-reason">{{ tField(c, 'reason') }}</p>
       </li>
     </ul>
 
     <dl v-if="levels" class="levels">
       <div>
-        <dt>支撑</dt>
+        <dt>{{ t('signalPanel.support') }}</dt>
         <dd>{{ levels.support.join(' / ') }}</dd>
       </div>
       <div>
-        <dt>阻力</dt>
+        <dt>{{ t('signalPanel.resistance') }}</dt>
         <dd>{{ levels.resistance.join(' / ') }}</dd>
       </div>
       <div>
-        <dt>参考区间</dt>
+        <dt>{{ t('signalPanel.range') }}</dt>
         <dd>{{ fmt(levels.refLow) }} – {{ fmt(levels.refHigh) }}</dd>
       </div>
       <div>
         <dt>ATR(14)</dt>
-        <dd>{{ fmt(levels.atr) }}（{{ fmt(levels.atrPercent) }}%）</dd>
+        <dd>{{ t('signalPanel.atr', { atr: fmt(levels.atr), percent: fmt(levels.atrPercent) }) }}</dd>
       </div>
     </dl>
 
     <p class="disclaimer">
-      量化参考，不构成投资建议。参考区间与止损参考位由 ATR 及枢轴点推算，仅用于风险控制讨论。
+      {{ t('signalPanel.disclaimer') }}
     </p>
   </section>
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel, tField } = useI18n();
 import { computed } from 'vue';
 import { fmtNumber } from '../format';
 

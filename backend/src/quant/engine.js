@@ -110,24 +110,25 @@ function computeIndicators(bars) {
 // ------------------------------------------------------------
 function scoreAt(i, bar, ind, premiumZ) {
   const comps = [];
-  const add = (key, label, weight, raw, reason) => {
+  // reason / reasonEn：同一条判断的中英文说明（英文界面使用 reasonEn）
+  const add = (key, label, weight, raw, reason, reasonEn) => {
     if (!valid(raw)) return;
-    comps.push({ key, label, weight, score: round(clamp(raw), 3), reason });
+    comps.push({ key, label, weight, score: round(clamp(raw), 3), reason, reasonEn });
   };
 
   const a = ind.atr14[i];
   if (valid(a) && a > 0) {
     if (valid(ind.emaFast[i]) && valid(ind.emaSlow[i])) {
       const gap = (ind.emaFast[i] - ind.emaSlow[i]) / a;
-      add('trend', 'EMA 趋势', 25, gap, gap >= 0 ? 'EMA12 位于 EMA26 上方，趋势向上' : 'EMA12 位于 EMA26 下方，趋势向下');
+      add('trend', 'EMA 趋势', 25, gap, gap >= 0 ? 'EMA12 位于 EMA26 上方，趋势向上' : 'EMA12 位于 EMA26 下方，趋势向下', gap >= 0 ? 'EMA12 above EMA26, trend up' : 'EMA12 below EMA26, trend down');
     }
     if (valid(ind.ma[20][i])) {
       const dev = (bar.close - ind.ma[20][i]) / a;
-      add('ma20', '价格 vs MA20', 15, dev * 0.8, dev >= 0 ? '收盘价位于 MA20 上方' : '收盘价位于 MA20 下方');
+      add('ma20', '价格 vs MA20', 15, dev * 0.8, dev >= 0 ? '收盘价位于 MA20 上方' : '收盘价位于 MA20 下方', dev >= 0 ? 'Close above MA20' : 'Close below MA20');
     }
     if (valid(ind.hist[i])) {
       const h = ind.hist[i] / a;
-      add('macd', 'MACD 动能', 15, h * 2, h >= 0 ? 'MACD 柱线为正，动能偏多' : 'MACD 柱线为负，动能偏空');
+      add('macd', 'MACD 动能', 15, h * 2, h >= 0 ? 'MACD 柱线为正，动能偏多' : 'MACD 柱线为负，动能偏空', h >= 0 ? 'MACD histogram positive, momentum bullish' : 'MACD histogram negative, momentum bearish');
     }
   }
   if (valid(ind.rsi14[i])) {
@@ -135,7 +136,10 @@ function scoreAt(i, bar, ind, premiumZ) {
     const reason = r >= 70 ? `RSI ${round(r, 1)} 进入超买区，注意回调风险`
       : r <= 30 ? `RSI ${round(r, 1)} 进入超卖区，关注反弹`
         : `RSI ${round(r, 1)} 处于中性区`;
-    add('rsi', 'RSI(14)', 15, (r - 50) / 25, reason);
+    const reasonEn = r >= 70 ? `RSI ${round(r, 1)} in overbought zone, watch for a pullback`
+      : r <= 30 ? `RSI ${round(r, 1)} in oversold zone, watch for a bounce`
+        : `RSI ${round(r, 1)} in neutral zone`;
+    add('rsi', 'RSI(14)', 15, (r - 50) / 25, reason, reasonEn);
   }
   if (ind.kdj && valid(ind.kdj.k[i]) && valid(ind.kdj.d[i]) && valid(ind.kdj.j[i])) {
     const kVal = ind.kdj.k[i];
@@ -143,26 +147,40 @@ function scoreAt(i, bar, ind, premiumZ) {
     const jVal = ind.kdj.j[i];
     let kScore = 0;
     let kReason = 'KDJ 中性运行';
+    let kReasonEn = 'KDJ neutral';
     if (jVal > 100) {
       kScore = -0.5;
       kReason = `KDJ J值(${round(jVal, 1)}) 超买钝化，警惕冲高回落`;
+      kReasonEn = `KDJ J(${round(jVal, 1)}) overbought, watch for a reversal`;
     } else if (jVal < 0) {
       kScore = 0.5;
       kReason = `KDJ J值(${round(jVal, 1)}) 超卖探底，关注反弹契机`;
+      kReasonEn = `KDJ J(${round(jVal, 1)}) oversold, watch for a rebound`;
     } else {
       kScore = (kVal - dVal) / 25;
       kReason = kVal >= dVal ? 'KDJ 金叉多头运行' : 'KDJ 死叉偏空整理';
+      kReasonEn = kVal >= dVal ? 'KDJ golden cross, bullish' : 'KDJ death cross, bearish consolidation';
     }
-    add('kdj', 'KDJ(9,3,3)', 10, kScore, kReason);
+    add('kdj', 'KDJ(9,3,3)', 10, kScore, kReason, kReasonEn);
   }
   if (valid(ind.boll.pctB[i])) {
     const p = ind.boll.pctB[i];
     const reason = p >= 1 ? '价格突破布林上轨' : p <= 0 ? '价格跌破布林下轨' : `布林 %B=${round(p, 2)}，位于带内`;
-    add('boll', '布林 %B', 10, (p - 0.5) * 2, reason);
+    const reasonEn = p >= 1 ? 'Price broke above the upper Bollinger band'
+      : p <= 0 ? 'Price broke below the lower Bollinger band'
+        : `Bollinger %B=${round(p, 2)}, inside the bands`;
+    add('boll', '布林 %B', 10, (p - 0.5) * 2, reason, reasonEn);
   }
   if (premiumZ && valid(premiumZ[i])) {
     const z = premiumZ[i];
-    add('premium', '溢价 Z 分数', 10, -z / 2, `国内溢价 Z=${round(z, 2)}，${z > 0 ? '偏高，偏空' : '偏低，偏多'}`);
+    add(
+      'premium',
+      '溢价 Z 分数',
+      10,
+      -z / 2,
+      `国内溢价 Z=${round(z, 2)}，${z > 0 ? '偏高，偏空' : '偏低，偏多'}`,
+      `Domestic premium z=${round(z, 2)}, ${z > 0 ? 'elevated, bearish' : 'depressed, bullish'}`
+    );
   }
 
   const weight = comps.reduce((s, c) => s + c.weight, 0);
@@ -210,10 +228,11 @@ function buildSignal(point, ind, i) {
   const active = point.components.filter((c) => Math.abs(c.score) >= 0.05);
   const activeWeight = active.reduce((s, c) => s + c.weight, 0);
   const agreeWeight = active.filter((c) => Math.sign(c.score) === dir).reduce((s, c) => s + c.weight, 0);
-  const reasons = [...point.components]
+  const topComponents = [...point.components]
     .sort((x, y) => Math.abs(y.weight * y.score) - Math.abs(x.weight * x.score))
-    .slice(0, 4)
-    .map((c) => c.reason);
+    .slice(0, 4);
+  const reasons = topComponents.map((c) => c.reason);
+  const reasonsEn = topComponents.map((c) => c.reasonEn);
 
   return {
     available: true,
@@ -222,8 +241,16 @@ function buildSignal(point, ind, i) {
     confidence: activeWeight ? round((agreeWeight / activeWeight) * 100, 0) : 0,
     trend: trendRegime(ind, i),
     volRegime: volRegime(ind, i),
-    components: point.components.map((c) => ({ key: c.key, label: c.label, weight: c.weight, score: c.score, reason: c.reason })),
+    components: point.components.map((c) => ({
+      key: c.key,
+      label: c.label,
+      weight: c.weight,
+      score: c.score,
+      reason: c.reason,
+      reasonEn: c.reasonEn,
+    })),
     reasons,
+    reasonsEn,
   };
 }
 
@@ -301,7 +328,7 @@ function ddOf(eq) {
 function backtest(bars, ind, scores, premiumZ = null) {
   const n = bars.length;
   const start = QUANT.warmupBars;
-  if (n - start < 20) return { available: false, reason: '样本不足，无法回测' };
+  if (n - start < 20) return { available: false, reason: '样本不足，无法回测', reasonEn: 'Not enough samples to backtest' };
 
   const closes = bars.map((b) => b.close);
   const posTrend = new Array(n).fill(0);
@@ -426,7 +453,13 @@ export function summarizePremium(bars, premiumMap) {
     .filter((b) => premiumMap.has(b.date))
     .map((b) => ({ date: b.date, value: premiumMap.get(b.date) }));
   if (series.length < 20) {
-    return { available: false, count: series.length, reason: '可对齐的国际金价与汇率样本不足 20 个交易日', series: [] };
+    return {
+      available: false,
+      count: series.length,
+      reason: '可对齐的国际金价与汇率样本不足 20 个交易日',
+      reasonEn: 'Fewer than 20 sessions of aligned international gold and FX data',
+      series: [],
+    };
   }
 
   const values = series.map((s) => s.value);
@@ -486,6 +519,7 @@ export function analyzeMarket(rawBars, { premiumByDate = null } = {}) {
     return {
       available: false,
       reason: `有效K线不足（${bars.length} 根，至少需要 ${QUANT.minBars} 根）`,
+      reasonEn: `Only ${bars.length} valid bars; at least ${QUANT.minBars} are needed`,
       bars: [],
     };
   }

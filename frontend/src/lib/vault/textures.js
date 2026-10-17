@@ -62,8 +62,8 @@ export function paintCoinFace(label, size = 512, canvas) {
   ctx.clearRect(0, 0, size, size);
 
   const body = ctx.createRadialGradient(r * 0.72, r * 0.64, r * 0.08, r, r, r);
-  body.addColorStop(0, GOLD_HI);
-  body.addColorStop(0.58, GOLD);
+  body.addColorStop(0, '#f7d978');
+  body.addColorStop(0.58, '#dcae4e');
   body.addColorStop(1, GOLD_DEEP);
   ctx.fillStyle = body;
   ctx.beginPath();
@@ -127,12 +127,12 @@ export function paintShadow(size = 128, canvas) {
   return c;
 }
 
-// 墙面投影字：透明底上的金色 Anton 大写
-export function paintLettering(word, width = 1024, height = 256, canvas) {
+// 墙面投影字：透明底上的 Anton 大写，颜色由昼夜调色板决定（夜间金色，日间深金）
+export function paintLettering(word, width = 1024, height = 256, canvas, color = GOLD) {
   const c = makeCanvas(width, height, canvas);
   const ctx = c.getContext('2d');
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = GOLD;
+  ctx.fillStyle = color;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   fitFont(ctx, word, width * 0.92, height * 0.78);

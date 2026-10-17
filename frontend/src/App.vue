@@ -1,6 +1,6 @@
 <template>
   <div class="app">
-    <a class="skip-link" href="#main">跳到主要内容</a>
+    <a class="skip-link" href="#main">{{ t('app.skip') }}</a>
 
     <!-- 页面滚动进度：顶部一条金色细线 -->
     <div class="scroll-meter" aria-hidden="true">
@@ -60,7 +60,7 @@
             <b class="toast-title">{{ activeNotice.title }}</b>
             <p class="toast-desc">{{ activeNotice.body }}</p>
           </div>
-          <button type="button" class="toast-close" aria-label="关闭提醒" @click="activeNotice = null">✕</button>
+          <button type="button" class="toast-close" :aria-label="t('app.toastClose')" @click="activeNotice = null">✕</button>
         </div>
       </transition>
 
@@ -73,12 +73,12 @@
         <section id="sec-overview" class="block" data-reveal aria-labelledby="title-overview">
           <SectionHead
             index="01"
-            tag="实时行情"
-            title="Market"
+            :tag="t('section.marketTag')"
+            :title="t('section.market')"
             title-id="title-overview"
-            sub="国内 AU9999 与国际 XAU/USD 的实时价格、涨跌与盘口统计。"
+            :sub="t('section.marketSub')"
           >
-            <button type="button" class="btn btn-ghost btn-sm" @click="showPoster = true">分享研报海报</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="showPoster = true">{{ t('action.poster') }}</button>
           </SectionHead>
 
           <div class="hero-grid">
@@ -86,9 +86,9 @@
               class="hero-cn"
               data-reveal-item
               code="AU9999"
-              name="上海黄金交易所 · 国内现货"
-              :tag="domestic?.estimated ? '估算' : 'CNY'"
-              unit="元 / 克"
+              :name="t('quote.domesticName')"
+              :tag="domestic?.estimated ? t('quote.estimated') : 'CNY'"
+              :unit="t('quote.unitCnyGram')"
               currency="CNY"
               :price="domestic?.price ?? null"
               :change="domestic?.change ?? null"
@@ -104,9 +104,9 @@
               class="hero-intl"
               data-reveal-item
               code="XAU/USD"
-              name="伦敦现货黄金"
+              :name="t('quote.intlName')"
               tag="SPOT"
-              unit="美元 / 盎司"
+              :unit="t('quote.unitUsdOunce')"
               currency="USD"
               :price="international?.price ?? null"
               :change="international?.change ?? null"
@@ -134,10 +134,10 @@
         <section v-if="analysis.state !== 'idle'" id="sec-report" class="block" aria-labelledby="title-report">
           <SectionHead
             index="AI"
-            tag="研报"
-            title="Brief"
+            :tag="t('section.briefTag')"
+            :title="t('section.brief')"
             title-id="title-report"
-            sub="机构级量化推演与实战策略报告。"
+            :sub="t('section.briefSub')"
           />
           <AnalysisReport
             id="report"
@@ -155,10 +155,10 @@
         <section id="sec-quant" class="block" data-reveal aria-labelledby="title-quant">
           <SectionHead
             index="02"
-            tag="技术矩阵"
-            title="Signals"
+            :tag="t('section.signalsTag')"
+            :title="t('section.signals')"
             title-id="title-quant"
-            sub="八项技术因子逐一判定多空，综合评分、风险状态与枢轴位一并给出。"
+            :sub="t('section.signalsSub')"
           />
 
           <TechnicalMatrix :quant="cnQuant" data-reveal-item />
@@ -172,7 +172,7 @@
               :as-of="cnQuant.asOf"
             />
             <div v-else class="card notice-card an-signal">
-              {{ cnError || '量化信号计算中…' }}
+              {{ cnError || t('quant.computing') }}
             </div>
             <div v-if="cnQuant?.available" class="an-side">
               <RiskTiles :quant="cnQuant" />
@@ -189,10 +189,10 @@
         <section id="sec-charts" class="block" data-reveal aria-labelledby="title-charts">
           <SectionHead
             index="03"
-            tag="图表回测"
-            title="Charts"
+            :tag="t('section.chartsTag')"
+            :title="t('section.charts')"
             title-id="title-charts"
-            sub="K 线、均线、量价与指标联动；国内溢价与金银比；策略回测与权益曲线。"
+            :sub="t('section.chartsSub')"
           />
           <div data-reveal-item>
             <ChartWorkspace
@@ -211,10 +211,10 @@
         <section id="sec-tools" class="block" data-reveal aria-labelledby="title-tools">
           <SectionHead
             index="04"
-            tag="实战工具"
-            title="Tools"
+            :tag="t('section.toolsTag')"
+            :title="t('section.tools')"
             title-id="title-tools"
-            sub="持仓变现与盈亏平衡，52 周区间与周期收益率。"
+            :sub="t('section.toolsSub')"
           />
 
           <div class="tools-grid" data-reveal-item>
@@ -232,14 +232,14 @@
         <section id="contact" class="block contact" data-reveal aria-labelledby="title-contact">
           <SectionHead
             index="05"
-            tag="提醒推送"
-            title="Alerts"
+            :tag="t('section.alertsTag')"
+            :title="t('section.alerts')"
             title-id="title-contact"
-            sub="价格突破预警与微信推送。点击下方金币即可设置预警。"
+            :sub="t('section.alertsSub')"
           />
           <div class="contact-actions" data-reveal-item>
-            <button type="button" class="pill pill-gold" @click="showAlerts = true">设置价格预警 ↗</button>
-            <button type="button" class="pill" @click="showSubscribe = true">订阅微信推送 ↗</button>
+            <button type="button" class="pill pill-gold" @click="showAlerts = true">{{ t('contact.setAlert') }}</button>
+            <button type="button" class="pill" @click="showSubscribe = true">{{ t('contact.subscribe') }}</button>
           </div>
           <CoinRow :labels="COIN_LABELS" @select="showAlerts = true" />
         </section>
@@ -248,6 +248,11 @@
 
     <!-- 底部状态与版权 -->
     <AppFooter :latency="latency" />
+
+    <!-- 显示偏好：昼夜主题与中英文，固定在左下角 -->
+    <div class="prefs-dock">
+      <PrefsMenu />
+    </div>
 
     <!-- 弹窗组件群 -->
     <SubscribeModal :open="showSubscribe" @close="showSubscribe = false" />
@@ -301,6 +306,11 @@ import { useAlerts } from './composables/useAlerts';
 import { requestAnalysis } from './api';
 import { fmtNumber, fmtInt, fmtPercent, toneOf } from './format';
 import { gsap, prefersReducedMotion } from './lib/motion';
+import { useI18n } from './i18n';
+import { loadGeo } from './lib/geo';
+import PrefsMenu from './components/PrefsMenu.vue';
+
+const { t, locale } = useI18n();
 
 const COIN_LABELS = ['AU9999', 'XAU/USD', 'USD/CNY'];
 
@@ -357,33 +367,33 @@ const cnSpark = computed(() => (cnQuant.value?.bars ?? []).slice(-60).map((b) =>
 const intlSpark = computed(() => (intlQuant.value?.bars ?? []).slice(-60).map((b) => b.close));
 
 const domesticNote = computed(() => {
-  if (domestic.value?.estimated) return '由国际金价 × 汇率换算，并非交易所实时价，不触发涨跌预警';
-  if (!domestic.value && !loading.value) return '国内金价暂不可用';
+  if (domestic.value?.estimated) return t('quote.estimatedNote');
+  if (!domestic.value && !loading.value) return t('quote.domesticMissing');
   return '';
 });
 
 const internationalNote = computed(() => {
-  if (!international.value && !loading.value) return '国际金价暂不可用';
+  if (!international.value && !loading.value) return t('quote.intlMissing');
   return '';
 });
 
 const domesticStats = computed(() => {
   const d = domestic.value;
   return [
-    { label: '开盘', value: fmtNumber(d?.open) },
-    { label: '最高', value: fmtNumber(d?.high) },
-    { label: '最低', value: fmtNumber(d?.low) },
-    { label: '昨收', value: fmtNumber(d?.previousClose) },
-    { label: '成交量', value: d?.volume != null ? `${fmtInt(d.volume)} 手` : '--' },
+    { label: t('stats.open'), value: fmtNumber(d?.open) },
+    { label: t('stats.high'), value: fmtNumber(d?.high) },
+    { label: t('stats.low'), value: fmtNumber(d?.low) },
+    { label: t('stats.prevClose'), value: fmtNumber(d?.previousClose) },
+    { label: t('stats.volume'), value: d?.volume != null ? t('stats.lots', { n: fmtInt(d.volume) }) : '--' },
   ];
 });
 
 const internationalStats = computed(() => {
   const silver = international.value?.silverPrice;
   return [
-    { label: '白银 XAG', value: silver != null ? `$${fmtNumber(silver)}` : '--' },
+    { label: t('stats.silver'), value: silver != null ? `$${fmtNumber(silver)}` : '--' },
     { label: 'USD / CNY', value: fmtNumber(fx.value?.usdCny, 4) },
-    { label: '国内溢价', value: fmtPercent(premiumPercent.value), tone: toneOf(premiumPercent.value) },
+    { label: t('stats.premium'), value: fmtPercent(premiumPercent.value), tone: toneOf(premiumPercent.value) },
   ];
 });
 
@@ -411,7 +421,7 @@ async function runAnalysis(requestedModel) {
   analysis.value = { ...analysis.value, state: 'loading', error: '' };
 
   try {
-    const data = await requestAnalysis({ model: requestedModel || 'deepseek-r1', force: true });
+    const data = await requestAnalysis({ model: requestedModel || 'deepseek-r1', force: true, lang: locale.value });
     if (data.success && data.analysis?.analysis) {
       analysis.value = {
         state: 'done',
@@ -428,10 +438,10 @@ async function runAnalysis(requestedModel) {
         if (el) el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
       }, 100);
     } else {
-      analysis.value = { ...analysis.value, state: 'error', error: data.message || '分析暂不可用，请稍后重试' };
+      analysis.value = { ...analysis.value, state: 'error', error: data.message || t('app.analysisUnavailable') };
     }
   } catch (error) {
-    const text = error?.response?.data?.message || '分析请求失败，请检查网络后重试';
+    const text = error?.response?.data?.message || t('app.analysisFailed');
     analysis.value = { ...analysis.value, state: 'error', error: text };
   }
 }
@@ -470,7 +480,14 @@ function setupReveals() {
   });
 }
 
+// 切换语言时，若已有研报则按新语言重新生成（后端按语言分别缓存）
+watch(locale, () => {
+  if (analysis.value.state === 'done') runAnalysis();
+});
+
 onMounted(async () => {
+  // 位置信息用于默认语言与昼夜主题，取到后自动更新
+  loadGeo();
   window.addEventListener('scroll', onScrollMeter, { passive: true });
   updateMeter();
   await nextTick();
@@ -484,6 +501,29 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.prefs-dock {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 95;
+  max-width: min(calc(100vw - 40px), 460px);
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-card) 86%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 767px) {
+  .prefs-dock {
+    left: 12px;
+    bottom: 12px;
+    max-width: calc(100vw - 24px);
+  }
+}
+
 .scroll-meter {
   position: fixed;
   top: 0;

@@ -1,26 +1,26 @@
 <template>
   <div class="backtest">
     <p class="meta">
-      回测区间 {{ backtest.startDate }} 至 {{ backtest.endDate }}，共 {{ backtest.days }} 个交易日；
-      单边交易成本 {{ backtest.rules.costPerSwitchPercent }}%。信号收盘产生，次日生效，避免前视偏差。
+      {{ t('backtestPanel.rangeLine', { start: backtest.startDate, end: backtest.endDate, days: backtest.days }) }}
+      {{ t('backtestPanel.costLine', { cost: backtest.rules.costPerSwitchPercent }) }}
     </p>
 
     <div class="table-wrap">
       <table class="metrics">
         <thead>
           <tr>
-            <th scope="col">策略</th>
-            <th scope="col">总收益</th>
-            <th scope="col">年化</th>
-            <th scope="col">年化波动</th>
-            <th scope="col">夏普比率</th>
-            <th scope="col">索提诺</th>
-            <th scope="col">卡玛</th>
-            <th scope="col">盈亏比</th>
-            <th scope="col">胜率</th>
-            <th scope="col">最大回撤</th>
-            <th scope="col">换仓</th>
-            <th scope="col">持仓占比</th>
+            <th scope="col">{{ t('backtestPanel.strategy') }}</th>
+            <th scope="col">{{ t('backtestPanel.totalReturn') }}</th>
+            <th scope="col">{{ t('backtestPanel.annual') }}</th>
+            <th scope="col">{{ t('backtestPanel.vol') }}</th>
+            <th scope="col">{{ t('backtestPanel.sharpe') }}</th>
+            <th scope="col">{{ t('backtestPanel.sortino') }}</th>
+            <th scope="col">{{ t('backtestPanel.calmar') }}</th>
+            <th scope="col">{{ t('backtestPanel.payoff') }}</th>
+            <th scope="col">{{ t('backtestPanel.winRate') }}</th>
+            <th scope="col">{{ t('backtestPanel.maxDd') }}</th>
+            <th scope="col">{{ t('backtestPanel.switches') }}</th>
+            <th scope="col">{{ t('backtestPanel.exposure') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -46,11 +46,13 @@
       </table>
     </div>
 
-    <div ref="el" class="echart" role="img" aria-label="策略权益曲线与回撤图"></div>
+    <div ref="el" class="echart" role="img" :aria-label="t('backtestPanel.aria')"></div>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
 
@@ -85,7 +87,7 @@ function buildOption() {
     if (bt.equity?.[key]) {
       const isDashed = key === 'buyHold';
       const stratName = bt.strategies?.[key]?.name || key;
-      const color = pal.equity[key] || '#a3a3a3';
+      const color = pal.equity[key] || pal.muted;
       series.push({
         name: stratName,
         type: 'line',
@@ -101,7 +103,7 @@ function buildOption() {
 
   if (bt.drawdown?.score) {
     series.push({
-      name: '综合评分回撤',
+      name: t('backtestPanel.scoreDd'),
       type: 'line',
       xAxisIndex: 1,
       yAxisIndex: 1,
@@ -113,7 +115,7 @@ function buildOption() {
   }
   if (bt.drawdown?.buyHold) {
     series.push({
-      name: '买入持有回撤',
+      name: t('backtestPanel.holdDd'),
       type: 'line',
       xAxisIndex: 1,
       yAxisIndex: 1,
@@ -129,6 +131,7 @@ function buildOption() {
       { left: 58, right: 20, top: 40, height: '50%' },
       { left: 58, right: 20, top: '72%', height: '16%' },
     ],
+    textStyle: { fontFamily: pal.font },
     legend: {
       top: 0,
       right: 0,
@@ -140,7 +143,7 @@ function buildOption() {
       trigger: 'axis',
       axisPointer: { type: 'line', link: [{ xAxisIndex: 'all' }] },
       backgroundColor: pal.tipBg,
-      borderColor: pal.axis,
+      borderColor: pal.tipBorder,
       textStyle: { color: pal.text, fontSize: 12 },
       valueFormatter: (v) => fmtVal(v, 2),
     },

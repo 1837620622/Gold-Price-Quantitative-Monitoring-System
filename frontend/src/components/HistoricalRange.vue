@@ -10,8 +10,8 @@
           </svg>
         </div>
         <div>
-          <h3 class="range-title">历史极值与周期收益率阶梯</h3>
-          <p class="range-sub">52 周波动区间定位 · ATH 历史高点回撤 · 周期动量</p>
+          <h3 class="range-title">{{ t('historicalRange.title') }}</h3>
+          <p class="range-sub">{{ t('historicalRange.sub') }}</p>
         </div>
       </div>
     </header>
@@ -21,15 +21,15 @@
       <div class="range-slider-box">
         <div class="slider-meta">
           <div class="meta-item">
-            <span class="meta-label">52 周最低 (L)</span>
+            <span class="meta-label">{{ t('historicalRange.low52') }}</span>
             <b class="meta-val">¥{{ fmt(low52) }}</b>
           </div>
           <div class="meta-current">
-            <span class="meta-label">当前位置</span>
+            <span class="meta-label">{{ t('historicalRange.now') }}</span>
             <b class="meta-val highlight">¥{{ fmt(currentPrice) }} ({{ fmt(percentile52, 1) }}%)</b>
           </div>
           <div class="meta-item right">
-            <span class="meta-label">52 周最高 (H)</span>
+            <span class="meta-label">{{ t('historicalRange.high52') }}</span>
             <b class="meta-val">¥{{ fmt(high52) }}</b>
           </div>
         </div>
@@ -37,14 +37,14 @@
         <!-- 进度条 -->
         <div class="track-bar">
           <div class="track-fill" :style="{ width: `${percentile52}%` }"></div>
-          <div class="track-pointer" :style="{ left: `${percentile52}%` }" :title="`位于 52 周第 ${percentile52}% 分位`">
+          <div class="track-pointer" :style="{ left: `${percentile52}%` }" :title="t('historicalRange.percentile', { value: percentile52 })">
             <span class="pointer-dot"></span>
           </div>
         </div>
 
         <div class="ath-row">
-          <span>距 52 周最高点差：<b>-¥{{ fmt(athDiff) }} ({{ fmt(athDrawdown) }}%)</b></span>
-          <span class="ath-tag">{{ athDrawdown > -2 ? '高位盘整' : '阶段调整' }}</span>
+          <span>{{ t('historicalRange.dropFromHigh') }}<b>-¥{{ fmt(athDiff) }} ({{ fmt(athDrawdown) }}%)</b></span>
+          <span class="ath-tag">{{ athDrawdown > -2 ? t('historicalRange.hot') : t('historicalRange.pullback') }}</span>
         </div>
       </div>
 
@@ -63,6 +63,8 @@
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { computed } from 'vue';
 import { fmtNumber } from '../format';
 
@@ -118,12 +120,12 @@ const periods = computed(() => {
   };
 
   return [
-    { label: '近 24 小时 (1D)', rate: getReturn(1) },
-    { label: '近 7 天 (1W)', rate: getReturn(5) },
-    { label: '近 30 天 (1M)', rate: getReturn(22) },
-    { label: '近 90 天 (3M)', rate: getReturn(66) },
-    { label: '今年以来 (YTD)', rate: getReturn(120) },
-    { label: '近 1 年 (1Y)', rate: getReturn(240) },
+    { label: t('historicalRange.d1'), rate: getReturn(1) },
+    { label: t('historicalRange.w1'), rate: getReturn(5) },
+    { label: t('historicalRange.m1'), rate: getReturn(22) },
+    { label: t('historicalRange.m3'), rate: getReturn(66) },
+    { label: t('historicalRange.ytd'), rate: getReturn(120) },
+    { label: t('historicalRange.y1'), rate: getReturn(240) },
   ];
 });
 

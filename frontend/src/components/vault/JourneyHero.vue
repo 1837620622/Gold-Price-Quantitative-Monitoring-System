@@ -9,38 +9,38 @@
     <div ref="stageEl" class="journey-stage">
       <canvas ref="hallEl" class="layer layer-hall" aria-hidden="true"></canvas>
 
-      <div class="hero-copy">
-        <p class="label eyebrow">GOLD QUANT TERMINAL · 黄金量化终端</p>
+      <div ref="copyEl" class="hero-copy">
+        <p class="label eyebrow">{{ t('vault.hero.eyebrow') }}</p>
         <h1 id="journey-title" class="display title">
-          <span class="line">GOLD</span>
-          <span class="line grad-text">QUANT</span>
+          <span class="line">{{ t('vault.hero.title1') }}</span>
+          <span class="line grad-text">{{ t('vault.hero.title2') }}</span>
         </h1>
         <div class="sub">
-          <p>上海金 AU9999 与伦敦现货 XAU/USD，</p>
-          <p>多因子量化信号与跨市溢价同屏监控。</p>
-          <p>SPOT &amp; DOMESTIC GOLD, SCORED LIVE.</p>
-          <p>BACKTEST · RISK REGIME · AI BRIEF.</p>
+          <p>{{ t('vault.hero.sub1') }}</p>
+          <p>{{ t('vault.hero.sub2') }}</p>
+          <p>{{ t('vault.hero.sub3') }}</p>
+          <p>{{ t('vault.hero.sub4') }}</p>
         </div>
       </div>
 
-      <dl class="live" aria-label="实时行情">
+      <dl ref="liveEl" class="live" :aria-label="t('vault.hero.liveAria')">
         <div class="live-row">
-          <dt class="label">AU9999 · CNY/g</dt>
+          <dt class="label">{{ t('vault.live.domestic') }}</dt>
           <dd class="num" :class="flashes.domestic">{{ live.domestic }}</dd>
         </div>
         <div class="live-row">
-          <dt class="label">XAU/USD</dt>
+          <dt class="label">{{ t('vault.live.intl') }}</dt>
           <dd class="num" :class="flashes.intl">{{ live.intl }}</dd>
         </div>
         <div class="live-row">
-          <dt class="label">PREMIUM</dt>
+          <dt class="label">{{ t('vault.live.premium') }}</dt>
           <dd class="num" :class="flashes.premium">{{ live.premium }}</dd>
         </div>
       </dl>
 
       <p ref="footerEl" class="display footer-line" aria-hidden="true">
-        <span class="desk">SHANGHAI · LONDON · FX</span>
-        <span class="mob">SHANGHAI<br />LONDON</span>
+        <span class="desk">{{ t('vault.footer.desk') }}</span>
+        <span class="mob">{{ t('vault.footer.m1') }}<br />{{ t('vault.footer.m2') }}</span>
       </p>
 
       <canvas ref="coinEl" class="layer layer-coins" aria-hidden="true"></canvas>
@@ -63,7 +63,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { useI18n } from '../../i18n';
+import { useTheme } from '../../composables/useTheme';
 import { gsap, ScrollTrigger, prefersReducedMotion } from '../../lib/motion';
 import { createVaultScene, webglAvailable } from '../../lib/vault/scene';
 import { createCoinLayer, measureCapTop } from '../../lib/vault/coins';
@@ -89,6 +91,9 @@ const stageEl = ref(null);
 const hallEl = ref(null);
 const coinEl = ref(null);
 const footerEl = ref(null);
+const copyEl = ref(null);
+const liveEl = ref(null);
+let heroShown = true;
 const anchorEl = ref(null);
 
 // 运行模式在 setup 时确定：减少动态效果 / 无 WebGL / 移动端
@@ -96,6 +101,18 @@ const reduced = prefersReducedMotion();
 const noGL = !webglAvailable();
 const mobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
 const isStatic = reduced || noGL;
+
+// 文案随语言切换（t 读取 locale，模板中自动更新）；resolved 为 'light'（日间）或 'dark'（夜间）
+const { t } = useI18n();
+const { resolved } = useTheme();
+
+// 昼夜切换：等 data-theme 写入后读取纸本底色（--bg），更新大厅调色板，不重载页面
+async function applyTheme() {
+  await nextTick();
+  const base = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#f6f3ec';
+  scene?.setTheme(resolved.value, base);
+}
+watch(resolved, applyTheme);
 
 // ---------------- 实时数值：数字滚动 + 涨跌闪色（只改颜色，不铺背景） ----------------
 const tweened = reactive({ domestic: null, intl: null, premium: null });
@@ -283,6 +300,16 @@ function tick(now) {
   if (!inView || document.hidden) return;
 
   const p = progress.p;
+
+  // 进度 0.12：HTML 标题、实时数值与页脚在一帧内隐藏，让位给金库墙面
+  const shown = reduced || p < 0.12;
+  if (shown !== heroShown) {
+    heroShown = shown;
+    for (const el of [copyEl.value, liveEl.value, footerEl.value]) {
+      if (el) el.style.visibility = shown ? 'visible' : 'hidden';
+    }
+  }
+
   const strength = reduced ? 0 : 1 - smooth(0.035, 0.11, p);
   const stopped = p >= 0.94;
   if (stopped !== lookStopped) {
@@ -394,6 +421,7 @@ onMounted(async () => {
 
   if (!noGL) {
     scene = createVaultScene(hallEl.value, { mobile, bars: props.bars });
+    applyTheme();
     coins = createCoinLayer(coinEl.value, {
       labels: COIN_LABELS,
       radius: mobile ? 36 : 52,
@@ -454,6 +482,7 @@ onBeforeUnmount(() => {
   position: relative;
   height: 480vh;
   background: var(--bg);
+  color: var(--text);
 }
 
 .journey.is-static {
@@ -646,7 +675,7 @@ onBeforeUnmount(() => {
 
   .eyebrow {
     left: 28px;
-    top: 6vh;
+    top: 4vh;
   }
 
   .title {
@@ -663,7 +692,7 @@ onBeforeUnmount(() => {
 
   .live {
     right: 20px;
-    top: 7vh;
+    top: 11vh;
   }
 
   .footer-line {

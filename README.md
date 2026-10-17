@@ -151,6 +151,14 @@
 
 ---
 
+### 🌓 昼夜主题与中英文
+
+- **昼夜自动切换**：自动模式下，页面按访客位置计算当地日出日落决定日间或夜间主题。位置来自 Cloudflare 边缘提供的国家、城市、时区与经纬度，服务端不记录也不返回 IP；位置不可用时按访客时区的当地时间切换（06:00–18:00 为日间）。顶部偏好条可手动固定日间或夜间，手动选择会被记住。
+- **中英文界面**：默认语言按访客所在国家判断（中国大陆、港澳台与新加坡为中文，其余为英文），偏好条可随时切换并记住选择。AI 研报按当前语言生成。
+- 位置信息只用于上述两项默认值，不参与行情计算。
+
+---
+
 ## 🛠️ 技术架构
 
 ```
@@ -286,11 +294,12 @@ npx wrangler pages deploy dist --project-name=gold-monitor
 | `/api/price/international` | GET | 国际金价（gold-api.com，Yahoo 双源校验） |
 | `/api/price/domestic` | GET | 国内 AU9999（估算时 `estimated=true`） |
 | `/api/sources` | GET | 数据源健康状态：成功/失败次数、耗时、最近错误 |
+| `/api/geo` | GET | 访客地理信息（国家、城市、时区、经纬度），用于默认语言与昼夜主题；不返回 IP，边缘信息缺失时各字段为 `null` |
 | `/api/kline?days=30` | GET | 国内日K原始数据（1–250 天） |
 | `/api/quant/cn?days=250` | GET | 国内量化结果：指标、信号、关键位、风险、回测、溢价 |
 | `/api/quant/intl?days=250` | GET | 国际量化结果（同上，不含溢价） |
 | `/api/premium?days=250` | GET | 国内溢价序列与统计 |
-| `/api/analyze` | POST | AI 量化分析（基于量化结果，缓存 15 分钟） |
+| `/api/analyze` | POST | AI 量化分析（基于量化结果，缓存 15 分钟）；请求体 `lang` 取 `zh` 或 `en`，决定研报语言 |
 | `/api/push/status` | GET | 推送状态 |
 | `/api/push/test` | POST | 测试推送（需 ADMIN_TOKEN） |
 | `/api/push/scheduled` | POST | 定时推送（每半小时，需 ADMIN_TOKEN） |

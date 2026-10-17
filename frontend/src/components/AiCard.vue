@@ -8,8 +8,8 @@
         </svg>
       </div>
       <div class="ai-title-wrap">
-        <h2 id="ai-title" class="ai-title">AI 量化深度研报</h2>
-        <span class="ai-subtitle">多因子量化推演与实盘策略指引</span>
+        <h2 id="ai-title" class="ai-title">{{ t('aiCard.title') }}</h2>
+        <span class="ai-subtitle">{{ t('aiCard.sub') }}</span>
       </div>
     </header>
 
@@ -17,7 +17,7 @@
     <div class="model-select-group">
       <label class="select-label" for="model-selector">
         <span class="label-dot"></span>
-        <span>推理引擎模型</span>
+        <span>{{ t('aiCard.modelLabel') }}</span>
       </label>
       <div class="select-wrapper">
         <select
@@ -27,7 +27,7 @@
           :disabled="state === 'loading'"
           @change="onModelChange"
         >
-          <option v-for="m in MODELS" :key="m.id" :value="m.id">
+          <option v-for="m in models" :key="m.id" :value="m.id">
             {{ m.label }}
           </option>
         </select>
@@ -49,18 +49,18 @@
         <span></span>
         <span></span>
       </div>
-      <p class="analyzing-text">{{ currentModelShortName }} 推理链计算中…</p>
-      <span class="analyzing-sub">正在结合 250 日K线与多因子矩阵推演</span>
+      <p class="analyzing-text">{{ t('aiCard.reasoning', { model: currentModelShortName }) }}</p>
+      <span class="analyzing-sub">{{ t('aiCard.reasoningHint') }}</span>
     </div>
 
     <!-- 正常/空闲状态描述 -->
     <div v-else class="ai-body">
       <p class="ai-desc">{{ statusText }}</p>
       <div class="ai-tags">
-        <span class="tag">多空定调</span>
-        <span class="tag">关键枢轴点</span>
-        <span class="tag">金银比研判</span>
-        <span class="tag">仓位建议</span>
+        <span class="tag">{{ t('aiCard.tagTone') }}</span>
+        <span class="tag">{{ t('aiCard.tagPivot') }}</span>
+        <span class="tag">{{ t('aiCard.tagRatio') }}</span>
+        <span class="tag">{{ t('aiCard.tagSize') }}</span>
       </div>
     </div>
 
@@ -79,6 +79,8 @@
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { ref, computed, onMounted } from 'vue';
 
 const props = defineProps({
@@ -91,14 +93,23 @@ const props = defineProps({
 
 const emit = defineEmits(['run']);
 
+// 模型名称与说明按当前语言取值；short 为英文模型名，智能调度的简称按语言翻译
 const MODELS = [
-  { id: 'deepseek-r1', label: 'DeepSeek-R1 (深度推理 · 默认)', short: 'DeepSeek-R1', desc: '具备思维链推理能力，擅长宏观归因与矛盾点博弈' },
-  { id: 'qwen-72b', label: 'Qwen 2.5 72B (全能旗舰)', short: 'Qwen 72B', desc: '阿里千问顶尖旗舰模型，中文金融理解与回测研判极强' },
-  { id: 'llama-70b', label: 'Llama 3.3 70B (顶尖研报)', short: 'Llama 70B', desc: 'Meta 最新旗舰开源模型，宏观视野宽广、逻辑严密' },
-  { id: 'qwen-14b', label: 'Qwen 2.5 14B (均衡低耗)', short: 'Qwen 14B', desc: '性价比卓越，消耗神经元少，快速输出专业报告' },
-  { id: 'qwen-7b', label: 'Qwen 2.5 7B (轻量极速)', short: 'Qwen 7B', desc: '极速毫秒级响应，超低额度开销，平滑稳定' },
-  { id: 'auto', label: '智能调度 (自动多源容灾)', short: '智能调度', desc: '根据配额与健康度自动调度最优可用模型，无缝降级' },
+  { id: 'deepseek-r1', labelKey: 'aiCard.model.deepseek', short: 'DeepSeek-R1', descKey: 'aiCard.model.deepseekDesc' },
+  { id: 'qwen-72b', labelKey: 'aiCard.model.qwen72', short: 'Qwen 72B', descKey: 'aiCard.model.qwen72Desc' },
+  { id: 'llama-70b', labelKey: 'aiCard.model.llama', short: 'Llama 70B', descKey: 'aiCard.model.llamaDesc' },
+  { id: 'qwen-14b', labelKey: 'aiCard.model.qwen14', short: 'Qwen 14B', descKey: 'aiCard.model.qwen14Desc' },
+  { id: 'qwen-7b', labelKey: 'aiCard.model.qwen7', short: 'Qwen 7B', descKey: 'aiCard.model.qwen7Desc' },
+  { id: 'auto', labelKey: 'aiCard.model.auto', shortKey: 'aiCard.model.autoShort', descKey: 'aiCard.model.autoDesc' },
 ];
+const models = computed(() =>
+  MODELS.map((m) => ({
+    ...m,
+    label: t(m.labelKey),
+    desc: t(m.descKey),
+    short: m.shortKey ? t(m.shortKey) : m.short,
+  }))
+);
 
 const selectedModel = ref('deepseek-r1');
 
@@ -114,30 +125,30 @@ function onModelChange() {
 }
 
 const currentModelDesc = computed(() => {
-  const found = MODELS.find((m) => m.id === selectedModel.value);
-  return found ? found.desc : '金融大模型深度解析';
+  const found = models.value.find((m) => m.id === selectedModel.value);
+  return found ? found.desc : t('aiCard.reportTitle');
 });
 
 const currentModelShortName = computed(() => {
-  const found = MODELS.find((m) => m.id === selectedModel.value);
-  return found ? found.short : '大模型';
+  const found = models.value.find((m) => m.id === selectedModel.value);
+  return found ? found.short : t('aiCard.modelBadge');
 });
 
 const statusText = computed(() => {
-  if (props.unavailable && props.state !== 'loading') return '行情暂不可用，无法生成深度研报';
+  if (props.unavailable && props.state !== 'loading') return t('aiCard.noMarket');
   switch (props.state) {
     case 'done':
-      return props.cached ? '已展示 15 分钟内缓存报告，切换模型或点击可重新生成' : '研报已生成，可下拉切换模型重新分析';
+      return props.cached ? t('aiCard.cachedHint') : t('aiCard.doneHint');
     case 'error':
-      return props.error || '分析调用异常，已自动触发多源兜底机制，请重试';
+      return props.error || t('aiCard.error');
     default:
-      return '由 Cloudflare Workers AI 驱动，严格基于真实行情与量化因子深度推演';
+      return t('aiCard.powered');
   }
 });
 
 const buttonText = computed(() => {
-  if (props.state === 'loading') return '模型推理中…';
-  return props.state === 'done' ? '重新生成研报' : '开始深度分析';
+  if (props.state === 'loading') return t('aiCard.inferring');
+  return props.state === 'done' ? t('aiCard.regenerate') : t('aiCard.start');
 });
 
 function handleRun() {

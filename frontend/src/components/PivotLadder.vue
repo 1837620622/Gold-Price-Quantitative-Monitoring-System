@@ -2,24 +2,24 @@
   <section class="card pivot-card" aria-labelledby="pivot-title">
     <header class="pivot-head">
       <div>
-        <h3 id="pivot-title" class="pivot-title">日内枢轴阶梯</h3>
-        <p class="pivot-sub">Pivot Points · 以最近一根日K 的高低收推算</p>
+        <h3 id="pivot-title" class="pivot-title">{{ t('pivotLadder.title') }}</h3>
+        <p class="pivot-sub">{{ t('pivotLadder.sub') }}</p>
       </div>
-      <div class="seg-xs" role="tablist" aria-label="枢轴算法">
+      <div class="seg-xs" role="tablist" :aria-label="t('pivotLadder.mode')">
         <button
           type="button"
           role="tab"
           :aria-selected="mode === 'classic'"
           :class="{ active: mode === 'classic' }"
           @click="mode = 'classic'"
-        >经典</button>
+        >{{ t('pivotLadder.classic') }}</button>
         <button
           type="button"
           role="tab"
           :aria-selected="mode === 'fibonacci'"
           :class="{ active: mode === 'fibonacci' }"
           @click="mode = 'fibonacci'"
-        >斐波那契</button>
+        >{{ t('pivotLadder.fibonacci') }}</button>
       </div>
     </header>
 
@@ -35,6 +35,8 @@
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { ref, computed } from 'vue';
 import { fmtNumber } from '../format';
 
@@ -46,13 +48,13 @@ const props = defineProps({
 const mode = ref('classic');
 
 const LEVELS = [
-  { key: 'r3', label: 'R3 阻力', tone: 'res' },
-  { key: 'r2', label: 'R2 阻力', tone: 'res' },
-  { key: 'r1', label: 'R1 阻力', tone: 'res' },
-  { key: 'pivot', label: 'P 枢轴', tone: 'mid' },
-  { key: 's1', label: 'S1 支撑', tone: 'sup' },
-  { key: 's2', label: 'S2 支撑', tone: 'sup' },
-  { key: 's3', label: 'S3 支撑', tone: 'sup' },
+  { key: 'r3', labelKey: 'pivotLadder.r3', tone: 'res' },
+  { key: 'r2', labelKey: 'pivotLadder.r2', tone: 'res' },
+  { key: 'r1', labelKey: 'pivotLadder.r1', tone: 'res' },
+  { key: 'pivot', labelKey: 'pivotLadder.p', tone: 'mid' },
+  { key: 's1', labelKey: 'pivotLadder.s1', tone: 'sup' },
+  { key: 's2', labelKey: 'pivotLadder.s2', tone: 'sup' },
+  { key: 's3', labelKey: 'pivotLadder.s3', tone: 'sup' },
 ];
 
 const rows = computed(() => {
@@ -61,13 +63,13 @@ const rows = computed(() => {
 
   const items = LEVELS.filter((l) => Number.isFinite(active[l.key])).map((l) => ({
     key: l.key,
-    label: l.label,
+    label: t(l.labelKey),
     tone: l.tone,
     num: active[l.key],
     value: fmtNumber(active[l.key]),
   }));
   if (Number.isFinite(props.price)) {
-    items.push({ key: 'price', label: '现价', tone: 'now', num: props.price, value: fmtNumber(props.price) });
+    items.push({ key: 'price', label: t('pivotLadder.now'), tone: 'now', num: props.price, value: fmtNumber(props.price) });
   }
   return items.sort((a, b) => b.num - a.num);
 });

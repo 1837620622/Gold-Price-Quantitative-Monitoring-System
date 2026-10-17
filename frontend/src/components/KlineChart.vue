@@ -1,11 +1,13 @@
 <template>
   <div class="kline" :class="{ 'is-loading': loading }">
     <div ref="el" class="echart" role="img" :aria-label="ariaLabel"></div>
-    <div v-if="!hasData" class="overlay">暂无K线数据</div>
+    <div v-if="!hasData" class="overlay">{{ t('klineChart.empty') }}</div>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
 
@@ -15,7 +17,7 @@ const props = defineProps({
   toggles: { type: Object, default: () => ({}) },
   theme: { type: String, default: 'dark' },
   zoomStart: { type: Number, default: 60 },
-  name: { type: String, default: 'K线' },
+  name: { type: String, default: t('klineChart.candles') },
   loading: { type: Boolean, default: false },
 });
 
@@ -25,18 +27,18 @@ let unmounted = false;
 let resizeObserver = null;
 
 const hasData = computed(() => props.bars.length > 0);
-const ariaLabel = computed(() => `${props.name} 日K线与技术指标图`);
+const ariaLabel = computed(() => t('klineChart.aria', { name: props.name }));
 
 // 窗格（pane）按开关动态生成：价格 → 成交量 → 评分 → MACD → RSI → KDJ
 function activePanes() {
-  const t = props.toggles;
+  const tg = props.toggles;
   const hasVolume = props.bars.some((b) => b.volume > 0);
   const panes = ['price'];
-  if (t.vol && hasVolume) panes.push('volume');
-  if (t.score && props.indicators) panes.push('score');
-  if (t.macd && props.indicators) panes.push('macd');
-  if (t.rsi && props.indicators) panes.push('rsi');
-  if (t.kdj && props.indicators?.kdj) panes.push('kdj');
+  if (tg.vol && hasVolume) panes.push('volume');
+  if (tg.score && props.indicators) panes.push('score');
+  if (tg.macd && props.indicators) panes.push('macd');
+  if (tg.rsi && props.indicators) panes.push('rsi');
+  if (tg.kdj && props.indicators?.kdj) panes.push('kdj');
   return panes;
 }
 
@@ -57,7 +59,7 @@ function yAxisOf(pane, gridIndex, pal) {
   return { ...base, ...configs[pane] };
 }
 
-function tooltipHtml(params, pal, bars, ind, t, panes) {
+function tooltipHtml(params, pal, bars, ind, tg, panes) {
   const idx = params?.[0]?.dataIndex;
   if (idx === undefined || !bars[idx]) return '';
   const b = bars[idx];
@@ -65,15 +67,15 @@ function tooltipHtml(params, pal, bars, ind, t, panes) {
   const v = (arr) => fmtVal(arr?.[idx]);
   const rows = [
     `<div style="font-weight:600;margin-bottom:4px">${b.date}</div>`,
-    `开 ${fmtVal(b.open)} · 高 ${fmtVal(b.high)}`,
-    `低 ${fmtVal(b.low)} · 收 <b style="color:${up ? pal.up : pal.down}">${fmtVal(b.close)}</b>`,
+    `${t('klineTip.open')} ${fmtVal(b.open)} · ${t('klineTip.high')} ${fmtVal(b.high)}`,
+    `${t('klineTip.low')} ${fmtVal(b.low)} · ${t('klineTip.close')} <b style="color:${up ? pal.up : pal.down}">${fmtVal(b.close)}</b>`,
   ];
   if (ind) {
-    if (t.ma) rows.push(`MA5 ${v(ind.ma5)} · MA10 ${v(ind.ma10)} · MA20 ${v(ind.ma20)}`);
-    if (t.boll) rows.push(`布林 上 ${v(ind.bollUpper)} · 下 ${v(ind.bollLower)}`);
-    if (panes.includes('volume')) rows.push(`成交量 ${Math.round(b.volume).toLocaleString('zh-CN')} 手`);
-    if (panes.includes('score')) rows.push(`量化评分 <b>${v(ind.score)}</b>`);
-    if (panes.includes('macd')) rows.push(`DIF ${v(ind.dif)} · DEA ${v(ind.dea)} · 柱 ${v(ind.hist)}`);
+    if (tg.ma) rows.push(`MA5 ${v(ind.ma5)} · MA10 ${v(ind.ma10)} · MA20 ${v(ind.ma20)}`);
+    if (tg.boll) rows.push(`${t('klineTip.boll')} ${t('klineTip.upper')} ${v(ind.bollUpper)} · ${t('klineTip.lower')} ${v(ind.bollLower)}`);
+    if (panes.includes('volume')) rows.push(`${t('klineTip.volume')} ${Math.round(b.volume).toLocaleString('zh-CN')} ${t('klineTip.lots')}`);
+    if (panes.includes('score')) rows.push(`${t('klineTip.score')} <b>${v(ind.score)}</b>`);
+    if (panes.includes('macd')) rows.push(`DIF ${v(ind.dif)} · DEA ${v(ind.dea)} · ${t('klineTip.hist')} ${v(ind.hist)}`);
     if (panes.includes('rsi')) rows.push(`RSI ${v(ind.rsi14)}`);
     if (panes.includes('kdj') && ind.kdj) rows.push(`K ${v(ind.kdj.k)} · D ${v(ind.kdj.d)} · J ${v(ind.kdj.j)}`);
   }
@@ -84,7 +86,7 @@ function buildOption() {
   const pal = chartPalette(props.theme);
   const bars = props.bars;
   const ind = props.indicators;
-  const t = props.toggles;
+  const tg = props.toggles;
   const panes = activePanes();
   const dates = bars.map((b) => b.date);
   const paneIndex = (name) => panes.indexOf(name);
@@ -130,7 +132,7 @@ function buildOption() {
   });
 
   series.push({
-    name: 'K线',
+    name: t('klineChart.candles'),
     type: 'candlestick',
     xAxisIndex: 0,
     yAxisIndex: 0,
@@ -138,27 +140,27 @@ function buildOption() {
     itemStyle: { color: pal.up, color0: pal.down, borderColor: pal.up, borderColor0: pal.down },
   });
 
-  if (ind && t.ma) {
+  if (ind && tg.ma) {
     series.push(line('MA5', ind.ma5, 0, pal.ma5));
     series.push(line('MA10', ind.ma10, 0, pal.ma10));
     series.push(line('MA20', ind.ma20, 0, pal.ma20));
   }
-  if (ind && t.boll) {
-    series.push(line('布林上轨', ind.bollUpper, 0, pal.boll, 'dashed'));
-    series.push(line('布林下轨', ind.bollLower, 0, pal.boll, 'dashed'));
+  if (ind && tg.boll) {
+    series.push(line(t('klineChart.bollUpper'), ind.bollUpper, 0, pal.boll, 'dashed'));
+    series.push(line(t('klineChart.bollLower'), ind.bollLower, 0, pal.boll, 'dashed'));
   }
 
   if (paneIndex('volume') >= 0) {
     const i = paneIndex('volume');
     series.push({
-      name: '成交量',
+      name: t('klineChart.volume'),
       type: 'bar',
       xAxisIndex: i,
       yAxisIndex: i,
       barMaxWidth: 10,
       data: bars.map((b) => ({
         value: b.volume,
-        itemStyle: { color: b.close >= b.open ? pal.up : pal.down, opacity: 0.45 },
+        itemStyle: { color: b.close >= b.open ? pal.up : pal.down, opacity: 0.3 },
       })),
     });
   }
@@ -166,7 +168,7 @@ function buildOption() {
   if (paneIndex('score') >= 0) {
     const i = paneIndex('score');
     series.push({
-      ...line('量化评分', ind.score, i, pal.score),
+      ...line(t('klineChart.score'), ind.score, i, pal.score),
       lineStyle: { width: 1.6, color: pal.score },
       areaStyle: { color: pal.score, opacity: 0.08 },
       markLine: {
@@ -182,7 +184,7 @@ function buildOption() {
   if (paneIndex('macd') >= 0) {
     const i = paneIndex('macd');
     series.push({
-      name: 'MACD柱',
+      name: t('klineChart.macdBar'),
       type: 'bar',
       xAxisIndex: i,
       yAxisIndex: i,
@@ -226,6 +228,7 @@ function buildOption() {
   const allAxes = panes.map((_, i) => i);
   return {
     animationDuration: 300,
+    textStyle: { fontFamily: pal.font },
     grid,
     xAxis,
     yAxis,
@@ -248,9 +251,9 @@ function buildOption() {
         lineStyle: { color: pal.muted, type: 'dashed' },
       },
       backgroundColor: pal.tipBg,
-      borderColor: pal.axis,
+      borderColor: pal.tipBorder,
       textStyle: { color: pal.text, fontSize: 12 },
-      formatter: (params) => tooltipHtml(params, pal, bars, ind, t, panes),
+      formatter: (params) => tooltipHtml(params, pal, bars, ind, tg, panes),
     },
     dataZoom: [
       { type: 'inside', xAxisIndex: allAxes, start: props.zoomStart, end: 100, zoomOnMouseWheel: false, moveOnMouseWheel: false },

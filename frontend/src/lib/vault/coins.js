@@ -64,8 +64,11 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
     const tex = new THREE.CanvasTexture(paintCoinFace(label, 512));
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
+    tex.center.set(0.5, 0.5);
+    tex.rotation = -Math.PI / 2; // 标签在圆面上正向显示
     faceTextures.push(tex);
-    const faceMat = new THREE.MeshStandardMaterial({ map: tex, metalness: 1, roughness: 0.34 });
+    // 金属反射乘以底色：偏暖的底色让金面保持金色，避免环境光把金面洗成白色
+    const faceMat = new THREE.MeshStandardMaterial({ map: tex, color: 0xc99a4a, metalness: 1, roughness: 0.4, envMapIntensity: 0.45 });
     // 圆柱分组：0 侧面，1 顶面，2 底面；顶面朝向观众
     const mesh = new THREE.Mesh(coinGeo, [sideMat, faceMat, faceMat]);
     mesh.rotation.order = 'XYZ';
@@ -83,6 +86,7 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
   let height = 1;
   let exitK = 0;
   let spawned = false;
+  let needsRender = true; // 静止且无变化时跳过渲染，节省每帧的 GPU 开销
   const lastPos = coins.map(() => ({ x: -1e4, y: -1e4, scale: 0, visible: false }));
 
   function setSize(w, h, pixelRatio = 1) {
@@ -95,6 +99,7 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
     camera.top = 0;
     camera.bottom = height;
     camera.updateProjectionMatrix();
+    needsRender = true;
   }
 
   // xs：每枚硬币的起始 x（画布坐标）；从画布上方落下
@@ -107,6 +112,7 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
     });
     world.impacts.length = 0;
     spawned = true;
+    needsRender = true;
   }
 
   // 减少动态效果或首帧：直接推演到静止，不播放落下过程
@@ -115,10 +121,13 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
     const steps = Math.round(seconds / SIM_STEP);
     for (let i = 0; i < steps; i += 1) stepWorld(world, SIM_STEP);
     world.impacts.length = 0;
+    needsRender = true;
   }
 
   function setExit(k) {
-    exitK = Math.min(1, Math.max(0, k));
+    const next = Math.min(1, Math.max(0, k));
+    if (next !== exitK) needsRender = true;
+    exitK = next;
   }
 
   // 每帧：推进物理、更新网格，然后渲染
@@ -168,7 +177,10 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
       lastPos[coin.index] = { x, y, scale: s, visible };
     }
 
-    if (draw) renderer.render(scene, camera);
+    if (draw && (needsRender || !allAsleep(world))) {
+      renderer.render(scene, camera);
+      needsRender = false;
+    }
   }
 
   // 命中测试：圆形范围，随硬币形变与退场缩放
