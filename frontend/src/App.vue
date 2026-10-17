@@ -249,11 +249,6 @@
     <!-- 底部状态与版权 -->
     <AppFooter :latency="latency" />
 
-    <!-- 显示偏好：昼夜主题与中英文，固定在左下角 -->
-    <div class="prefs-dock">
-      <PrefsMenu />
-    </div>
-
     <!-- 弹窗组件群 -->
     <SubscribeModal :open="showSubscribe" @close="showSubscribe = false" />
     <SourcesDrawer :open="showSources" :sources="sources" :checks="crossChecks" @close="showSources = false" />
@@ -308,7 +303,6 @@ import { fmtNumber, fmtInt, fmtPercent, toneOf } from './format';
 import { gsap, prefersReducedMotion } from './lib/motion';
 import { useI18n } from './i18n';
 import { loadGeo } from './lib/geo';
-import PrefsMenu from './components/PrefsMenu.vue';
 
 const { t, locale } = useI18n();
 
@@ -501,29 +495,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.prefs-dock {
-  position: fixed;
-  left: 20px;
-  bottom: 20px;
-  z-index: 95;
-  max-width: min(calc(100vw - 40px), 460px);
-  padding: 12px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface-card) 86%, transparent);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow);
-}
-
-@media (max-width: 767px) {
-  .prefs-dock {
-    left: 12px;
-    bottom: 12px;
-    max-width: calc(100vw - 24px);
-  }
-}
-
 .scroll-meter {
   position: fixed;
   top: 0;
