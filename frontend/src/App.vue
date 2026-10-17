@@ -21,41 +21,38 @@
       @alert="showAlerts = true"
     />
 
-    <!-- 00 电影级全景沉浸视界 (PLUME 极致工艺与实盘行情联动) -->
-    <CinematicHero
+    <!-- 四幕电影级全景叙事与粘性滚轨 (Hero -> Recipe -> Adv 460vh 粘性滚轨 -> Essentials) -->
+    <PlumeCinematicTrack
       :domestic-price="domestic?.price"
-      :domestic-change="domestic?.changePercent"
       :intl-price="international?.price"
-      :intl-change="international?.changePercent"
-      :premium-percent="snapshot?.premiumPercent"
-      :quant-score="cnQuant?.signal?.score"
-      @run-ai="runAnalysis"
     />
 
-    <!-- 实时全景跑马灯与快捷控制条 -->
-    <GlobalTickerBar
-      :snapshot="snapshot"
-      :countdown="countdown"
-      :poll-interval="pollInterval"
-      :alert-count="alerts.length"
-      @set-interval="setPollInterval"
-      @open-alert="showAlerts = true"
-      @open-calc="scrollToCalc"
-    />
+    <!-- 第五部分：实盘量化投研终端工作台 (#workspace) -->
+    <div id="workspace" class="workspace-section">
+      <!-- 实时全景跑马灯与快捷控制条 -->
+      <GlobalTickerBar
+        :snapshot="snapshot"
+        :countdown="countdown"
+        :poll-interval="pollInterval"
+        :alert-count="alerts.length"
+        @set-interval="setPollInterval"
+        @open-alert="showAlerts = true"
+        @open-calc="scrollToCalc"
+      />
 
-    <!-- 浮动实时告警 Toast -->
-    <transition name="toast-fade">
-      <div v-if="activeNotice" class="toast-alert" role="alert">
-        <div class="toast-icon">🚨</div>
-        <div class="toast-content">
-          <b class="toast-title">{{ activeNotice.title }}</b>
-          <p class="toast-desc">{{ activeNotice.body }}</p>
+      <!-- 浮动实时告警 Toast -->
+      <transition name="toast-fade">
+        <div v-if="activeNotice" class="toast-alert" role="alert">
+          <div class="toast-icon">🚨</div>
+          <div class="toast-content">
+            <b class="toast-title">{{ activeNotice.title }}</b>
+            <p class="toast-desc">{{ activeNotice.body }}</p>
+          </div>
+          <button type="button" class="toast-close" @click="activeNotice = null">✕</button>
         </div>
-        <button type="button" class="toast-close" @click="activeNotice = null">✕</button>
-      </div>
-    </transition>
+      </transition>
 
-    <main id="main" class="container main">
+      <main id="main" class="container main">
       <div v-if="message && status !== 'live'" class="alert" :class="`alert-${status}`" role="status">
         {{ message }}
       </div>
@@ -205,6 +202,7 @@
 
     <!-- 底部状态与版权 -->
     <AppFooter :latency="latency" />
+    </div>
 
     <!-- 弹窗组件群 -->
     <SubscribeModal :open="showSubscribe" @close="showSubscribe = false" />
@@ -230,7 +228,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import AppHeader from './components/AppHeader.vue';
-import CinematicHero from './components/CinematicHero.vue';
+import PlumeCinematicTrack from './components/PlumeCinematicTrack.vue';
 import GlobalTickerBar from './components/GlobalTickerBar.vue';
 import PriceCard from './components/PriceCard.vue';
 import AiCard from './components/AiCard.vue';
