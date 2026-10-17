@@ -118,6 +118,7 @@
               accent="blue"
             />
             <AiCard
+              id="sec-ai"
               class="hero-ai"
               data-reveal-item
               :state="analysis.state"
@@ -463,13 +464,13 @@ function setupReveals() {
     const masks = section.querySelectorAll('.mask > span');
     const items = section.querySelectorAll('[data-reveal-item]');
     gsap
-      .timeline({ scrollTrigger: { trigger: section, start: 'top 82%', once: true } })
-      .fromTo(masks, { yPercent: 110 }, { yPercent: 0, duration: 1, ease: 'power4.out', stagger: 0.08 })
+      .timeline({ scrollTrigger: { trigger: section, start: 'top 88%', once: true } })
+      .fromTo(masks, { yPercent: 100 }, { yPercent: 0, duration: 0.55, ease: 'power3.out' })
       .fromTo(
         items,
-        { autoAlpha: 0, y: 24 },
-        { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.06, clearProps: 'transform' },
-        '-=0.6'
+        { autoAlpha: 0, y: 8 },
+        { autoAlpha: 1, y: 0, duration: 0.45, ease: 'power2.out', stagger: 0.04, clearProps: 'all' },
+        '-=0.35'
       );
   });
 }
@@ -519,7 +520,12 @@ onUnmounted(() => {
 }
 
 .block {
-  padding-top: clamp(56px, 8vw, 104px);
+  padding-top: clamp(48px, 6vw, 84px);
+  scroll-margin-top: 104px;
+}
+
+.workspace-section {
+  scroll-margin-top: 56px;
 }
 
 .block + .block {

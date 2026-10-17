@@ -278,34 +278,36 @@ onBeforeUnmount(() => {
 .row {
   position: relative;
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 24px;
+  grid-template-columns: 48px minmax(0, 1fr) 28px;
   grid-template-rows: auto auto;
   align-items: center;
   column-gap: 16px;
-  row-gap: 10px;
+  row-gap: 6px;
   width: 100%;
-  padding: clamp(16px, 2.2vw, 24px) 0;
+  padding: clamp(14px, 1.6vw, 20px) 0;
   border: 0;
   border-bottom: 1px solid var(--line);
   background: transparent;
   color: var(--text-3);
   text-align: left;
   cursor: pointer;
-  transition: color var(--dur) var(--ease-out);
+  transition: color var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
 }
 
 .row-index {
   grid-column: 1;
   grid-row: 1 / span 2;
   align-self: start;
-  padding-top: 0.6em;
+  padding-top: 0.3em;
+  font-size: 13px;
+  font-family: var(--mono);
 }
 
 .row-name {
   grid-column: 2;
   grid-row: 1;
-  font-size: clamp(40px, 5.4vw, 84px);
-  line-height: 0.92;
+  font-size: clamp(24px, 2.6vw, 42px);
+  line-height: 1.05;
   color: inherit;
   transform-origin: left center;
   transition: transform var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
@@ -317,7 +319,8 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: -0.01em;
   text-transform: none;
-  line-height: 1.15;
+  font-size: clamp(20px, 2.2vw, 34px);
+  line-height: 1.2;
 }
 
 .row.is-active {
@@ -326,7 +329,7 @@ onBeforeUnmount(() => {
 
 .row.is-active .row-name {
   color: var(--gold-3);
-  transform: skewX(-7deg);
+  transform: translateX(10px);
 }
 
 .row.is-active .row-arrow {

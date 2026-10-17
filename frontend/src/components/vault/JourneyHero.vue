@@ -130,6 +130,7 @@ const live = computed(() => ({
 }));
 
 function flash(key, cls) {
+  if (!lastNow) return;
   flashes[key] = cls;
   clearTimeout(flashTimers[key]);
   flashTimers[key] = setTimeout(() => {
@@ -276,7 +277,7 @@ function sizeAll() {
 
 function coinStartXs() {
   const w = stageEl.value?.clientWidth ?? 1440;
-  const fractions = mobile ? [0.20, 0.50, 0.80] : [0.36, 0.52, 0.68];
+  const fractions = mobile ? [0.22, 0.50, 0.78] : [0.18, 0.50, 0.82];
   return fractions.map((f) => f * w);
 }
 
@@ -288,9 +289,9 @@ function updatePill() {
   anchor.style.transform = `translate3d(${pos.x.toFixed(1)}px, ${(pos.y - pos.r - 14).toFixed(1)}px, 0)`;
 }
 
-// 退场：p 0.025 → 0.115 与金条同步
+// 退场：p 0.03 → 0.16 与金条同步
 function exitProgress(p) {
-  return reduced ? 0 : smooth(0.025, 0.115, p);
+  return reduced ? 0 : smooth(0.03, 0.16, p);
 }
 
 function tick(now) {
@@ -301,12 +302,14 @@ function tick(now) {
 
   const p = progress.p;
 
-  // 进度 0.12：HTML 标题、实时数值与页脚在一帧内隐藏，让位给金库墙面
-  const shown = reduced || p < 0.12;
-  if (shown !== heroShown) {
-    heroShown = shown;
-    for (const el of [copyEl.value, liveEl.value, footerEl.value]) {
-      if (el) el.style.visibility = shown ? 'visible' : 'hidden';
+  // 进度 0.04 → 0.16：HTML 标题、实时数值与页脚平滑淡出，避免突兀消失
+  const alpha = reduced ? 1 : clamp(1 - (p - 0.04) / 0.12, 0, 1);
+  const shown = alpha > 0.005;
+  for (const el of [copyEl.value, liveEl.value, footerEl.value]) {
+    if (el) {
+      el.style.opacity = alpha.toFixed(3);
+      el.style.pointerEvents = shown ? 'auto' : 'none';
+      el.style.visibility = shown ? 'visible' : 'hidden';
     }
   }
 
@@ -424,8 +427,10 @@ onMounted(async () => {
     applyTheme();
     coins = createCoinLayer(coinEl.value, {
       labels: COIN_LABELS,
-      radius: mobile ? 28 : 52,
-      thickness: mobile ? 7 : 12,
+      radius: mobile ? 28 : 46,
+      thickness: mobile ? 7 : 11,
+      gravity: 1400,
+      restitution: 0.16,
     });
     sizeAll();
     coins.spawn(coinStartXs());
@@ -480,7 +485,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .journey {
   position: relative;
-  height: 480vh;
+  height: 240vh;
   background: var(--bg);
   color: var(--text);
 }
@@ -564,16 +569,19 @@ onBeforeUnmount(() => {
 .sub {
   position: absolute;
   left: var(--pad);
-  top: clamp(340px, 48vh, 520px);
-  max-width: 30em;
-  font-size: clamp(13px, 1.05vw, 16px);
+  top: clamp(320px, 44vh, 480px);
+  max-width: 32em;
+  font-size: clamp(13px, 1.05vw, 15px);
   line-height: 1.65;
   color: var(--text-2);
-  backdrop-filter: blur(8px);
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  border-left: 2px solid var(--gold-3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-card) 85%, transparent);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.2);
 }
 
 .sub p {
@@ -695,7 +703,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 767px) {
   .journey {
-    height: 360vh;
+    height: 180vh;
   }
 
   .journey.is-static {
@@ -703,34 +711,34 @@ onBeforeUnmount(() => {
   }
 
   .eyebrow {
-    left: 18px;
-    top: clamp(68px, 9vh, 80px);
-    max-width: 260px;
-    line-height: 1.4;
-    font-size: 11px;
+    left: 16px;
+    top: clamp(62px, 8.5vh, 74px);
+    max-width: 280px;
+    line-height: 1.35;
+    font-size: 10.5px;
   }
 
   .title {
     left: 16px;
-    top: clamp(92px, 12.2vh, 112px);
-    font-size: clamp(48px, 14vw, 70px);
+    top: clamp(84px, 11.2vh, 98px);
+    font-size: clamp(44px, 13vw, 64px);
     line-height: 0.92;
   }
 
   .sub {
     left: 16px;
     right: 16px;
-    top: clamp(400px, 49vh, 440px);
+    top: clamp(340px, 44vh, 390px);
     max-width: calc(100% - 32px);
     font-size: 12px;
     line-height: 1.5;
-    padding: 8px 12px;
+    padding: 10px 14px;
   }
 
   .live {
     left: 16px;
     right: 16px;
-    top: clamp(208px, 25.5vh, 238px);
+    top: clamp(196px, 24vh, 226px);
     flex-direction: row;
     justify-content: space-around;
     align-items: center;

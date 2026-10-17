@@ -1,5 +1,5 @@
 <template>
-  <header class="top-nav">
+  <header class="top-nav" :class="{ scrolled: isScrolled }">
     <!-- Left: Wordmark AURUM -->
     <a href="#journey" class="nav-logo" @click.prevent="scrollTo('#journey')">
       AURUM <span class="nav-logo-sub">QUANT</span>
@@ -9,9 +9,9 @@
     <ul class="nav-links" :class="{ open: mobileOpen }" ref="navLinksRef">
       <li><a href="#journey" :class="{ active: activeId === 'journey' }" @click.prevent="navClick('#journey')">{{ t('appHeader.navOverview') }}</a></li>
       <li><a href="#sec-overview" :class="{ active: activeId === 'sec-overview' }" @click.prevent="navClick('#sec-overview')">{{ t('appHeader.navMarket') }}</a></li>
-      <li><a href="#sec-signals" :class="{ active: activeId === 'sec-signals' }" @click.prevent="navClick('#sec-signals')">{{ t('appHeader.navSignals') }}</a></li>
+      <li><a href="#sec-quant" :class="{ active: activeId === 'sec-quant' }" @click.prevent="navClick('#sec-quant')">{{ t('appHeader.navSignals') }}</a></li>
       <li><a href="#sec-charts" :class="{ active: activeId === 'sec-charts' }" @click.prevent="navClick('#sec-charts')">{{ t('appHeader.navCharts') }}</a></li>
-      <li><a href="#sec-arbitrage" :class="{ active: activeId === 'sec-arbitrage' }" @click.prevent="navClick('#sec-arbitrage')">{{ t('appHeader.navArbitrage') }}</a></li>
+      <li><a href="#sec-tools" :class="{ active: activeId === 'sec-tools' }" @click.prevent="navClick('#sec-tools')">{{ t('appHeader.navArbitrage') }}</a></li>
       <li><a href="#sec-ai" :class="{ active: activeId === 'sec-ai' }" @click.prevent="navClick('#sec-ai')">{{ t('appHeader.navAi') }}</a></li>
       <li class="mobile-only-action"><a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">{{ t('appHeader.navTerminal') }}</a></li>
     </ul>
@@ -120,12 +120,17 @@ const emit = defineEmits(['refresh', 'subscribe', 'sources', 'poster', 'calc', '
 
 const mobileOpen = ref(false);
 const activeId = ref('hero');
+const isScrolled = ref(false);
 const navLinksRef = ref(null);
 const prefsOpen = ref(false);
 const prefsRef = ref(null);
 const prefsBtnRef = ref(null);
 
 const sourcesHealthy = computed(() => props.sourcesTotal > 0 && props.sourcesOk === props.sourcesTotal);
+
+function onScroll() {
+  isScrolled.value = window.scrollY > 24;
+}
 
 function scrollTo(selector) {
   const el = document.querySelector(selector);
@@ -158,8 +163,10 @@ let sectionObserver = null;
 onMounted(() => {
   document.addEventListener('click', onClickOutside);
   document.addEventListener('keydown', onKeydown);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 
-  const sectionIds = ['journey', 'sec-overview', 'sec-signals', 'sec-charts', 'sec-arbitrage', 'sec-ai'];
+  const sectionIds = ['journey', 'sec-overview', 'sec-quant', 'sec-charts', 'sec-tools', 'sec-ai'];
   sectionObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
       if (entry.isIntersecting) {
@@ -177,6 +184,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', onClickOutside);
   document.removeEventListener('keydown', onKeydown);
+  window.removeEventListener('scroll', onScroll);
   if (sectionObserver) sectionObserver.disconnect();
 });
 </script>
@@ -186,16 +194,28 @@ onUnmounted(() => {
    NAV (EXACT PROMPT SPECIFICATION)
    ============================================================ */
 .top-nav {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
+  right: 0;
   width: 100%;
-  z-index: 40;
+  height: 56px;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2.6vh var(--pad) 0;
+  padding: 0 var(--pad);
   box-sizing: border-box;
+  background: transparent;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.top-nav.scrolled {
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
 .nav-logo {
@@ -357,7 +377,8 @@ onUnmounted(() => {
 /* Mobile Dropdown */
 @media (max-width: 900px), (max-height: 540px) {
   .top-nav {
-    padding: max(2.6vh, env(safe-area-inset-top)) max(var(--pad), env(safe-area-inset-right)) 0 max(var(--pad), env(safe-area-inset-left));
+    height: 56px;
+    padding: 0 max(var(--pad), env(safe-area-inset-right)) 0 max(var(--pad), env(safe-area-inset-left));
   }
   .nav-toggle {
     display: flex;

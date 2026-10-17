@@ -224,8 +224,8 @@ const countdownText = computed(() => {
   font-size: 12px;
   position: sticky;
   top: 56px;
-  z-index: 30;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 90;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .ticker-inner {

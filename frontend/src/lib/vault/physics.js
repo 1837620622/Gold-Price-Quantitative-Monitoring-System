@@ -18,7 +18,7 @@ const IMPACT_MIN = 90; // 高于该速度的落地记为冲击，用于挤压动
 const BOUNCE_MIN = 40; // 低于该速度的落地直接停住，避免无限抖动
 const WAKE_GAP = 0.5; // 圆底与地面的间隙超过该值（px）时唤醒
 
-export function createWorld({ gravity = 2400, restitution = 0.5 } = {}) {
+export function createWorld({ gravity = 1400, restitution = 0.16 } = {}) {
   return {
     bodies: [],
     gravity,
@@ -62,6 +62,7 @@ function integrate(world, h) {
   for (const b of bodies) {
     if (b.sleeping) continue;
     b.vy += gravity * h;
+    b.vy *= Math.max(0, 1 - 0.45 * h);
     b.x += b.vx * h;
     b.y += b.vy * h;
     // 滚动角由水平位移决定：圆盘沿地面滚动时的旋转
