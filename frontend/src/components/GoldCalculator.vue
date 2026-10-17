@@ -327,10 +327,11 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel } = useI18n();
 import { ref, computed, watch, onMounted } from 'vue';
 import { fmtNumber } from '../format';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   domesticPrice: { type: Number, default: 899 },

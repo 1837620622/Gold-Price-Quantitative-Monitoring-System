@@ -79,9 +79,10 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel } = useI18n();
 import { ref, computed, onMounted } from 'vue';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   state: { type: String, default: 'idle' }, // idle | loading | done | error

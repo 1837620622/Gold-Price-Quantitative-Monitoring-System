@@ -72,11 +72,12 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel } = useI18n();
 import { ref, computed } from 'vue';
 import { renderMarkdown } from '../lib/markdown';
 import { fmtDateTime } from '../format';
+import { useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   state: { type: String, default: 'idle' },

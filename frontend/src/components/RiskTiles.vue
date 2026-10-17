@@ -25,11 +25,12 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel } = useI18n();
 import { computed } from 'vue';
 import { fmtNumber, fmtSigned } from '../format';
 import SparkLine from './SparkLine.vue';
+import { useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   quant: { type: Object, required: true },

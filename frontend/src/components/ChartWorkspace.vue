@@ -118,14 +118,15 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel } = useI18n();
 import { ref, computed, watch, onMounted } from 'vue';
 import KlineChart from './KlineChart.vue';
 import PremiumChart from './PremiumChart.vue';
 import RatioChart from './RatioChart.vue';
 import BacktestPanel from './BacktestPanel.vue';
 import { fetchRatio } from '../api';
+import { useI18n } from '../i18n';
+
+const { t, tLabel } = useI18n();
 
 const props = defineProps({
   cn: { type: Object, default: null },

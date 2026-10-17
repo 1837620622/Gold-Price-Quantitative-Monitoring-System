@@ -6,10 +6,11 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel } = useI18n();
 import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   bars: { type: Array, default: () => [] },

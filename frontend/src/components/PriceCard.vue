@@ -70,11 +70,12 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel } = useI18n();
 import { ref, computed, watch } from 'vue';
 import SparkLine from './SparkLine.vue';
 import { isNum, fmtNumber, fmtSigned, fmtPercent, toneOf } from '../format';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   code: { type: String, required: true },
