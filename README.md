@@ -6,7 +6,8 @@
   <img src="https://img.shields.io/badge/Vue-3.x-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white" alt="Vue 3">
   <img src="https://img.shields.io/badge/DeepSeek-V3.2-FF6B6B?style=for-the-badge&logo=openai&logoColor=white" alt="DeepSeek">
   <img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare">
-  <img src="https://img.shields.io/badge/ECharts-5.x-AA344D?style=for-the-badge&logo=apacheecharts&logoColor=white" alt="ECharts">
+  <img src="https://img.shields.io/badge/ECharts-6.x-AA344D?style=for-the-badge&logo=apacheecharts&logoColor=white" alt="ECharts">
+  <img src="https://img.shields.io/badge/Three.js-0.186-000000?style=for-the-badge&logo=threedotjs&logoColor=white" alt="Three.js">
 </p>
 
 <p align="center">
@@ -112,15 +113,16 @@
 
 ### 🤖 多模型 AI 矩阵与专业研报
 - 支持 Cloudflare Workers AI（DeepSeek R1 Distill / Qwen 2.5 72B）免 Key 零成本推演
-- 兼容 OpenRouter（免费模型群）、硅基流动 (SiliconFlow)、DeepSeek 官方 API
+- 兼容魔搭 ModelScope（DeepSeek-V3.2 / Qwen2.5-72B）、DeepSeek 官方 API、硅基流动 (SiliconFlow)、OpenRouter（免费模型群），按此顺序容灾
 - 宏观对冲基金级量化 Prompt：融合通胀、地缘溢价、多因子、枢轴阶梯与情景推演
 - AI 故障时无缝降级为自研专家规则引擎，100% 保证高可用响应
+- 研报随界面语言生成中文或英文版本
 
 </td>
 <td width="50%">
 
 ### 🎯 机构级量化与回测矩阵
-- 6大经典与量化策略并列回测：EMA 趋势、过滤趋势、综合评分、布林RSI、溢价套利、买入持有
+- 6 个策略并列回测：EMA 趋势、趋势过滤（+MA60）、综合评分、布林反转、溢价回归（需溢价数据）、买入持有
 - 机构级绩效评估：夏普 (Sharpe)、索提诺 (Sortino)、卡玛 (Calmar)、盈亏比、胜率、最大回撤
 - 每日日内枢轴点梯队 (Pivot Points)：经典 Classic 与斐波那契 Fibonacci 7档阶梯
 - 一键复制格式化行情快报，随时分享社群与交易团队
@@ -139,8 +141,9 @@
 </td>
 <td width="50%">
 
-### 🎨 专业金融 UI 与交互
-- 现代金融终端暗色与明色主题随心切换
+### 🎨 金融量化黄金风格与交互
+- Vault Noir 视觉：Three.js 3D 金库开场（随滚动推进的镜头与物理金币）；减少动态效果或无 WebGL 时自动降级为静态展示
+- 昼夜自动主题与中英文界面（见下文「昼夜主题与中英文」）
 - 中国市场红涨绿跌经典视觉标准
 - 极致响应式适配手机、平板与桌面宽屏
 - 一键复制行情与一键订阅
@@ -153,8 +156,8 @@
 
 ### 🌓 昼夜主题与中英文
 
-- **昼夜自动切换**：自动模式下，页面按访客位置计算当地日出日落决定日间或夜间主题。位置来自 Cloudflare 边缘提供的国家、城市、时区与经纬度，服务端不记录也不返回 IP；位置不可用时按访客时区的当地时间切换（06:00–18:00 为日间）。顶部偏好条可手动固定日间或夜间，手动选择会被记住。
-- **中英文界面**：默认语言按访客所在国家判断（中国大陆、港澳台与新加坡为中文，其余为英文），偏好条可随时切换并记住选择。AI 研报按当前语言生成。
+- **昼夜自动切换**：自动模式下，页面按访客位置计算当地日出日落决定日间或夜间主题。位置来自 Cloudflare 边缘提供的国家、城市、时区与经纬度，服务端不记录也不返回 IP；位置不可用时按访客时区的当地时间切换（06:00–18:00 为日间）。页头的「偏好」面板可手动固定日间或夜间，手动选择会被记住。
+- **中英文界面**：默认语言按访客所在国家判断（中国大陆、港澳台与新加坡为中文，其余为英文），「偏好」面板可随时切换并记住选择；无法判断国家时按浏览器语言。AI 研报按当前语言生成。
 - 位置信息只用于上述两项默认值，不参与行情计算。
 
 ---
@@ -162,28 +165,30 @@
 ## 🛠️ 技术架构
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Gold Monitor 2.0                       │
-├─────────────────────────────────────────────────────────────┤
-│  Frontend (Vue 3 + Vite 6 + ECharts 6)                      │
+┌───────────────────────────────────────────────────────────────┐
+│                       Gold Monitor 2.0                        │
+├───────────────────────────────────────────────────────────────┤
+│  Frontend (Vue 3 + Vite 8 + ECharts 6 + Three.js + GSAP)      │
+│  ├── 金库开场：Three.js 3D 金库 · GSAP 滚动驱动               │
 │  ├── 行情概览 · 枢轴阶梯 · 指标速览 · 一键复制快报            │
-│  ├── ECharts 工作台：K线+KDJ、国内溢价、金银比、多策略回测   │
-│  ├── 自研设计系统（深浅主题，红涨绿跌）                      │
-│  └── DOMPurify + marked（AI 研报安全渲染）                   │
-├─────────────────────────────────────────────────────────────┤
-│  Backend (Hono + Cloudflare Workers)                        │
-│  ├── providers/  东财/新浪/Swissquote/gold-api/Yahoo/Stooq  │
-│  ├── quant/      KDJ/MACD/RSI/OBV/枢轴点/多策略回测矩阵     │
-│  ├── market.js   双源校验、金银比率、故障级联、缓存合并     │
-│  └── ai.js       Workers AI / OpenRouter / DeepSeek / 规则  │
-├─────────────────────────────────────────────────────────────┤
-│  Data Sources（多层冗余容灾，免费无需强制 Key）             │
-│  ├── 国内黄金：东方财富 ➔ 新浪 SGE 行情 ➔ 汇率理论估算       │
-│  ├── 国际黄金：gold-api ➔ 瑞士银行 Swissquote ➔ Yahoo ➔ 新浪│
-│  ├── 国际白银：gold-api ➔ Swissquote ➔ 新浪国际             │
-│  ├── 汇率接口：open.er-api ➔ 新浪外汇 ➔ Frankfurter ➔ Stooq │
-│  └── 历史日K：东方财富 (国内) / Stooq ➔ Yahoo (国际)        │
-└─────────────────────────────────────────────────────────────┘
+│  ├── ECharts 工作台：K线+KDJ、国内溢价、金银比、多策略回测    │
+│  ├── 中英文界面 · 昼夜自动主题（日出日落 / 时区回退）         │
+│  └── DOMPurify + marked（AI 研报安全渲染）                    │
+├───────────────────────────────────────────────────────────────┤
+│  Backend (Hono + Cloudflare Workers)                          │
+│  ├── providers/  东财/新浪/Swissquote/gold-api/Yahoo/Stooq    │
+│  ├── quant/      KDJ/MACD/RSI/OBV/枢轴点/多策略回测矩阵       │
+│  ├── market.js   双源校验、金银比率、故障级联、缓存合并       │
+│  ├── ai.js       多模型容灾链，最后回落规则引擎               │
+│  └── ai-en.js    英文研报提示词与规则摘要                     │
+├───────────────────────────────────────────────────────────────┤
+│  Data Sources（多层冗余容灾，免费无需强制 Key）               │
+│  ├── 国内黄金：东方财富 ➔ 新浪 SGE 行情 ➔ 汇率理论估算        │
+│  ├── 国际黄金：gold-api ➔ 瑞士银行 Swissquote ➔ Yahoo ➔ 新浪  │
+│  ├── 国际白银：gold-api ➔ Swissquote ➔ 新浪国际               │
+│  ├── 汇率接口：open.er-api ➔ 新浪外汇 ➔ Frankfurter ➔ Stooq   │
+│  └── 历史日K：东方财富 (国内) / Stooq ➔ Yahoo (国际)          │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -192,7 +197,7 @@
 
 ### 环境要求
 
-- Node.js 18.0+
+- Node.js 20.19+ 或 22.12+（前端 Vite 8 的要求）
 - npm 或 pnpm
 - Cloudflare 账号（部署用）
 
@@ -245,7 +250,7 @@ cd ../frontend
 # 安装依赖
 npm install
 
-# 修改API地址（src/api.js 中的 API_BASE）
+# 默认请求 https://gold-backend.chuankangkk.top；如需指向自建后端，构建前设置环境变量 VITE_API_BASE
 
 # 构建并部署
 npm run build
@@ -299,6 +304,8 @@ npx wrangler pages deploy dist --project-name=gold-monitor
 | `/api/quant/cn?days=250` | GET | 国内量化结果：指标、信号、关键位、风险、回测、溢价 |
 | `/api/quant/intl?days=250` | GET | 国际量化结果（同上，不含溢价） |
 | `/api/premium?days=250` | GET | 国内溢价序列与统计 |
+| `/api/ratio` | GET | 金银比（Gold/Silver Ratio）当前值与历史统计 |
+| `/api/signals` | GET | 量化信号摘要：当前价、信号（方向 / 评分 / 置信度）、关键位与风险，`market=cn\|intl` |
 | `/api/analyze` | POST | AI 量化分析（基于量化结果，缓存 15 分钟）；请求体 `lang` 取 `zh` 或 `en`，决定研报语言 |
 | `/api/push/status` | GET | 推送状态 |
 | `/api/push/test` | POST | 测试推送（需 ADMIN_TOKEN） |
@@ -314,10 +321,11 @@ npx wrangler pages deploy dist --project-name=gold-monitor
 
 | 模块 | 内容 |
 |:-----|:-----|
-| 技术指标 | MA(5/10/20/60)、EMA(12/26)、MACD(12,26,9，柱 = 2×(DIF−DEA))、RSI(14，Wilder 平滑)、布林带(20, 2σ)、ATR(14)、20 日年化已实现波动率、回撤 |
-| 量化评分 | 6 个分量：EMA 趋势 30、价格 vs MA20 15、MACD 动能 20、RSI 15、布林 %B 10、溢价 Z 分数 10（溢价缺失时权重自动归一化）；加权后映射到 −100 ~ +100 |
+| 技术指标 | MA(5/10/20/60)、EMA(12/26)、MACD(12,26,9，柱 = 2×(DIF−DEA))、RSI(14，Wilder 平滑)、KDJ(9,3,3)、布林带(20, 2σ)、ATR(14)、OBV、20 日年化已实现波动率、回撤 |
+| 量化评分 | 7 个分量：EMA 趋势 25、价格 vs MA20 15、MACD 动能 15、RSI 15、KDJ 10、布林 %B 10、溢价 Z 分数 10；按权重加权平均（缺失分量如无溢价数据时自动归一化），映射到 −100 ~ +100 |
 | 信号置信度 | 与主方向一致的分量权重占比；|得分| < 0.05 的分量视为中性 |
-| 回测 | 信号基于收盘数据，次日生效（无前视偏差）；单边成本 0.05%；对比 EMA 趋势、综合评分（≥20 开仓、≤0 平仓）与买入持有 |
+| 回测 | 信号基于收盘数据，次日生效（无前视偏差）；单边成本 0.05%。6 个策略：EMA 趋势（EMA12 > EMA26 持仓）、趋势过滤（再要求收盘 ≥ MA60）、综合评分（≥20 开仓、≤0 平仓）、布林反转（RSI < 38 且 %B < 0.2 开仓；RSI > 65 或 %B > 0.9 平仓）、溢价回归（Z ≤ −1.2 开仓、Z ≥ 0.5 平仓，需溢价数据）、买入持有 |
+| 绩效指标 | 总收益、CAGR、年化波动、夏普、索提诺、卡玛、盈亏比、胜率、最大回撤、最大连续亏损次数 |
 | 溢价 | 国内收盘 ÷（国际收盘 × 汇率 ÷ 31.1035）− 1；日线级近似，国内与国际收盘时点不同 |
 | 参考区间 | 最新收盘 ± 1 ATR；止损参考为 ± 2 ATR，仅用于风险讨论 |
 
@@ -340,9 +348,10 @@ gold-monitor/
 │   │   ├── 📄 config.js               # 数据源地址、缓存时长、校验范围、量化参数
 │   │   ├── 📄 market.js               # 多源聚合、双源校验、量化缓存入口
 │   │   ├── 📄 ai.js                   # AI 解释（以量化结果为输入）
+│   │   ├── 📄 ai-en.js                # 英文研报提示词与规则摘要
 │   │   ├── 📄 push.js                 # 推送、预警、定时推送
 │   │   ├── 📄 templates.js            # PushPlus HTML 模板
-│   │   ├── 📂 providers/              # gold / yahoo / stooq / fx / eastmoney
+│   │   ├── 📂 providers/              # gold / yahoo / stooq / swissquote / sina / fx / eastmoney
 │   │   ├── 📂 quant/                  # indicators.js（纯函数）、engine.js（信号与回测）
 │   │   └── 📂 lib/                    # http / cache / sources / util
 │   ├── 📂 test/                       # node:test 测试（npm test）
@@ -356,10 +365,13 @@ gold-monitor/
 │   │   └── 📷 qrcode.png              # 订阅二维码
 │   ├── 📂 src/
 │   │   ├── 📄 App.vue                 # 页面布局与 AI 分析流程
+│   │   ├── 📄 main.js                 # 入口：挂载应用、滚动与指针效果
 │   │   ├── 📄 api.js · format.js · style.css
 │   │   ├── 📂 components/             # 行情卡、信号面板、指标速览、图表工作台、数据源抽屉等
-│   │   ├── 📂 composables/            # useMarket / useQuant / useTheme
-│   │   └── 📂 lib/                    # ECharts 按需引入、图表配色、Markdown 消毒
+│   │   │   └── 📂 vault/              # 金库开场（Three.js 3D 场景与金币）
+│   │   ├── 📂 composables/            # useMarket / useQuant / useTheme / useAlerts
+│   │   ├── 📂 i18n/                   # 中英文词典（namespaces/ 按组件拆分）
+│   │   └── 📂 lib/                    # ECharts 按需引入、图表配色、Markdown 消毒、日出日落（solar.js）、地理信息（geo.js）、GSAP 动效（motion.js）、金库场景（vault/）
 │   ├── 📄 index.html
 │   ├── 📄 package.json
 │   └── 📄 vite.config.js
@@ -375,18 +387,19 @@ gold-monitor/
 
 ## ⚙️ 配置说明
 
-### DeepSeek API
+### AI 模型配置（多模型容灾）
 
-本项目使用 ModelScope 的 DeepSeek V3.2 模型：
+研报按下表顺序尝试，前一个不可用或失败时自动切换到下一个，全部失败时回落为规则摘要。只需配置其中一个即可：
 
-```javascript
-// API配置
-{
-  endpoint: "https://api-inference.modelscope.cn/v1/chat/completions",
-  model: "deepseek-ai/DeepSeek-V3.2",
-  apiKey: "ms-xxxxxxxx"  // 在ModelScope获取
-}
-```
+| 顺序 | 配置项 | 模型 | 说明 |
+|:---:|:-----|:-----|:-----|
+| 1 | `AI`（Workers AI 绑定） | DeepSeek-R1 Distill / Qwen2.5 等 | 无需 Key，`wrangler.toml` 已绑定 |
+| 2 | `MODELSCOPE_API_KEY` | DeepSeek-V3.2 / Qwen2.5-72B | 魔搭 ModelScope |
+| 3 | `DEEPSEEK_API_KEY` | deepseek-chat | DeepSeek 官方 API |
+| 4 | `SILICONFLOW_API_KEY` | DeepSeek-V3 / Qwen2.5-72B | 硅基流动 |
+| 5 | `OPENROUTER_API_KEY` | 免费 / 聚合模型 | OpenRouter |
+
+密钥通过 `npx wrangler secret put <变量名>` 设置；本地开发写入 `backend/.dev.vars`。访客界面为英文时（`lang=en`），研报与提示词均使用英文。
 
 ### 数据源配置
 
