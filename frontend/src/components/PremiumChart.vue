@@ -10,7 +10,7 @@ import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
 import { useI18n } from '../i18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const props = defineProps({
   series: { type: Array, default: () => [] },
@@ -109,7 +109,7 @@ function render() {
   chart.value.setOption(buildOption(), { notMerge: true });
 }
 
-watch([() => props.series, () => props.stats, () => props.theme], render);
+watch([() => props.series, () => props.stats, () => props.theme, () => locale.value], render);
 
 onMounted(async () => {
   const { default: echarts } = await import('../lib/echarts.js');

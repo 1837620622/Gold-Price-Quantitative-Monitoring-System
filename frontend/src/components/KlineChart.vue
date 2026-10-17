@@ -10,7 +10,7 @@ import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
 import { useI18n } from '../i18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const props = defineProps({
   bars: { type: Array, default: () => [] },
@@ -284,7 +284,7 @@ function render() {
   chart.value.setOption(buildOption(), { notMerge: true });
 }
 
-watch([() => props.bars, () => props.indicators, () => props.toggles, () => props.theme, () => props.zoomStart], render);
+watch([() => props.bars, () => props.indicators, () => props.toggles, () => props.theme, () => props.zoomStart, () => locale.value], render);
 
 onMounted(async () => {
   // ECharts 按需加载，不阻塞首屏

@@ -112,7 +112,7 @@
       <div v-if="activeBacktest?.available">
         <BacktestPanel :backtest="activeBacktest" :theme="theme" />
       </div>
-      <div v-else class="notice">{{ tLabel(activeBacktest?.reason) || t('chartWorkspace.noBacktest') }}</div>
+      <div v-else class="notice">{{ tField(activeBacktest, 'reason') || t('chartWorkspace.noBacktest') }}</div>
     </template>
   </section>
 </template>
@@ -124,7 +124,7 @@ import PremiumChart from './PremiumChart.vue';
 import RatioChart from './RatioChart.vue';
 import BacktestPanel from './BacktestPanel.vue';
 import { fetchRatio } from '../api';
-import { useI18n } from '../i18n';
+import { tField, useI18n } from '../i18n';
 
 const { t, tLabel } = useI18n();
 
@@ -199,8 +199,8 @@ async function loadRatio() {
   }
 }
 
-watch(tab, (t) => {
-  if (t === 'ratio') loadRatio();
+watch(tab, (key) => {
+  if (key === 'ratio') loadRatio();
 });
 
 onMounted(() => {
@@ -211,7 +211,7 @@ const activeQuant = computed(() => (tab.value === 'intl' ? props.intl : props.cn
 const activeError = computed(() => {
   const err = tab.value === 'intl' ? props.intlError : props.cnError;
   if (err) return err;
-  return activeQuant.value && !activeQuant.value.available ? (tLabel(activeQuant.value.reason) || t('chartWorkspace.insufficient')) : '';
+  return activeQuant.value && !activeQuant.value.available ? (tField(activeQuant.value, 'reason') || t('chartWorkspace.insufficient')) : '';
 });
 const activeLoading = computed(() => (tab.value === 'intl' ? props.loadingIntl : props.loadingCn) && !activeQuant.value);
 

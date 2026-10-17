@@ -66,8 +66,8 @@
 </template>
 
 <script setup>
-import { useI18n } from '../i18n';
-const { t, tLabel, tField } = useI18n();
+import { tField, useI18n } from '../i18n';
+const { t, tLabel } = useI18n();
 import { computed } from 'vue';
 import { fmtNumber } from '../format';
 

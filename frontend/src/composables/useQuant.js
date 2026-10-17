@@ -9,6 +9,7 @@
 
 import { ref, onMounted, onUnmounted } from 'vue';
 import { fetchQuant } from '../api';
+import { t } from '../i18n';
 
 const REFRESH_MS = 5 * 60 * 1000;
 const CACHE_PREFIX = 'gold_quant_cache_';
@@ -55,7 +56,7 @@ async function fetchWithRetry(market, days = 250, retries = 3) {
       }
     }
   }
-  throw lastError || new Error('量化数据服务暂时繁忙');
+  throw lastError || new Error(t('quantLoad.busy'));
 }
 
 export function useQuant() {
@@ -87,7 +88,7 @@ export function useQuant() {
     } catch (error) {
       // 若已有缓存支撑，不将全局状态置为错误，仅保留最新可用量化推演
       if (!target.value) {
-        errorRef.value = error?.response?.data?.message || '量化数据暂不可用，正在重试…';
+        errorRef.value = error?.response?.data?.message || t('quantLoad.retrying');
       }
     } finally {
       loading.value = false;

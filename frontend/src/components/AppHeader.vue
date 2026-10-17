@@ -401,7 +401,7 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
   .nav-actions {
     gap: 6px;
   }

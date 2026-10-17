@@ -6,7 +6,7 @@
           ref="closeBtn"
           type="button"
           class="icon-btn modal-close"
-          aria-label="关闭"
+          :aria-label="t('subscribe.close')"
           @click="$emit('close')"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -14,21 +14,21 @@
           </svg>
         </button>
 
-        <h2 id="subscribe-title" class="modal-title">订阅金价推送</h2>
-        <p class="modal-desc">扫码加入微信群组，实时接收行情与预警</p>
+        <h2 id="subscribe-title" class="modal-title">{{ t('subscribe.title') }}</h2>
+        <p class="modal-desc">{{ t('subscribe.desc') }}</p>
 
         <div class="qr-wrap">
-          <img src="/qrcode.png" alt="订阅二维码" width="200" height="200" class="qr" />
+          <img src="/qrcode.png" :alt="t('subscribe.qrAlt')" width="200" height="200" class="qr" />
         </div>
 
         <ul class="features">
-          <li><span class="feature-dot"></span>每 30 分钟推送一次实时行情</li>
-          <li><span class="feature-dot"></span>国内金价涨跌幅达 1% 立即预警</li>
-          <li><span class="feature-dot"></span>附带 AI 智能分析摘要</li>
+          <li><span class="feature-dot"></span>{{ t('subscribe.feat1') }}</li>
+          <li><span class="feature-dot"></span>{{ t('subscribe.feat2') }}</li>
+          <li><span class="feature-dot"></span>{{ t('subscribe.feat3') }}</li>
         </ul>
 
-        <p class="modal-foot">二维码有效期：30 天。长按图片或点击下方按钮保存后，用微信扫一扫加入。</p>
-        <a class="btn btn-primary modal-save" href="/qrcode.png" download="金价推送订阅二维码.png">保存二维码</a>
+        <p class="modal-foot">{{ t('subscribe.validity') }}</p>
+        <a class="btn btn-primary modal-save" href="/qrcode.png" :download="t('subscribe.fileName')">{{ t('subscribe.save') }}</a>
       </div>
     </div>
   </Teleport>
@@ -36,6 +36,9 @@
 
 <script setup>
 import { ref, watch, nextTick, onUnmounted } from 'vue';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: { type: Boolean, default: false },

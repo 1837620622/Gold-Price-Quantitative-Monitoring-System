@@ -10,8 +10,8 @@
             </svg>
           </div>
           <div>
-            <h3 class="modal-title">价格目标与突破预警</h3>
-            <p class="modal-sub">到达目标价格时自动触发金融警报音与系统桌面通知</p>
+            <h3 class="modal-title">{{ t('priceAlert.title') }}</h3>
+            <p class="modal-sub">{{ t('priceAlert.desc') }}</p>
           </div>
         </div>
         <button type="button" class="close-btn" @click="$emit('close')">✕</button>
@@ -19,36 +19,36 @@
 
       <!-- 权限提醒提示条 -->
       <div v-if="notificationPermission === 'default'" class="perm-banner">
-        <span>尚未授权系统桌面通知，仅在网页内播放警报音。</span>
-        <button type="button" class="perm-btn" @click="requestPerm">开启桌面通知</button>
+        <span>{{ t('priceAlert.permissionHint') }}</span>
+        <button type="button" class="perm-btn" @click="requestPerm">{{ t('priceAlert.enableNotify') }}</button>
       </div>
 
       <!-- 添加新预警表单 -->
       <form class="alert-form" @submit.prevent="submitAlert">
         <div class="form-row">
           <div class="form-field">
-            <label class="field-label">监控标的</label>
+            <label class="field-label">{{ t('priceAlert.target') }}</label>
             <select v-model="formTarget" class="field-select">
-              <option value="cn">国内现货 AU9999 (元/克)</option>
-              <option value="intl">国际伦敦金 XAU/USD (美元/盎司)</option>
+              <option value="cn">{{ t('priceAlert.optCn') }}</option>
+              <option value="intl">{{ t('priceAlert.optIntl') }}</option>
             </select>
           </div>
 
           <div class="form-field">
-            <label class="field-label">触发条件</label>
+            <label class="field-label">{{ t('priceAlert.condition') }}</label>
             <select v-model="formCondition" class="field-select">
-              <option value="gte">≥ 涨破目标位 (多头突破)</option>
-              <option value="lte">≤ 跌破防守线 (空头止损)</option>
+              <option value="gte">{{ t('priceAlert.optGte') }}</option>
+              <option value="lte">{{ t('priceAlert.optLte') }}</option>
             </select>
           </div>
 
           <div class="form-field">
-            <label class="field-label">目标价格 ({{ formTarget === 'cn' ? '元' : '美元' }})</label>
+            <label class="field-label">{{ t('priceAlert.targetPrice', { unit: formTarget === 'cn' ? t('priceAlert.unitCny') : t('priceAlert.unitUsd') }) }}</label>
             <input
               v-model.number="formPrice"
               type="number"
               step="any"
-              :placeholder="formTarget === 'cn' ? '如 905' : '如 4200'"
+              :placeholder="formTarget === 'cn' ? t('priceAlert.phCn') : t('priceAlert.phIntl')"
               class="field-input"
               required
             />
@@ -57,10 +57,10 @@
 
         <div class="form-actions">
           <button type="button" class="btn btn-ghost btn-sm" @click="testSound">
-            🔊 测试警报音
+            {{ t('priceAlert.testSound') }}
           </button>
           <button type="submit" class="btn btn-primary btn-sm">
-            + 添加预警规则
+            {{ t('priceAlert.add') }}
           </button>
         </div>
       </form>
@@ -68,14 +68,14 @@
       <!-- 已设预警列表 -->
       <div class="alerts-list-box">
         <div class="list-head">
-          <span class="list-title">已激活预警 ({{ alerts.length }})</span>
+          <span class="list-title">{{ t('priceAlert.activeCount', { count: alerts.length }) }}</span>
           <button v-if="hasTriggered" type="button" class="clear-btn" @click="clearTriggered">
-            清除已触发项
+            {{ t('priceAlert.clearTriggered') }}
           </button>
         </div>
 
         <div v-if="!alerts.length" class="empty-state">
-          暂无预警规则。添加一条规则，在黄金暴涨或暴跌时第一时间得到提醒！
+          {{ t('priceAlert.empty') }}
         </div>
 
         <div v-else class="alerts-items">
@@ -87,10 +87,10 @@
           >
             <div class="row-left">
               <span class="row-badge" :class="a.target">{{ a.target === 'cn' ? 'AU9999' : 'XAU/USD' }}</span>
-              <span class="row-cond">{{ a.condition === 'gte' ? '≥ 涨破' : '≤ 跌破' }}</span>
+              <span class="row-cond">{{ a.condition === 'gte' ? t('priceAlert.badgeGte') : t('priceAlert.badgeLte') }}</span>
               <span class="row-price">{{ a.target === 'cn' ? '¥' : '$' }}{{ a.price }}</span>
-              <span v-if="a.triggered" class="status-tag triggered">已触发</span>
-              <span v-else class="status-tag active">监控中</span>
+              <span v-if="a.triggered" class="status-tag triggered">{{ t('priceAlert.triggered') }}</span>
+              <span v-else class="status-tag active">{{ t('priceAlert.monitoring') }}</span>
             </div>
 
             <div class="row-actions">
@@ -98,15 +98,15 @@
                 v-if="a.triggered"
                 type="button"
                 class="row-btn reset"
-                title="重置为此规则继续监控"
+                :title="t('priceAlert.resetTitle')"
                 @click="toggleAlert(a.id)"
-              >重置</button>
+              >{{ t('priceAlert.reset') }}</button>
               <button
                 type="button"
                 class="row-btn del"
-                title="删除此规则"
+                :title="t('priceAlert.removeTitle')"
                 @click="removeAlert(a.id)"
-              >删除</button>
+              >{{ t('priceAlert.remove') }}</button>
             </div>
           </div>
         </div>
@@ -118,6 +118,9 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { playAlertSound } from '../lib/sound';
+import { useI18n } from '../i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: { type: Boolean, default: false },

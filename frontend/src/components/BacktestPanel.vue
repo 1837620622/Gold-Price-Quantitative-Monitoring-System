@@ -27,8 +27,8 @@
           <tr v-for="row in rows" :key="row.key">
             <th scope="row">
               <span class="swatch" :style="{ background: colors[row.key] || '#888' }"></span>
-              <span>{{ row.name }}</span>
-              <span class="rule">{{ backtest.rules?.[row.key] || '' }}</span>
+              <span>{{ tLabel(row.name) }}</span>
+              <span class="rule">{{ tLabel(backtest.rules?.[row.key]) }}</span>
             </th>
             <td :class="toneOf(row.totalReturn)">{{ signedPct(row.totalReturn) }}</td>
             <td :class="toneOf(row.cagr)">{{ signedPct(row.cagr) }}</td>
@@ -55,7 +55,7 @@ import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue';
 import { chartPalette, fmtVal } from '../lib/chartTheme.js';
 import { useI18n } from '../i18n';
 
-const { t } = useI18n();
+const { t, tLabel, locale } = useI18n();
 
 const props = defineProps({
   backtest: { type: Object, required: true },
@@ -87,7 +87,7 @@ function buildOption() {
   STRATEGY_ORDER.forEach((key) => {
     if (bt.equity?.[key]) {
       const isDashed = key === 'buyHold';
-      const stratName = bt.strategies?.[key]?.name || key;
+      const stratName = tLabel(bt.strategies?.[key]?.name || key);
       const color = pal.equity[key] || pal.muted;
       series.push({
         name: stratName,
@@ -178,7 +178,7 @@ function render() {
   chart.value.setOption(buildOption(), { notMerge: true });
 }
 
-watch([() => props.backtest, () => props.theme], render);
+watch([() => props.backtest, () => props.theme, () => locale.value], render);
 
 onMounted(async () => {
   const { default: echarts } = await import('../lib/echarts.js');

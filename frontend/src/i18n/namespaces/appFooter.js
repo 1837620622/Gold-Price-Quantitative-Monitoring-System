@@ -1,0 +1,48 @@
+/**
+ * 页脚：状态指标、技术信息、免责声明与信源审计
+ */
+
+export default {
+  zh: {
+    'appFooter.online': '系统在线',
+    'appFooter.gateway': '网关延迟',
+    'appFooter.edge': '边缘节点',
+    'appFooter.engine': 'Workers AI · DeepSeek-R1 / Qwen 2.5 混合算力引擎',
+    'appFooter.persistence': '数据持久化',
+    'appFooter.kvSync': 'Cloudflare KV 边缘同步',
+    'appFooter.version': '终端版本',
+    'appFooter.brand': 'GOLD MONITOR · 黄金量化投研终端',
+    'appFooter.tagline': '全天候全球黄金现货、多因子量化推演与跨市套利监控系统',
+    'appFooter.repo': 'GitHub 开源仓库',
+    'appFooter.site': '官网 chuankangkk.top',
+    'appFooter.plumeTitle': '查看 PLUME 极简工艺与原生粘性滚动实现',
+    'appFooter.plume': 'PLUME 极致工艺',
+    'appFooter.wechat': '微信: 1837620622',
+    'appFooter.bilibili': 'B站 / 咸鱼: 万能程序员',
+    'appFooter.disclaimerTitle': '免责声明',
+    'appFooter.disclaimerBody': '：本系统基于上海黄金交易所、伦敦金做市商连续报价及欧洲央行基准汇率等公开信源进行程序化量化推演。所有量化信号、多空评分、回测指标及 AI 分析报告仅供量化模型研究与学术交流参考，不构成任何实质性投资建议或操盘指令。贵金属杠杆与现货投资具备高波动性，投资有风险，决策需独立审慎。',
+    'appFooter.sources': '信源审计：上海黄金交易所 · 东方财富 · 新浪财经 · 瑞士银行 Swissquote · gold-api.com · Frankfurter ECB · Cloudflare Workers AI',
+    'appFooter.backTop': '返回顶部',
+  },
+  en: {
+    'appFooter.online': 'All systems online',
+    'appFooter.gateway': 'Gateway latency',
+    'appFooter.edge': 'Edge nodes',
+    'appFooter.engine': 'Workers AI · DeepSeek-R1 / Qwen 2.5 hybrid compute engine',
+    'appFooter.persistence': 'Data persistence',
+    'appFooter.kvSync': 'Cloudflare KV edge sync',
+    'appFooter.version': 'Terminal version',
+    'appFooter.brand': 'GOLD MONITOR · Gold quant research terminal',
+    'appFooter.tagline': 'Around-the-clock monitoring of global spot gold, multi-factor quant projections and cross-market arbitrage',
+    'appFooter.repo': 'GitHub repository',
+    'appFooter.site': 'Website chuankangkk.top',
+    'appFooter.plumeTitle': 'View PLUME: minimal craft and native sticky scrolling',
+    'appFooter.plume': 'PLUME craftsmanship',
+    'appFooter.wechat': 'WeChat: 1837620622',
+    'appFooter.bilibili': 'Bilibili / Xianyu: 万能程序员',
+    'appFooter.disclaimerTitle': 'Disclaimer',
+    'appFooter.disclaimerBody': ': This system runs programmatic quant projections from public sources, including Shanghai Gold Exchange data, London bullion market-maker quotes and European Central Bank reference FX rates. All quant signals, long/short scores, backtest metrics and AI analysis reports are for quant-model research and academic exchange only. They are not investment advice or trading instructions. Leveraged precious-metal and spot investments are highly volatile; investing carries risk, so decide independently and prudently.',
+    'appFooter.sources': 'Source audit: Shanghai Gold Exchange · Eastmoney · Sina Finance · Swissquote · gold-api.com · Frankfurter ECB · Cloudflare Workers AI',
+    'appFooter.backTop': 'Back to top',
+  },
+};
