@@ -287,19 +287,29 @@ const factors = computed(() => {
   return result;
 });
 
-// 计算多空比例
+// 计算多空比例（结合量化综合评分与因子多空阵列）
 const bullPct = computed(() => {
+  const score = signal.value?.score;
+  if (typeof score === 'number' && Number.isFinite(score)) {
+    // 评分范围 -100 到 +100，映射到 0% 到 100%
+    const mapped = Math.round((score + 100) / 2);
+    return Math.max(5, Math.min(95, mapped));
+  }
+
   const f = factors.value;
   if (!f.length) return 50;
-  let bulls = 0;
-  let total = 0;
+  let bullCount = 0;
+  let bearCount = 0;
   for (const item of f) {
-    if (item.bias === 'bull') bulls += 1;
-    if (item.bias === 'bear') total += 1;
-    if (item.bias === 'bull') total += 1;
+    if (item.bias === 'bull') bullCount += 1;
+    else if (item.bias === 'bear') bearCount += 1;
+    else {
+      bullCount += 0.5;
+      bearCount += 0.5;
+    }
   }
-  if (!total) return 50;
-  return Math.round((bulls / total) * 100);
+  const total = bullCount + bearCount;
+  return total > 0 ? Math.round((bullCount / total) * 100) : 50;
 });
 
 const bearPct = computed(() => 100 - bullPct.value);

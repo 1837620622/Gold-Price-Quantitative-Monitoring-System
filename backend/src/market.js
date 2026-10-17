@@ -12,7 +12,7 @@
 
 import { TTL, OZ_TO_GRAM, PREMIUM_ALERT_PERCENT, QUANT_DAYS } from './config.js';
 import { memo } from './lib/cache.js';
-import { round } from './lib/util.js';
+import { round, isNum } from './lib/util.js';
 import { fetchGoldSpot } from './providers/gold.js';
 import { fetchYahooSpot, fetchYahooDaily } from './providers/yahoo.js';
 import { fetchStooqDaily } from './providers/stooq.js';
@@ -35,29 +35,20 @@ const settle = (result, label, errors) => {
 // ------------------------------------------------------------
 async function loadIntlQuote() {
   const errors = [];
-  const [spotR, yahooR] = await Promise.allSettled([
+  const [spotR, yahooR, sinaR] = await Promise.allSettled([
     fetchGoldSpot(),
     fetchYahooSpot({ timeoutMs: 1500 }),
+    fetchSinaSpot(),
   ]);
   let spot = settle(spotR, '国际金价(gold-api)', errors);
   let yahoo = settle(yahooR, '国际金价(Yahoo)', errors);
+  let sina = settle(sinaR, '国际金价(新浪)', errors);
 
-  let price = spot?.price ?? yahoo?.price ?? null;
-  let source = spot ? 'gold-api.com' : (yahoo ? 'Yahoo Finance' : null);
+  let price = spot?.price ?? sina?.price ?? yahoo?.price ?? null;
+  let source = spot ? 'gold-api.com' : (sina ? '新浪财经' : (yahoo ? 'Yahoo Finance' : null));
   let silverPrice = spot?.silverPrice ?? null;
 
-  // 兜底一：新浪国际现货（50ms极速稳定）
-  if (price === null) {
-    try {
-      const sina = await fetchSinaSpot();
-      price = sina.price;
-      source = '新浪财经';
-    } catch (sinaErr) {
-      errors.push(`国际金价(新浪备用): ${sinaErr.message}`);
-    }
-  }
-
-  // 兜底二：瑞讯银行 Swissquote
+  // 兜底：瑞讯银行 Swissquote
   if (price === null) {
     try {
       const sq = await fetchSwissquoteSpot('XAU');
@@ -82,14 +73,47 @@ async function loadIntlQuote() {
     }
   }
 
-  const previousClose = yahoo?.previousClose ?? null;
+  const previousClose = yahoo?.previousClose ?? sina?.previousClose ?? null;
+
+  // 交叉校验：优先对比 Yahoo，若 Yahoo 异常（如 404/429）则自动使用新浪现货或 Swissquote
+  let peerQuote = null;
+  let peerName = null;
+
+  if (source === 'gold-api.com') {
+    if (yahoo && isNum(yahoo.price)) {
+      peerQuote = yahoo;
+      peerName = 'Yahoo Finance';
+    } else if (sina && isNum(sina.price)) {
+      peerQuote = sina;
+      peerName = '新浪现货';
+    }
+  } else if (source === '新浪财经') {
+    if (spot && isNum(spot.price)) {
+      peerQuote = spot;
+      peerName = 'gold-api.com';
+    } else if (yahoo && isNum(yahoo.price)) {
+      peerQuote = yahoo;
+      peerName = 'Yahoo Finance';
+    }
+  }
+
+  if (!peerQuote) {
+    try {
+      const sq = await fetchSwissquoteSpot('XAU');
+      if (sq && isNum(sq.price)) {
+        peerQuote = sq;
+        peerName = 'Swissquote';
+      }
+    } catch {}
+  }
+
   let crossCheck = { status: 'single', deviationPercent: null, peer: null };
-  if (spot && yahoo) {
-    const deviationPercent = round(((spot.price - yahoo.price) / yahoo.price) * 100, 3);
+  if (price && peerQuote && isNum(peerQuote.price)) {
+    const deviationPercent = round(((price - peerQuote.price) / peerQuote.price) * 100, 3);
     crossCheck = {
       status: Math.abs(deviationPercent) <= 0.5 ? 'consistent' : 'divergent',
       deviationPercent,
-      peer: 'Yahoo Finance',
+      peer: peerName,
     };
   }
 
@@ -103,7 +127,7 @@ async function loadIntlQuote() {
       changePercent: previousClose !== null ? round(((price - previousClose) / previousClose) * 100, 2) : null,
       previousClose,
       silverPrice,
-      asOf: spot?.asOf ?? yahoo?.asOf ?? new Date().toISOString(),
+      asOf: spot?.asOf ?? sina?.asOf ?? yahoo?.asOf ?? new Date().toISOString(),
       crossCheck,
     },
     errors,
@@ -199,7 +223,7 @@ async function loadSnapshot() {
       status: c.status === 'consistent' ? 'ok' : c.status === 'divergent' ? 'warn' : 'info',
       detail: c.deviationPercent == null
         ? '仅单一来源，无法交叉校验'
-        : `gold-api 与 Yahoo 偏差 ${c.deviationPercent}%（阈值 0.5%）`,
+        : `${international.source} 与 ${c.peer || '校验源'} 偏差 ${c.deviationPercent}%（阈值 0.5%）`,
     });
   }
   if (premiumPercent !== null) {

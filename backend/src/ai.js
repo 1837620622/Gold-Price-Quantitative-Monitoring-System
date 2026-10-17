@@ -27,11 +27,12 @@ const MODELS = [
 const SYSTEM_PROMPT = `你是一位拥有20年华尔街顶级宏观对冲基金与量化交易经验的贵金属首席策略师兼量化投研总监。
 你的任务是根据经过严格程序计算的多源真实行情与量化因子数据，输出一份逻辑严密、数据确凿、具备实操指导价值的《黄金资产量化研判与实战策略报告》。
 
-【核心原则】
-1. 严禁空洞套话：所有多空研判必须紧扣给定的具体数值（如评分分量、均线排列、RSI/KDJ读数、布林带%B、枢轴点、ATR、金银比、溢价率Z分数等），严禁无数据依据的臆测。
-2. 矛盾点深度推演：若趋势指标（如EMA/MA60）与动能指标（如RSI/KDJ）出现背离，或内外盘溢价与国际走势分化，必须作为重点博弈场景深入剖析。
-3. 实操可落地性：明确给出操作定调（偏多/偏空/震荡观望）、建议仓位区间、关键入场防御点位及止损止盈纪律。
-4. 语言风格：专业、严谨、客观、精炼，符合机构级金融研报与专业交易终端排版标准。`;
+【核心输出原则】
+1. 严禁泄漏思考过程：严禁输出任何思维链草稿或自言自语（严禁输出"好，我现在需要帮助用户"等思考语言），直接输出正式研报 Markdown 正文。
+2. 报告必须 100% 完整收尾：绝不允许在中途截断，必须一气呵成完整输出包含【1. 宏观环境与跨市协同】、【2. 多周期技术形态与量化因子】、【3. 日内与波段关键博弈点位】、【4. 历史回测绩效与实盘仓位指引】、【5. 极端行情预案与免责声明】的全部内容。
+3. 严禁空洞套话：所有多空研判必须紧扣给定的具体数值（如评分分量、均线排列、RSI/KDJ读数、布林带%B、枢轴点、ATR、金银比、溢价率Z分数等），严禁无数据依据的臆测。
+4. 实操可落地性：明确给出操作定调（偏多/偏空/震荡观望）、建议仓位区间、关键入场防御点位及止损止盈纪律。
+5. 语言风格：专业、严谨、客观、精炼，符合机构级金融研报与专业交易终端排版标准。`;
 
 const fmtStrategy = (st) =>
   `${st.name}：总收益 ${signedPercent(st.totalReturn)}，年化 ${signedPercent(st.cagr)}，夏普 ${fmt(st.sharpe)}，索提诺 ${fmt(st.sortino)}，卡玛 ${fmt(st.calmar)}，盈亏比 ${fmt(st.profitFactor)}，胜率 ${fmt(st.winRate)}%，最大回撤 ${fmt(st.maxDrawdown)}%`;
@@ -267,6 +268,18 @@ async function callSiliconFlow(apiKey, prompt) {
   });
 }
 
+// 彻底去除 <think> 思维链与草稿，确保严禁泄漏思考过程
+export function cleanAiReport(text) {
+  if (!text || typeof text !== 'string') return '';
+  // 1. 彻底剔除闭合的 <think>...</think>
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  // 2. 剔除未闭合的 <think> 前缀
+  cleaned = cleaned.replace(/^<think>[\s\S]*?(?=\n\n|##)/s, '').trim();
+  // 3. 剔除常见的自言自语思考草稿开头（如“好，我现在需要帮助用户生成...”）
+  cleaned = cleaned.replace(/^(好的?|首先)?，?我现在(需要|要|来)帮.*?(\n\n|##)/s, '$1').trim();
+  return cleaned.trim();
+}
+
 // Cloudflare Workers AI 内置大模型矩阵（支持指定模型优先 + 智能容灾降级）
 async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
   if (!aiBinding || typeof aiBinding.run !== 'function') throw new Error('Workers AI 未绑定');
@@ -281,7 +294,7 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
 
   const candidateModel = MODEL_MAP[requestedModel] || (requestedModel?.startsWith('@cf/') ? requestedModel : null);
 
-  // 1. 若用户指定了模型，优先调用该模型
+  // 1. 若用户指定了模型，优先调用该模型（提供充分 token 确保 5 大章节完整无截断）
   if (candidateModel) {
     try {
       const response = await aiBinding.run(candidateModel, {
@@ -289,26 +302,27 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 1600,
+        max_tokens: 3500,
         temperature: 0.6,
       });
       const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
-      if (text && typeof text === 'string' && text.trim().length > 20) {
+      const cleaned = cleanAiReport(text);
+      if (cleaned && cleaned.length > 20) {
         const shortName = candidateModel.split('/').pop();
-        return { content: text.trim(), modelName: `Workers AI · ${shortName}` };
+        return { content: cleaned, modelName: `Workers AI · ${shortName}` };
       }
     } catch (e) {
       console.warn(`指定的 Workers AI 模型 ${candidateModel} 失败，启用兜底梯队:`, e.message);
     }
   }
 
-  // 2. 兜底梯队（按质量与配额平滑降级）
+  // 2. 兜底梯队（按质量与配额平滑降级，保证输出完整）
   const fallbackList = [
-    { model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'deepseek-r1-distill-qwen-32b (深度推理)', maxTokens: 1600 },
-    { model: '@cf/qwen/qwen2.5-72b-instruct', name: 'qwen2.5-72b-instruct (全能旗舰)', maxTokens: 1400 },
-    { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'llama-3.3-70b (顶尖研报)', maxTokens: 1400 },
-    { model: '@cf/qwen/qwen2.5-14b-instruct', name: 'qwen2.5-14b-instruct (均衡低耗)', maxTokens: 1200 },
-    { model: '@cf/qwen/qwen2.5-7b-instruct', name: 'qwen2.5-7b-instruct (极速兜底)', maxTokens: 1000 },
+    { model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'deepseek-r1-distill-qwen-32b (深度推理)', maxTokens: 3500 },
+    { model: '@cf/qwen/qwen2.5-72b-instruct', name: 'qwen2.5-72b-instruct (全能旗舰)', maxTokens: 2600 },
+    { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'llama-3.3-70b (顶尖研报)', maxTokens: 2600 },
+    { model: '@cf/qwen/qwen2.5-14b-instruct', name: 'qwen2.5-14b-instruct (均衡低耗)', maxTokens: 2200 },
+    { model: '@cf/qwen/qwen2.5-7b-instruct', name: 'qwen2.5-7b-instruct (极速兜底)', maxTokens: 1800 },
   ];
 
   for (const item of fallbackList) {
@@ -323,8 +337,9 @@ async function callWorkersAi(aiBinding, prompt, requestedModel = 'auto') {
         temperature: 0.6,
       });
       const text = response?.response || response?.choices?.[0]?.message?.content || response?.text;
-      if (text && typeof text === 'string' && text.trim().length > 20) {
-        return { content: text.trim(), modelName: `Workers AI · ${item.name}` };
+      const cleaned = cleanAiReport(text);
+      if (cleaned && cleaned.length > 20) {
+        return { content: cleaned, modelName: `Workers AI · ${item.name}` };
       }
     } catch (e) {
       console.warn(`Workers AI 兜底模型 ${item.model} 失败:`, e.message);
