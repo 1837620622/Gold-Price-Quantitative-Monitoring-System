@@ -54,61 +54,127 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 金币正反面：径向金色 + 双层刻边 + 深色压印标签
+// 金币正反面：径向黄金质感 + 同心防伪机镂纹 + 双层精铸边缘 + 浮雕压印标签
 export function paintCoinFace(label, size = 512, canvas) {
   const c = makeCanvas(size, size, canvas);
   const ctx = c.getContext('2d');
   const r = size / 2;
   ctx.clearRect(0, 0, size, size);
 
-  const body = ctx.createRadialGradient(r * 0.72, r * 0.64, r * 0.08, r, r, r);
-  body.addColorStop(0, '#f7d978');
-  body.addColorStop(0.58, '#dcae4e');
-  body.addColorStop(1, GOLD_DEEP);
+  // 1. 24K 纯金底色渐变
+  const body = ctx.createRadialGradient(r * 0.65, r * 0.55, r * 0.06, r, r, r);
+  body.addColorStop(0, '#fff4b8');
+  body.addColorStop(0.25, '#fcd34d');
+  body.addColorStop(0.65, '#f59e0b');
+  body.addColorStop(0.9, '#d97706');
+  body.addColorStop(1, '#92400e');
   ctx.fillStyle = body;
   ctx.beginPath();
   ctx.arc(r, r, r, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.lineWidth = size * 0.035;
-  ctx.strokeStyle = 'rgba(92, 64, 18, 0.85)';
+  // 2. 防伪精铸同心微纹（Guilloché Rings）
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+  for (let i = 1; i <= 6; i++) {
+    ctx.beginPath();
+    ctx.arc(r, r, r * (0.28 + i * 0.085), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // 3. 外层精铸滚齿边圈
+  ctx.lineWidth = size * 0.038;
+  ctx.strokeStyle = 'rgba(120, 53, 15, 0.88)';
   ctx.beginPath();
-  ctx.arc(r, r, r * 0.9, 0, Math.PI * 2);
+  ctx.arc(r, r, r * 0.92, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.lineWidth = size * 0.012;
-  ctx.strokeStyle = 'rgba(255, 241, 199, 0.6)';
+  // 4. 内层高光棱线
+  ctx.lineWidth = size * 0.015;
+  ctx.strokeStyle = 'rgba(255, 248, 220, 0.75)';
   ctx.beginPath();
-  ctx.arc(r, r, r * 0.8, 0, Math.PI * 2);
+  ctx.arc(r, r, r * 0.82, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = '#17110a';
+  // 5. 压印文字与阴影（高对比立体雕刻感）
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  fitFont(ctx, label, size * 0.74, size * 0.24);
-  ctx.fillText(label, r, r * 1.03);
+  fitFont(ctx, label, size * 0.72, size * 0.24, 700);
+
+  // 下层浅色高光（雕刻内边缘反光）
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  ctx.fillText(label, r, r * 1.045);
+
+  // 上层深色主字体（深凹下沉字）
+  ctx.fillStyle = '#451a03';
+  ctx.fillText(label, r, r * 1.015);
+
   return c;
 }
 
-// 金条顶部铭牌：深色底、金色边框与字
+// 金条顶部铭牌：上海黄金交易所官方精铸钢印质感
 export function paintIngotLabel(text = 'AU 999.9', width = 1024, height = 512, canvas) {
   const c = makeCanvas(width, height, canvas);
   const ctx = c.getContext('2d');
   ctx.clearRect(0, 0, width, height);
 
-  const pad = height * 0.12;
-  roundRect(ctx, pad, pad, width - pad * 2, height - pad * 2, height * 0.12);
-  ctx.fillStyle = 'rgba(5, 5, 7, 0.92)';
+  // 底色渐变
+  const pad = height * 0.08;
+  roundRect(ctx, pad, pad, width - pad * 2, height - pad * 2, height * 0.1);
+  const grad = ctx.createLinearGradient(0, 0, width, height);
+  grad.addColorStop(0, '#fef08a');
+  grad.addColorStop(0.3, '#f59e0b');
+  grad.addColorStop(0.7, '#d97706');
+  grad.addColorStop(1, '#78350f');
+  ctx.fillStyle = grad;
   ctx.fill();
-  ctx.lineWidth = height * 0.018;
-  ctx.strokeStyle = 'rgba(232, 199, 125, 0.7)';
+
+  // 金属拉丝微纹
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 1;
+  for (let y = pad; y < height - pad; y += 4) {
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(width - pad, y);
+    ctx.stroke();
+  }
+
+  // 双重凹凸防伪外框
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(69, 26, 3, 0.65)';
+  roundRect(ctx, pad + 10, pad + 10, width - (pad + 10) * 2, height - (pad + 10) * 2, height * 0.06);
   ctx.stroke();
 
-  ctx.fillStyle = GOLD;
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255, 248, 220, 0.4)';
+  roundRect(ctx, pad + 16, pad + 16, width - (pad + 16) * 2, height - (pad + 16) * 2, height * 0.05);
+  ctx.stroke();
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  fitFont(ctx, text, width * 0.72, height * 0.5);
-  ctx.fillText(text, width / 2, height / 2 + height * 0.02);
+
+  // 1. 上标：上海黄金交易所
+  ctx.font = `600 ${Math.round(height * 0.075)}px ${DISPLAY_STACK}`;
+  ctx.fillStyle = 'rgba(69, 26, 3, 0.85)';
+  ctx.fillText('SHANGHAI GOLD EXCHANGE · SGE PHYSICAL ANCHOR', width / 2, height * 0.23);
+
+  // 2. 主标：AU 999.9 纯金粗衬线雕印
+  ctx.font = `900 ${Math.round(height * 0.28)}px ${DISPLAY_STACK}`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.fillText(text, width / 2, height * 0.51);
+  ctx.fillStyle = 'rgba(69, 26, 3, 0.95)';
+  ctx.fillText(text, width / 2, height * 0.495);
+
+  // 3. 中副标：FINE GOLD 1000g
+  ctx.font = `700 ${Math.round(height * 0.085)}px ${MONO_STACK}`;
+  ctx.fillStyle = 'rgba(69, 26, 3, 0.85)';
+  ctx.fillText('FINE GOLD 1000g · NET PURITY 99.99%', width / 2, height * 0.72);
+
+  // 4. 底标：验金师印章与量化序列号
+  ctx.font = `500 ${Math.round(height * 0.055)}px ${MONO_STACK}`;
+  ctx.fillStyle = 'rgba(120, 53, 15, 0.7)';
+  ctx.fillText('MELTER ASSAYER · NO. 2026-QUANT-ALPHA-001', width / 2, height * 0.87);
+
   return c;
 }
 
@@ -157,21 +223,56 @@ function drawGrid(ctx, width, height) {
   ctx.stroke();
 }
 
-// 远墙 K 线：最近 60 根日K，红涨绿跌，MA20 为金线（MA 基于完整序列计算）
+// 远墙 K 线：高科技指挥中心终端屏，集成标头、实时标识与 60 根日 K 线
 export function paintCandleChart(bars, width = 1024, height = 512, canvas) {
   const c = makeCanvas(width, height, canvas);
   const ctx = c.getContext('2d');
-  ctx.fillStyle = '#07080b';
+
+  // 深邃科技黑底色
+  ctx.fillStyle = '#06070a';
   ctx.fillRect(0, 0, width, height);
+
+  // 屏幕外边框与科幻荧光四角
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(6, 6, width - 12, height - 12);
+
+  // 顶栏高科技 HUD 标头
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.fillRect(6, 6, width - 12, 38);
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(6, 44);
+  ctx.lineTo(width - 6, 44);
+  ctx.stroke();
+
+  // 顶栏文字与指示灯
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath();
+  ctx.arc(24, 25, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.font = `600 14px ${MONO_STACK}`;
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('LIVE QUANTITATIVE TERMINAL · SGE AU9999 · 60-BAR KLINE', 38, 25);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('[REALTIME FEED · CONNECTED]', width - 24, 25);
+
+  // 绘制图表背景网格
   drawGrid(ctx, width, height);
 
   const valid = (bars || []).filter((b) => [b.open, b.high, b.low, b.close].every(Number.isFinite));
   if (valid.length < 2) {
-    ctx.fillStyle = 'rgba(243, 239, 230, 0.4)';
+    ctx.fillStyle = 'rgba(243, 239, 230, 0.5)';
     ctx.font = `500 ${Math.round(height * 0.07)}px ${MONO_STACK}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('NO DATA', width / 2, height / 2);
+    ctx.fillText('SYNCHRONIZING FEED...', width / 2, height / 2);
     return c;
   }
 
@@ -180,33 +281,41 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas) {
   const slice = valid.slice(start);
   let lo = Math.min(...slice.map((b) => b.low));
   let hi = Math.max(...slice.map((b) => b.high));
-  const pad = (hi - lo) * 0.1 || 1;
+  const pad = (hi - lo) * 0.12 || 1;
   lo -= pad;
   hi += pad;
-  const yOf = (v) => height - ((v - lo) / (hi - lo)) * height;
-  const step = width / count;
-  const bodyWidth = Math.max(3, step * 0.56);
+  const chartTop = 50;
+  const chartHeight = height - chartTop - 12;
+  const yOf = (v) => chartTop + chartHeight - ((v - lo) / (hi - lo)) * chartHeight;
+  const step = (width - 16) / count;
+  const bodyWidth = Math.max(4, step * 0.58);
 
+  // 绘制 MA20 均线（金色发光）
   const closes = valid.map((b) => b.close);
-  ctx.strokeStyle = GOLD;
+  ctx.strokeStyle = '#f59e0b';
   ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(245, 158, 11, 0.5)';
+  ctx.shadowBlur = 8;
   ctx.beginPath();
   let started = false;
   for (let i = start; i < valid.length; i += 1) {
     if (i < MA_PERIOD - 1) continue;
     let sum = 0;
     for (let k = i - MA_PERIOD + 1; k <= i; k += 1) sum += closes[k];
-    const x = step * (i - start) + step / 2;
+    const x = 8 + step * (i - start) + step / 2;
     const y = yOf(sum / MA_PERIOD);
     if (started) ctx.lineTo(x, y);
     else ctx.moveTo(x, y);
     started = true;
   }
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
+  // 绘制 K 线实体与上下影线
   slice.forEach((b, i) => {
-    const x = step * i + step / 2;
-    const color = b.close >= b.open ? UP : DOWN;
+    const x = 8 + step * i + step / 2;
+    const isUp = b.close >= b.open;
+    const color = isUp ? UP : DOWN;
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -218,5 +327,6 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas) {
     ctx.fillStyle = color;
     ctx.fillRect(x - bodyWidth / 2, top, bodyWidth, Math.max(2, bottom - top));
   });
+
   return c;
 }

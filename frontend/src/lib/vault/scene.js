@@ -16,7 +16,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { paintCandleChart, paintIngotLabel, paintLettering, GOLD } from './textures';
 
-const GOLD_BAR = new THREE.Color(0xd9b26a);
+const GOLD_BAR = new THREE.Color(0xf5b835);
 
 // 夜间调色板：建筑从 #050507 渐显到石材色
 const NIGHT = {
@@ -178,6 +178,29 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   warmB.position.set(0, 5.6, -40);
   hall.add(ambient, key, key.target, warmA, warmB);
 
+  // 3D 悬浮金尘粒子系统 (160 颗闪耀微粒)
+  const sparkleCount = 160;
+  const sparkleGeom = track(new THREE.BufferGeometry());
+  const sparklePos = new Float32Array(sparkleCount * 3);
+  for (let i = 0; i < sparkleCount * 3; i += 3) {
+    sparklePos[i] = (Math.random() - 0.5) * 11;
+    sparklePos[i + 1] = Math.random() * 6 - 0.5;
+    sparklePos[i + 2] = (Math.random() - 0.5) * 90 - 30;
+  }
+  sparkleGeom.setAttribute('position', new THREE.BufferAttribute(sparklePos, 3));
+  const sparkleMat = track(
+    new THREE.PointsMaterial({
+      size: 0.12,
+      color: 0xfde047,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+  );
+  const sparkles = track(new THREE.Points(sparkleGeom, sparkleMat));
+  hall.add(sparkles);
+
   // 远墙：K 线画布贴图（监控屏保持深色，与昼夜无关）
   const chartCanvas = document.createElement('canvas');
   paintCandleChart(bars, 1024, 512, chartCanvas);
@@ -212,19 +235,40 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   const heroCam = new THREE.PerspectiveCamera(HERO_FOV, 1, 0.1, 100);
   heroCam.position.set(0, 2.4, HERO_DIST);
   heroCam.lookAt(0, 0, 0);
-  heroScene.add(new THREE.AmbientLight(0x3a2f20, 0.6));
-  const heroKey = new THREE.DirectionalLight(0xfff3dc, 1.6);
-  heroKey.position.set(-4, 7, 8);
+
+  // 专业摄影棚 3 点照明：金黄主光 + 极客冷蓝轮廓光 + 柔和暖金环境
+  heroScene.add(new THREE.AmbientLight(0x3a2610, 0.9));
+  const heroKey = new THREE.DirectionalLight(0xfff8e8, 3.2);
+  heroKey.position.set(-3.5, 7.5, 7.5);
   heroScene.add(heroKey);
 
+  const heroRim = new THREE.DirectionalLight(0x38bdf8, 2.2);
+  heroRim.position.set(5.5, 3.5, -4.5);
+  heroScene.add(heroRim);
+
+  const heroFill = new THREE.DirectionalLight(0xf59e0b, 1.4);
+  heroFill.position.set(1.5, -4.0, 3.5);
+  heroScene.add(heroFill);
+
   const ingotMat = track(
-    new THREE.MeshStandardMaterial({ color: 0xd9b26a, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.2 })
+    new THREE.MeshPhysicalMaterial({
+      color: 0xf5b835,
+      emissive: 0x241400,
+      metalness: 0.96,
+      roughness: 0.16,
+      clearcoat: 0.55,
+      clearcoatRoughness: 0.1,
+      reflectivity: 0.96,
+      envMap: env,
+      envMapIntensity: 1.5,
+    })
   );
-  const ingot = new THREE.Mesh(track(new RoundedBoxGeometry(2.2, 0.9, 1.25, 3, 0.08)), ingotMat);
+  const ingot = new THREE.Mesh(track(new RoundedBoxGeometry(2.2, 0.9, 1.25, 4, 0.08)), ingotMat);
   const labelTex = track(new THREE.CanvasTexture(paintIngotLabel('AU 999.9')));
   labelTex.colorSpace = THREE.SRGBColorSpace;
+  labelTex.anisotropy = 8;
   const labelMat = track(new THREE.MeshBasicMaterial({ map: labelTex, transparent: true, depthWrite: false, toneMapped: false }));
-  const label = new THREE.Mesh(track(new THREE.PlaneGeometry(1.5, 0.62)), labelMat);
+  const label = new THREE.Mesh(track(new THREE.PlaneGeometry(1.55, 0.72)), labelMat);
   label.rotation.x = -Math.PI / 2; // 铭牌朝上，文字顶部朝远离观众的方向
   label.position.y = 0.455;
   ingot.add(label);
@@ -309,6 +353,8 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     hall.environmentIntensity = 0.9 * a;
     stripMat.color.copy(palette.base).lerp(palette.light, a * 0.5);
     gridMat.opacity = 0.18 * a;
+    sparkles.rotation.y = time * 0.05;
+    sparkleMat.opacity = Math.min(0.85, a * 0.95);
     ambient.intensity = 0.5 * a;
     key.intensity = 1.6 * a;
     // 日间的暖光减弱，避免淡色墙面被染成黄色

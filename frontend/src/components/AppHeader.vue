@@ -1,18 +1,19 @@
 <template>
   <header class="top-nav">
     <!-- Left: Wordmark AURUM -->
-    <a href="#hero" class="nav-logo" @click.prevent="scrollTo('#hero')">
+    <a href="#journey" class="nav-logo" @click.prevent="scrollTo('#journey')">
       AURUM <span class="nav-logo-sub">QUANT</span>
     </a>
 
     <!-- Center: Links -->
     <ul class="nav-links" :class="{ open: mobileOpen }" ref="navLinksRef">
-      <li><a href="#hero" :class="{ active: activeId === 'hero' }" @click.prevent="navClick('#hero')">Overview</a></li>
-      <li><a href="#recipe" :class="{ active: activeId === 'recipe' }" @click.prevent="navClick('#recipe')">Dual Engine</a></li>
-      <li><a href="#adv" :class="{ active: activeId === 'adv' }" @click.prevent="navClick('#adv')">Advantages</a></li>
-      <li><a href="#ess" :class="{ active: activeId === 'ess' }" @click.prevent="navClick('#ess')">Synthesis</a></li>
-      <li><a href="#workspace" :class="{ active: activeId === 'workspace' }" @click.prevent="navClick('#workspace')">Terminal</a></li>
-      <li class="mobile-only-action"><a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">Launch Terminal</a></li>
+      <li><a href="#journey" :class="{ active: activeId === 'journey' }" @click.prevent="navClick('#journey')">{{ t('appHeader.navOverview') }}</a></li>
+      <li><a href="#sec-overview" :class="{ active: activeId === 'sec-overview' }" @click.prevent="navClick('#sec-overview')">{{ t('appHeader.navMarket') }}</a></li>
+      <li><a href="#sec-signals" :class="{ active: activeId === 'sec-signals' }" @click.prevent="navClick('#sec-signals')">{{ t('appHeader.navSignals') }}</a></li>
+      <li><a href="#sec-charts" :class="{ active: activeId === 'sec-charts' }" @click.prevent="navClick('#sec-charts')">{{ t('appHeader.navCharts') }}</a></li>
+      <li><a href="#sec-arbitrage" :class="{ active: activeId === 'sec-arbitrage' }" @click.prevent="navClick('#sec-arbitrage')">{{ t('appHeader.navArbitrage') }}</a></li>
+      <li><a href="#sec-ai" :class="{ active: activeId === 'sec-ai' }" @click.prevent="navClick('#sec-ai')">{{ t('appHeader.navAi') }}</a></li>
+      <li class="mobile-only-action"><a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">{{ t('appHeader.navTerminal') }}</a></li>
     </ul>
 
     <!-- Right: Actions & Pill -->
@@ -60,7 +61,7 @@
         class="pill nav-pill"
         @click.prevent="navClick('#workspace')"
       >
-        Launch Terminal
+        {{ t('appHeader.navTerminal') }}
       </a>
 
       <!-- 显示与语言：按钮展开 PrefsMenu 面板，桌面与手机通用 -->
@@ -152,14 +153,31 @@ function onKeydown(e) {
   if (e.key === 'Escape') prefsOpen.value = false;
 }
 
+let sectionObserver = null;
+
 onMounted(() => {
   document.addEventListener('click', onClickOutside);
   document.addEventListener('keydown', onKeydown);
+
+  const sectionIds = ['journey', 'sec-overview', 'sec-signals', 'sec-charts', 'sec-arbitrage', 'sec-ai'];
+  sectionObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        activeId.value = entry.target.id;
+      }
+    }
+  }, { rootMargin: '-20% 0px -60% 0px' });
+
+  sectionIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) sectionObserver.observe(el);
+  });
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', onClickOutside);
   document.removeEventListener('keydown', onKeydown);
+  if (sectionObserver) sectionObserver.disconnect();
 });
 </script>
 

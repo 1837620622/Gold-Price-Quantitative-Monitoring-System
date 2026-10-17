@@ -538,17 +538,21 @@ onBeforeUnmount(() => {
 .eyebrow {
   position: absolute;
   left: var(--pad);
-  top: 9vh;
-  color: var(--text-3);
+  top: clamp(80px, 10vh, 100px);
+  color: var(--gold-3);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .title {
   position: absolute;
   left: var(--pad);
-  top: 14vh;
+  top: clamp(108px, 14vh, 145px);
   margin: 0;
-  font-size: clamp(120px, 16vw, 240px);
-  line-height: 0.86;
+  font-size: clamp(75px, 12vw, 180px);
+  line-height: 0.88;
   color: var(--text);
   white-space: nowrap;
 }
@@ -560,11 +564,16 @@ onBeforeUnmount(() => {
 .sub {
   position: absolute;
   left: var(--pad);
-  top: 60vh;
-  max-width: 28em;
-  font-size: clamp(14px, 1.2vw, 18px);
-  line-height: 1.7;
+  top: clamp(340px, 48vh, 520px);
+  max-width: 30em;
+  font-size: clamp(13px, 1.05vw, 16px);
+  line-height: 1.65;
   color: var(--text-2);
+  backdrop-filter: blur(8px);
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-left: 2px solid var(--gold-3);
 }
 
 .sub p {
@@ -574,29 +583,47 @@ onBeforeUnmount(() => {
 .live {
   position: absolute;
   right: var(--pad);
-  top: 9vh;
+  top: clamp(84px, 11.5vh, 115px);
   z-index: 3;
   margin: 0;
-  display: grid;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   text-align: right;
   pointer-events: none;
+  background: rgba(18, 14, 10, 0.75);
+  border: 1px solid rgba(232, 199, 125, 0.22);
+  border-radius: 14px;
+  padding: 14px 20px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] .live {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(184, 137, 46, 0.3);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
 }
 
 .live-row {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   justify-items: end;
 }
 
 .live dt {
   margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
 }
 
 .live dd {
   margin: 0;
-  font-size: clamp(20px, 2vw, 30px);
-  font-weight: 500;
+  font-size: clamp(20px, 1.8vw, 28px);
+  font-weight: 600;
+  font-family: var(--mono);
   letter-spacing: -0.01em;
   color: var(--text);
 }
@@ -612,16 +639,18 @@ onBeforeUnmount(() => {
 .footer-line {
   position: absolute;
   left: var(--pad);
-  bottom: 3.2vh;
+  bottom: clamp(14px, 2.8vh, 28px);
   z-index: 3;
   width: max-content;
   margin: 0;
-  font-size: clamp(64px, 10vw, 190px);
-  line-height: 0.86;
+  font-size: clamp(48px, 7.2vw, 116px);
+  line-height: 0.9;
   color: var(--gold-3);
   white-space: nowrap;
   transform-origin: 50% 50%;
   pointer-events: none;
+  opacity: 0.88;
+  letter-spacing: 0.02em;
 }
 
 .footer-line .mob {

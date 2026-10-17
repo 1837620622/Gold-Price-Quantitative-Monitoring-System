@@ -42,13 +42,13 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
   camera.position.set(0, 0, 100);
   camera.lookAt(0, 0, 0);
 
-  const key = new THREE.DirectionalLight(0xfff3dc, 1.4);
+  const key = new THREE.DirectionalLight(0xfffae0, 2.2);
   key.position.set(-0.6, -0.9, 1.2);
   scene.add(key);
-  scene.add(new THREE.AmbientLight(0x2a2216, 0.4));
+  scene.add(new THREE.AmbientLight(0x45341c, 0.85));
 
   const coinGeo = new THREE.CylinderGeometry(radius, radius, thickness, 72, 1, false);
-  const sideMat = new THREE.MeshStandardMaterial({ color: 0xc9a14a, metalness: 1, roughness: 0.32 });
+  const sideMat = new THREE.MeshStandardMaterial({ color: 0xf5b835, metalness: 0.95, roughness: 0.22, envMapIntensity: 1.1 });
   const shadowGeo = new THREE.PlaneGeometry(1, 1);
   const shadowTex = new THREE.CanvasTexture(paintShadow(128));
   const shadowMat = new THREE.MeshBasicMaterial({
@@ -67,8 +67,13 @@ export function createCoinLayer(canvas, { labels = [], radius = 52, thickness = 
     tex.center.set(0.5, 0.5);
     tex.rotation = -Math.PI / 2; // 标签在圆面上正向显示
     faceTextures.push(tex);
-    // 金属反射乘以底色：偏暖的底色让金面保持金色，避免环境光把金面洗成白色
-    const faceMat = new THREE.MeshStandardMaterial({ map: tex, color: 0xc99a4a, metalness: 1, roughness: 0.4, envMapIntensity: 0.45 });
+    // 高饱和黄金材质，metalness 适中以保留纹理清晰度，低 roughness 呈现镜面反光
+    const faceMat = new THREE.MeshStandardMaterial({
+      map: tex,
+      metalness: 0.72,
+      roughness: 0.24,
+      envMapIntensity: 0.75,
+    });
     // 圆柱分组：0 侧面，1 顶面，2 底面；顶面朝向观众
     const mesh = new THREE.Mesh(coinGeo, [sideMat, faceMat, faceMat]);
     mesh.rotation.order = 'XYZ';
