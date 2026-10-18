@@ -66,17 +66,19 @@ function tooltipHtml(params, pal, bars, ind, tg, panes) {
   if (idx === undefined || !bars[idx]) return '';
   const b = bars[idx];
   const up = b.close >= b.open;
-  const v = (arr) => fmtVal(arr?.[idx]);
+  // 数值走等宽字体并对齐；标签文字走正文字体
+  const num = (s) => `<span style="font-family:${pal.mono};font-variant-numeric:tabular-nums">${s}</span>`;
+  const v = (arr) => num(fmtVal(arr?.[idx]));
   const rows = [
-    `<div style="font-weight:600;margin-bottom:4px">${b.date}</div>`,
-    `${t('klineTip.open')} ${fmtVal(b.open)} · ${t('klineTip.high')} ${fmtVal(b.high)}`,
-    `${t('klineTip.low')} ${fmtVal(b.low)} · ${t('klineTip.close')} <b style="color:${up ? pal.up : pal.down}">${fmtVal(b.close)}</b>`,
+    `<div style="font-family:${pal.mono};font-weight:500;margin-bottom:4px">${b.date}</div>`,
+    `${t('klineTip.open')} ${num(fmtVal(b.open))} · ${t('klineTip.high')} ${num(fmtVal(b.high))}`,
+    `${t('klineTip.low')} ${num(fmtVal(b.low))} · ${t('klineTip.close')} ${num(`<b style="font-weight:500;color:${up ? pal.up : pal.down}">${fmtVal(b.close)}</b>`)}`,
   ];
   if (ind) {
     if (tg.ma) rows.push(`MA5 ${v(ind.ma5)} · MA10 ${v(ind.ma10)} · MA20 ${v(ind.ma20)}`);
     if (tg.boll) rows.push(`${t('klineTip.boll')} ${t('klineTip.upper')} ${v(ind.bollUpper)} · ${t('klineTip.lower')} ${v(ind.bollLower)}`);
-    if (panes.includes('volume')) rows.push(`${t('klineTip.volume')} ${Math.round(b.volume).toLocaleString('zh-CN')} ${t('klineTip.lots')}`);
-    if (panes.includes('score')) rows.push(`${t('klineTip.score')} <b>${v(ind.score)}</b>`);
+    if (panes.includes('volume')) rows.push(`${t('klineTip.volume')} ${num(Math.round(b.volume).toLocaleString('zh-CN'))} ${t('klineTip.lots')}`);
+    if (panes.includes('score')) rows.push(`${t('klineTip.score')} <b style="font-weight:500">${v(ind.score)}</b>`);
     if (panes.includes('macd')) rows.push(`DIF ${v(ind.dif)} · DEA ${v(ind.dea)} · ${t('klineTip.hist')} ${v(ind.hist)}`);
     if (panes.includes('rsi')) rows.push(`RSI ${v(ind.rsi14)}`);
     if (panes.includes('kdj') && ind.kdj) rows.push(`K ${v(ind.kdj.k)} · D ${v(ind.kdj.d)} · J ${v(ind.kdj.j)}`);
@@ -256,7 +258,12 @@ function buildOption() {
       },
       backgroundColor: pal.tipBg,
       borderColor: pal.tipBorder,
-      textStyle: { color: pal.text, fontSize: 12 },
+      borderWidth: 1,
+      shadowBlur: 0,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: 'transparent',
+      textStyle: { color: pal.text, fontSize: 12, fontFamily: pal.font },
       confine: true,
       formatter: (params) => tooltipHtml(params, pal, bars, ind, tg, panes),
     },
@@ -272,7 +279,16 @@ function buildOption() {
         borderColor: 'transparent',
         backgroundColor: pal.sliderBg,
         fillerColor: pal.filler,
-        textStyle: { color: pal.muted, fontSize: 11 },
+        handleStyle: {
+          color: pal.tipBg,
+          borderColor: pal.axis,
+          borderWidth: 1,
+          shadowBlur: 0,
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          shadowColor: 'transparent',
+        },
+        textStyle: { color: pal.muted, fontSize: 11, fontFamily: pal.mono },
       },
     ],
   };

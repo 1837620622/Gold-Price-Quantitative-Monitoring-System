@@ -16,10 +16,9 @@
           <span class="line">{{ t('vault.hero.title2') }}</span>
         </h1>
         <div class="sub">
-          <p>{{ t('vault.hero.sub1') }}</p>
-          <p>{{ t('vault.hero.sub2') }}</p>
-          <p>{{ t('vault.hero.sub3') }}</p>
-          <p>{{ t('vault.hero.sub4') }}</p>
+          <p v-for="(line, i) in subLines" :key="i">
+            <span v-for="(seg, j) in line" :key="j" :class="{ num: seg.num }">{{ seg.text }}</span>
+          </p>
         </div>
       </div>
 
@@ -54,7 +53,8 @@
             :tabindex="hovered >= 0 ? 0 : -1"
             @click.stop="navigate"
           >
-            {{ pillText }} ↗
+            {{ pillText }}
+            <Icon name="arrow-up-right" :size="14" class="pill-arrow" />
           </button>
         </div>
       </div>
