@@ -1,8 +1,8 @@
 <template>
   <div class="prefs" role="group" :aria-label="t('prefs.group')">
     <div class="pref">
-      <span class="label pref-label">{{ t('prefs.theme') }}</span>
-      <div class="seg seg-sm" role="radiogroup" :aria-label="t('prefs.theme')">
+      <span class="pref-label">{{ t('prefs.theme') }}</span>
+      <div class="seg" role="radiogroup" :aria-label="t('prefs.theme')">
         <button
           v-for="m in modes"
           :key="m"
@@ -17,41 +17,21 @@
       </div>
     </div>
 
-    <div class="pref">
-      <span class="label pref-label">{{ t('prefs.language') }}</span>
-      <div class="seg seg-sm" role="radiogroup" :aria-label="t('prefs.language')">
-        <button
-          type="button"
-          role="radio"
-          :aria-checked="locale === 'zh' ? 'true' : 'false'"
-          :class="{ active: locale === 'zh' }"
-          @click="setLocale('zh')"
-        >
-          {{ t('prefs.zh') }}
-        </button>
-        <button
-          type="button"
-          role="radio"
-          :aria-checked="locale === 'en' ? 'true' : 'false'"
-          :class="{ active: locale === 'en' }"
-          @click="setLocale('en')"
-        >
-          EN
-        </button>
-      </div>
-    </div>
-
-    <p class="label prefs-now" aria-live="polite">{{ nowText }}</p>
+    <p class="prefs-now" aria-live="polite">{{ nowText }}</p>
   </div>
 </template>
 
 <script setup>
+/**
+ * 显示偏好面板：只保留主题单选（自动 / 日间 / 夜间）。
+ * 语言切换已常驻在页头的 LangToggle 中，这里不再重复。
+ */
 import { computed } from 'vue';
 import { useTheme } from '../composables/useTheme';
 import { useI18n } from '../i18n';
 import { geo } from '../lib/geo';
 
-const { t, locale, setLocale } = useI18n();
+const { t } = useI18n();
 const { mode, modes, resolved, setMode } = useTheme();
 
 const basis = computed(() => {
@@ -71,37 +51,58 @@ const nowText = computed(() =>
 <style scoped>
 .prefs {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 20px;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .pref {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .pref-label {
   flex: none;
-  color: var(--text-3);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-2);
   white-space: nowrap;
 }
 
-.prefs-now {
-  flex-basis: 100%;
+/* 英文标签：11px 大写，字距 .14em；中文标签不大写、不加字距 */
+:lang(en) .pref-label {
   font-size: 11px;
-  letter-spacing: 0.06em;
-  color: var(--text-3);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-@media (min-width: 768px) {
-  .prefs-now {
-    flex-basis: auto;
-  }
+.pref .seg {
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius);
 }
 
-/* 手机：标签在上，分段控件铺满面板宽度，每个选项 44px 高，面板不会超出 390px 视口 */
+.pref .seg button {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 2px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.prefs-now {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* 手机：标签在上，分段控件铺满面板宽度，每个选项 44px 高 */
 @media (max-width: 767px) {
   .prefs {
     gap: 14px;
@@ -111,16 +112,10 @@ const nowText = computed(() =>
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
-    width: 100%;
-  }
-
-  .pref-label {
-    font-size: 12px;
   }
 
   .pref .seg {
     display: flex;
-    width: 100%;
   }
 
   .pref .seg button {
@@ -128,12 +123,6 @@ const nowText = computed(() =>
     min-width: 0;
     min-height: 44px;
     padding: 0 8px;
-    font-size: 13px;
-  }
-
-  .prefs-now {
-    font-size: 12px;
-    line-height: 1.6;
   }
 }
 </style>

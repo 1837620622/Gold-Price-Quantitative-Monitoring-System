@@ -1,7 +1,10 @@
 <template>
   <footer ref="footerRef" class="app-footer">
     <div class="container">
-      <!-- 机构级实时系统运行状态条 (Terminal Status Dock)：桌面三列；手机端为一行可横滑的元信息 -->
+      <!-- 页脚顶部：金色细线分隔 -->
+      <GoldRule class="footer-rule" />
+
+      <!-- 系统运行状态：桌面三列；手机端为一行可横滑的元信息 -->
       <div class="terminal-status-bar">
         <div class="status-col left">
           <div class="status-indicator">
@@ -20,11 +23,7 @@
         </div>
 
         <div class="status-col center">
-          <div class="engine-badge">
-            <span class="engine-spark" aria-hidden="true">✦</span>
-            <span class="engine-full">{{ t('appFooter.engine') }}</span>
-            <span class="engine-short">{{ t('chromeMobile.engineShort') }}</span>
-          </div>
+          <div class="engine-badge">{{ t('appFooter.engine') }}</div>
         </div>
 
         <div class="status-col right">
@@ -34,16 +33,16 @@
           </div>
           <div class="status-metric">
             <span class="metric-label">{{ t('appFooter.version') }}</span>
-            <span class="metric-val gold">v3.5.0 PRO</span>
+            <span class="metric-val gold">v3.5.0</span>
           </div>
         </div>
       </div>
 
-      <!-- 身份卡：品牌、外链与联系方式；免责声明与信源放在下方 -->
+      <!-- 身份卡：字标、外链与联系方式；免责声明与信源放在下方 -->
       <div class="footer-main-card">
         <div class="footer-brand-section">
           <div class="footer-logo">
-            <span class="logo-box" aria-hidden="true">Au</span>
+            <GoldSeal :size="40" />
             <div class="brand-copy">
               <div class="brand-name">{{ t('appFooter.brand') }}</div>
               <div class="brand-tagline">{{ t('appFooter.tagline') }}</div>
@@ -57,10 +56,8 @@
               rel="noopener noreferrer"
               class="dev-pill"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-              </svg>
               <span>{{ t('appFooter.repo') }}</span>
+              <Icon name="arrow-up-right" :size="14" />
             </a>
 
             <a
@@ -69,12 +66,8 @@
               rel="noopener noreferrer"
               class="dev-pill"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
               <span>{{ t('appFooter.site') }}</span>
+              <Icon name="arrow-up-right" :size="14" />
             </a>
 
             <!-- 联系方式：桌面端保留两枚静态徽章，手机端折成一行文字 -->
@@ -97,7 +90,7 @@
             <span>{{ t('appFooter.sources') }}</span>
           </div>
           <div class="copyright-row">
-            <span>© 2026 GOLD MONITOR. All rights reserved. Designed for Institutional Quantitative Research.</span>
+            <span>© 2026 GOLD MONITOR. All rights reserved. Designed for quantitative research.</span>
             <span>Developed by 传康KK</span>
           </div>
         </div>
@@ -114,9 +107,7 @@
         :aria-label="t('appFooter.backTop')"
         @click="scrollToTop"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <polyline points="18 15 12 9 6 15"></polyline>
-        </svg>
+        <Icon name="chevron-up" :size="18" />
       </button>
     </Transition>
   </footer>
@@ -124,6 +115,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import GoldSeal from './brand/GoldSeal.vue';
+import GoldRule from './brand/GoldRule.vue';
+import Icon from './icons/Icon.vue';
 import { useI18n } from '../i18n';
 
 const { t } = useI18n();
@@ -169,27 +163,28 @@ onUnmounted(() => {
 
 <style scoped>
 .app-footer {
+  position: relative;
   margin-top: 56px;
   padding: 0 0 48px;
-  position: relative;
-  border-top: 1px solid rgba(232, 199, 125, 0.14);
   background: var(--surface-card);
 }
 
-/* 顶部金融终端系统状态微条（桌面：三列） */
+/* 页脚顶部的金色细线分隔（GoldRule） */
+.footer-rule {
+  margin-bottom: 16px;
+}
+
+/* ---------- 系统运行状态条：等宽元信息，桌面三列 ---------- */
 .terminal-status-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 18px;
-  margin: -1px 0 24px;
-  background: var(--surface-card);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 0 0 12px 12px;
-  font-family: var(--mono);
-  font-size: 11px;
-  gap: 16px;
   flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .status-col {
@@ -202,15 +197,15 @@ onUnmounted(() => {
 .status-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   white-space: nowrap;
 }
 
-/* 实时点：保留一个缓慢呼吸的绿点，去掉无限扩散的光环 */
+/* 实时点：保留一个缓慢呼吸的绿点，只做透明度 */
 .live-pulse-dot {
   flex: none;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--down);
   animation: live-breathe 3.2s ease-in-out infinite;
@@ -228,101 +223,83 @@ onUnmounted(() => {
 
 .indicator-title {
   color: var(--text);
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .indicator-sub {
-  color: var(--text-3);
-  font-size: 11px;
+  color: var(--text-2);
   white-space: nowrap;
 }
 
 .status-metric {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  align-items: baseline;
+  gap: 8px;
   white-space: nowrap;
 }
 
-/* 标签与数值各自不换行，列宽由内容决定，避免“网关延迟”被挤成竖排 */
 .metric-label {
   flex: none;
-  color: var(--text-3);
+  color: var(--text-2);
   white-space: nowrap;
-  word-break: keep-all;
 }
 
 .metric-val {
-  color: var(--text-2);
-  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
 .metric-val.gold {
-  color: var(--gold-3);
-  font-weight: 800;
+  color: var(--gold-2);
+  font-weight: 500;
 }
 
+/* 英文标签：11px 大写，字距 .14em；中文标签 12px，不大写、不加字距 */
+:lang(en) .metric-label,
+:lang(en) .indicator-sub {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* 模型标签：发丝边框的小芯片，不发光 */
 .engine-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: rgba(232, 199, 125, 0.08);
-  border: 1px solid rgba(232, 199, 125, 0.25);
-  color: var(--gold-3);
-  font-size: 11px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  color: var(--text-2);
   white-space: nowrap;
 }
 
-.engine-spark {
-  color: var(--gold);
-}
-
-.engine-short {
-  display: none;
-}
-
-/* 身份卡 */
+/* ---------- 身份卡：发丝边、纯色底，无阴影 ---------- */
 .footer-main-card {
   padding: 28px;
-  border-radius: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
-  border: 1px solid rgba(232, 199, 125, 0.15);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 }
 
 .footer-brand-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 22px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 22px;
   flex-wrap: wrap;
   gap: 16px;
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
 }
 
 .footer-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
-}
-
-.logo-box {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  font-family: var(--mono);
-  font-weight: 900;
-  font-size: 17px;
-  color: var(--gold-ink);
-  background: var(--gold);
 }
 
 .brand-copy {
@@ -330,18 +307,25 @@ onUnmounted(() => {
 }
 
 .brand-name {
-  font-size: 15px;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
-  letter-spacing: 0.04em;
   word-break: keep-all;
 }
 
 .brand-tagline {
-  font-size: 11px;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
-  margin-top: 3px;
   word-break: keep-all;
+}
+
+:lang(zh) .brand-tagline {
+  line-height: 1.75;
 }
 
 .dev-pills {
@@ -360,48 +344,59 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-family: var(--mono);
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: transparent;
   color: var(--text-2);
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-.dev-pill.static {
-  cursor: default;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
+.dev-pill.static {
+  cursor: default;
+  border-color: var(--line);
+}
+
+/* 悬停只改描边与颜色 */
 @media (hover: hover) and (pointer: fine) {
   .dev-pill:hover:not(.static) {
-    background: rgba(232, 199, 125, 0.12);
-    border-color: var(--gold-2);
+    border-color: var(--gold);
     color: var(--gold-3);
   }
 }
 
+/* ---------- 免责声明、信源与版权 ---------- */
 .footer-notes {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.7;
-  color: var(--text-3);
+  color: var(--text-2);
+}
+
+:lang(zh) .footer-notes {
+  line-height: 1.75;
 }
 
 .disclaimer b {
-  color: var(--gold-3);
+  color: var(--gold-2);
+  font-weight: 600;
 }
 
 .sources-list {
   padding: 8px 12px;
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   background: var(--surface-2);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  color: var(--text-3);
-  font-size: 11px;
+  color: var(--text-2);
+  font-size: 12px;
   line-height: 1.6;
 }
 
@@ -409,51 +404,57 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 11px;
   flex-wrap: wrap;
   gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
 }
 
-/* 返回顶部：44px 圆钮，右下角并避开安全区；只在滚过第一屏后出现 */
+/* 返回顶部：44px 方钮，发丝边、无阴影；右下角并避开安全区；只在滚过第一屏后出现 */
 .back-to-top-btn {
   --btt-inset: 28px;
   position: fixed;
   right: calc(var(--btt-inset) + env(safe-area-inset-right, 0px));
   bottom: calc(var(--btt-inset) + env(safe-area-inset-bottom, 0px));
   z-index: 50;
+  display: grid;
+  place-items: center;
   width: 44px;
   height: 44px;
   padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--surface-card) 90%, transparent);
   border: 1px solid var(--line-strong);
-  color: var(--gold-3);
-  box-shadow: var(--shadow);
+  border-radius: 2px;
+  background: var(--surface-card);
+  color: var(--gold);
   cursor: pointer;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 
+/* 悬停：纯色金底，文字用 gold-ink */
 @media (hover: hover) and (pointer: fine) {
   .back-to-top-btn:hover {
-    background: var(--gold-btn);
+    background: var(--gold);
+    border-color: var(--gold);
     color: var(--gold-ink);
-    border-color: transparent;
   }
 }
 
 .btt-enter-active,
 .btt-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s var(--ease-out);
+  transition: opacity 0.24s ease, transform 0.24s var(--ease-out);
 }
+
 .btt-enter-from,
 .btt-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btt-enter-from,
+  .btt-leave-to {
+    transform: none;
+  }
 }
 
 @media (max-width: 767px) {
@@ -468,45 +469,41 @@ onUnmounted(() => {
 
   /* 状态条：一行可横滑的元信息，所有条目保留 */
   .terminal-status-bar {
-    justify-content: flex-start;
     flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 0;
-    margin: -1px 0 12px;
-    padding: 10px 14px;
+    margin-bottom: 14px;
+    padding-bottom: 2px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
+
   .terminal-status-bar::-webkit-scrollbar {
     display: none;
   }
+
   .status-col {
     flex: none;
     flex-wrap: nowrap;
     gap: 14px;
   }
+
   .status-col + .status-col {
     margin-left: 14px;
   }
-  .engine-full {
-    display: none;
-  }
-  .engine-short {
-    display: inline;
-  }
 
   .footer-main-card {
-    padding: 14px;
-    border-radius: 12px;
+    padding: 16px;
   }
 
   .footer-brand-section {
     flex-direction: column;
     align-items: stretch;
     gap: 14px;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
   }
 
   .dev-pills {
@@ -514,11 +511,11 @@ onUnmounted(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
+
   .dev-pills > .dev-pill:not(.static) {
     justify-content: center;
-    min-height: 44px;
+    height: 44px;
     padding: 0 10px;
-    font-size: 12px;
   }
 
   .contacts {
@@ -527,26 +524,26 @@ onUnmounted(() => {
     gap: 4px 16px;
     grid-column: 1 / -1;
   }
+
   .contacts .dev-pill.static {
     padding: 0;
     border: 0;
     background: none;
-    font-size: 12px;
-    color: var(--text-3);
-  }
-
-  .footer-notes {
-    gap: 8px;
-    line-height: 1.6;
+    font-size: 13px;
     color: var(--text-2);
   }
 
+  .footer-notes {
+    gap: 10px;
+    font-size: 13px;
+  }
+
   .sources-list {
-    padding: 6px 10px;
+    padding: 8px 10px;
   }
 
   .copyright-row {
-    padding-top: 8px;
+    padding-top: 10px;
   }
 }
 </style>

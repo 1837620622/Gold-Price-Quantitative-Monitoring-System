@@ -270,9 +270,10 @@ function handleRun() {
 
 .select-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
 }
 
 .select-label {
@@ -483,6 +484,10 @@ function handleRun() {
 @media (max-width: 767px) {
   .ai-card {
     gap: 12px;
+  }
+
+  .ai-title {
+    font-size: 18px;
   }
 
   .custom-select {

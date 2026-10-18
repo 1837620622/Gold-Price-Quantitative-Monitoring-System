@@ -4,7 +4,6 @@
       <div class="head-info">
         <div class="title-with-badge">
           <h2 id="report-title" class="card-title">{{ t('analysisReport.title') }}</h2>
-          <span class="report-badge">{{ t('analysisReport.deep') }}</span>
         </div>
         <p class="card-sub">{{ t('analysisReport.desc') }}</p>
       </div>

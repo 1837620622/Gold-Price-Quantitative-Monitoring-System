@@ -6,7 +6,6 @@
 export default {
   zh: {
     'analysisReport.title': 'AI 研报',
-    'analysisReport.deep': '深度解读',
     'analysisReport.desc': '因子由规则引擎计算，再由模型撰写解读，仅供参考。',
     'analysisReport.cached': '缓存数据',
     'analysisReport.copied': '已复制',
@@ -23,7 +22,6 @@ export default {
   },
   en: {
     'analysisReport.title': 'AI quant report',
-    'analysisReport.deep': 'Deep analysis',
     'analysisReport.desc': 'Factors come from a rule engine; the model writes the commentary. For reference only.',
     'analysisReport.cached': 'Cached',
     'analysisReport.copied': 'Copied',

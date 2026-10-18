@@ -9,7 +9,7 @@
       </span>
     </a>
 
-    <!-- 中间：页内导航。1120px 及以下与手机端收进 ☰ 菜单 -->
+    <!-- 中间：页内导航。1120px 及以下与手机端收进顶部菜单 -->
     <ul
       id="nav-links"
       ref="navLinksRef"
@@ -54,7 +54,7 @@
       </li>
     </ul>
 
-    <!-- 右：状态与快捷操作。手机端的数据源与主题收进 ☰ 菜单，语言切换始终在页头 -->
+    <!-- 右：状态与快捷操作。手机端的数据源与主题收进顶部菜单，语言切换始终在页头 -->
     <div class="nav-actions">
       <button
         type="button"
@@ -566,7 +566,7 @@ onUnmounted(() => {
   display: contents;
 }
 
-/* 中等宽度与手机：☰ 菜单接管导航链接，横屏手机也走这一套 */
+/* 中等宽度与手机：顶部菜单接管导航链接，横屏手机也走这一套 */
 @media (max-width: 1120px), (max-height: 540px) {
   .top-nav {
     padding: 0 max(var(--pad), env(safe-area-inset-right)) 0 max(var(--pad), env(safe-area-inset-left));
