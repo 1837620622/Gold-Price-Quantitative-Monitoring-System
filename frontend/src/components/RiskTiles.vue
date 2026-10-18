@@ -258,6 +258,7 @@ const tiles = computed(() => {
   font-variant-numeric: tabular-nums;
   line-height: 1.15;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .value.tone-up { color: var(--up); }

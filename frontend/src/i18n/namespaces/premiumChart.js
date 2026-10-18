@@ -7,7 +7,7 @@ export default {
     'premiumChart.aria': '国内溢价历史序列图',
     'premiumChart.empty': '溢价样本不足（需要国际金价与汇率历史）',
     'premiumChart.series': '国内溢价',
-    'premiumChart.mean60': '近60日均值',
+    'premiumChart.mean60': '近 60 日均值',
   },
   en: {
     'premiumChart.aria': 'Domestic premium history chart',

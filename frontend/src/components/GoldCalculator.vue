@@ -848,6 +848,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   font-family: var(--font-mono);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* 套利研判：边框与底色保持中性，涨跌色只用于标签文字 */

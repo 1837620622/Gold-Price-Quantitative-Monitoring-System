@@ -6,11 +6,11 @@
 export default {
   zh: {
     'ratio.regime.neutral': '均衡中枢',
-    'ratio.regime.silver-undervalued': '历史极高位（白银极度低估）',
-    'ratio.regime.gold-strong': '偏高区间（避险属性主导）',
+    'ratio.regime.silver-undervalued': '历史高位（白银相对低估）',
+    'ratio.regime.gold-strong': '偏高区间（避险需求主导）',
     'ratio.regime.silver-strong': '偏低区间（工业与通胀驱动）',
-    'ratio.suggestion.neutral': '金银比处于历史合理中枢区间（65–75），贵金属整体估值协同良好。',
-    'ratio.suggestion.silver-undervalued': '金银比突破 85，处于历史极高分位，白银相对金价偏低，可关注均值回归机会。',
+    'ratio.suggestion.neutral': '金银比处于历史中枢区间（65–75），贵金属整体估值较为协调。',
+    'ratio.suggestion.silver-undervalued': '金银比高于 85，处于历史高分位，白银相对黄金偏低，存在均值回归的可能。',
     'ratio.suggestion.gold-strong': '黄金相对白银偏强，避险买盘主导，警惕金银比冲高后动能衰竭。',
     'ratio.suggestion.silver-strong': '金银比处于低位，白银强于黄金，通常反映工业需求与通胀预期偏强。',
   },

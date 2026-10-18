@@ -12,10 +12,10 @@ export default {
     'appHeader.navOverview': '总览',
     'appHeader.navModules': '模块导航',
     'appHeader.navMarket': '实时行情',
-    'appHeader.navSignals': '量化矩阵',
-    'appHeader.navCharts': '多维图表',
+    'appHeader.navSignals': '技术矩阵',
+    'appHeader.navCharts': '图表',
     'appHeader.navArbitrage': '跨市套利',
-    'appHeader.navAi': 'AI研报',
+    'appHeader.navAi': 'AI 研报',
     'appHeader.navTerminal': '进入终端',
   },
   en: {

@@ -294,15 +294,37 @@ textarea {
   color: var(--gold);
 }
 
-/* 中文界面（html[lang] 为 zh）：展示标题用衬线，界面文字用无衬线，去掉英文大写与字距 */
+/* 中文界面（html[lang] 为 zh）的排版：展示标题用衬线，界面文字用无衬线，去掉英文大写与字距
+   正文行距 1.8、字距 0.02em；断行落在标点之后而不是切开词语（word-break: keep-all，如不把“枢轴位”拆开）；
+   标点按中文规则断行（line-break: strict）；超出宽度的长串由 overflow-wrap 兜底，不会溢出容器 */
 :lang(zh) body {
-  line-height: 1.75;
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  word-break: keep-all;
+  line-break: strict;
+  overflow-wrap: break-word;
+}
+
+/* 标题平衡断行，段落避免末行只剩一两个字 */
+:lang(zh) h1,
+:lang(zh) h2,
+:lang(zh) h3,
+:lang(zh) .display,
+:lang(zh) .section-title,
+:lang(zh) .title {
+  text-wrap: balance;
+}
+
+:lang(zh) p,
+:lang(zh) .body-sm,
+:lang(zh) .section-sub {
+  text-wrap: pretty;
 }
 
 :lang(zh) .display {
   font-family: var(--font-serif);
   line-height: 1.25;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
   text-transform: none;
 }
 
@@ -320,13 +342,17 @@ textarea {
   font-size: 12px;
 }
 
-:lang(zh) .body-sm,
+:lang(zh) .body-sm {
+  line-height: 1.8;
+}
+
 :lang(zh) .md {
-  line-height: 1.75;
+  line-height: 1.85;
 }
 
 :lang(zh) .md h1,
-:lang(zh) .md h2 {
+:lang(zh) .md h2,
+:lang(zh) .md h3 {
   letter-spacing: 0;
 }
 

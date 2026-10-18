@@ -525,10 +525,6 @@ onUnmounted(() => {
   transform: scaleX(0);
 }
 
-.main {
-  padding: 0;
-}
-
 /* 锚点滚动：分区顶边落在固定页头（及桌面行情条）之下 16px */
 .block {
   padding-top: clamp(48px, 6vw, 84px);

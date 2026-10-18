@@ -10,7 +10,6 @@ export default {
     'chromeMobile.on': '开',
     'chromeMobile.off': '关',
     'chromeMobile.interval': '自动刷新',
-    'chromeMobile.engineShort': 'Workers AI · DeepSeek-R1',
   },
   en: {
     'chromeMobile.menu': 'Open menu',
@@ -19,6 +18,5 @@ export default {
     'chromeMobile.on': 'On',
     'chromeMobile.off': 'Off',
     'chromeMobile.interval': 'Auto-refresh',
-    'chromeMobile.engineShort': 'Workers AI · DeepSeek-R1',
   },
 };

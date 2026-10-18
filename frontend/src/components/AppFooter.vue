@@ -90,8 +90,8 @@
             <span>{{ t('appFooter.sources') }}</span>
           </div>
           <div class="copyright-row">
-            <span>© 2026 GOLD MONITOR. All rights reserved. Designed for quantitative research.</span>
-            <span>Developed by 传康KK</span>
+            <span>{{ t('appFooter.copyright') }}</span>
+            <span>{{ t('appFooter.developer') }}</span>
           </div>
         </div>
       </div>
@@ -467,31 +467,19 @@ onUnmounted(() => {
     padding: 0 0 calc(14px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* 状态条：一行可横滑的元信息，所有条目保留 */
+  /* 状态条：三组元信息纵向排列，组内换行，不横向滚动，所有条目可见 */
   .terminal-status-bar {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 14px;
-    padding-bottom: 2px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .terminal-status-bar::-webkit-scrollbar {
-    display: none;
   }
 
   .status-col {
     flex: none;
-    flex-wrap: nowrap;
-    gap: 14px;
-  }
-
-  .status-col + .status-col {
-    margin-left: 14px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    width: 100%;
   }
 
   .footer-main-card {
@@ -512,10 +500,15 @@ onUnmounted(() => {
     gap: 8px;
   }
 
+  /* 两枚等宽按钮；标签允许换行，窄屏下不溢出按钮边界 */
   .dev-pills > .dev-pill:not(.static) {
     justify-content: center;
-    height: 44px;
-    padding: 0 10px;
+    min-height: 44px;
+    height: auto;
+    padding: 8px 10px;
+    line-height: 1.3;
+    text-align: center;
+    white-space: normal;
   }
 
   .contacts {

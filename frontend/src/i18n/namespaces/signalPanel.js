@@ -6,11 +6,11 @@
 export default {
   zh: {
     'signalPanel.title': '量化信号',
-    'signalPanel.asOf': '多因子评分 · 基于截至 {asOf} 的日K',
+    'signalPanel.asOf': '多因子评分 · 基于截至 {asOf} 的日 K 线',
     'signalPanel.trend': '趋势 {trend}',
     'signalPanel.regime': '波动 {regime}',
     'signalPanel.confidence': '置信度 {confidence}%',
-    'signalPanel.scoreAria': '量化评分 {score}，范围 -100 到 +100',
+    'signalPanel.scoreAria': '量化评分 {score}，范围 −100 至 +100',
     'signalPanel.weight': '权重 {weight} · {score}',
     'signalPanel.support': '支撑',
     'signalPanel.resistance': '阻力',
