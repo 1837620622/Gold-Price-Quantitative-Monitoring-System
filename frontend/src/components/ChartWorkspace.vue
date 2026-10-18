@@ -251,6 +251,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: none;
 }
 
 .head {
