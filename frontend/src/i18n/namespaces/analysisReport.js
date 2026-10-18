@@ -5,9 +5,9 @@
 
 export default {
   zh: {
-    'analysisReport.title': 'AI 智能量化研报',
-    'analysisReport.deep': '深度推演',
-    'analysisReport.desc': '多因子程序量化计算 + 大模型深度场景推演，提供实盘博弈参考',
+    'analysisReport.title': 'AI 研报',
+    'analysisReport.deep': '深度解读',
+    'analysisReport.desc': '因子由规则引擎计算，再由模型撰写解读，仅供参考。',
     'analysisReport.cached': '缓存数据',
     'analysisReport.copied': '已复制',
     'analysisReport.copy': '复制研报',
@@ -23,8 +23,8 @@ export default {
   },
   en: {
     'analysisReport.title': 'AI quant report',
-    'analysisReport.deep': 'Deep scenario analysis',
-    'analysisReport.desc': 'Rule-based quant factors plus LLM scenario analysis, as a reference for live trading decisions',
+    'analysisReport.deep': 'Deep analysis',
+    'analysisReport.desc': 'Factors come from a rule engine; the model writes the commentary. For reference only.',
     'analysisReport.cached': 'Cached',
     'analysisReport.copied': 'Copied',
     'analysisReport.copy': 'Copy report',

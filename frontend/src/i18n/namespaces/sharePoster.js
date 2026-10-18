@@ -6,7 +6,7 @@
 export default {
   zh: {
     'sharePoster.title': '量化研报海报卡片',
-    'sharePoster.desc': '一键复制或分享黄金实战量化快报',
+    'sharePoster.desc': '复制或分享当前的量化快报',
     'sharePoster.brandTag': '专业黄金量化终端 · 实时研判',
     'sharePoster.domestic': '国内现货 AU9999',
     'sharePoster.intl': '伦敦金 XAU/USD',
@@ -22,7 +22,7 @@ export default {
     'sharePoster.terminal': '量化终端：gold.chuankangkk.top',
     'sharePoster.disclaimer': '仅供研究参考 · 不构成投资建议',
     'sharePoster.close': '关闭',
-    'sharePoster.copied': '✓ 快报文本已复制',
+    'sharePoster.copied': '快报文本已复制',
     'sharePoster.copy': '一键复制快报文本',
     'sharePoster.copyHeader': '【Gold Monitor · 黄金量化研判快报】',
     'sharePoster.copyTime': '生成时间：{time}',
@@ -52,7 +52,7 @@ export default {
     'sharePoster.terminal': 'Quant terminal: gold.chuankangkk.top',
     'sharePoster.disclaimer': 'For research reference only · not investment advice',
     'sharePoster.close': 'Close',
-    'sharePoster.copied': '✓ Flash text copied',
+    'sharePoster.copied': 'Flash text copied',
     'sharePoster.copy': 'Copy flash text',
     'sharePoster.copyHeader': '【Gold Monitor · Gold quant flash report】',
     'sharePoster.copyTime': 'Generated: {time}',

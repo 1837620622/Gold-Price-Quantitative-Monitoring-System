@@ -9,7 +9,7 @@ export default {
     'alerts.intlLabel': '国际 XAU/USD',
     'alerts.condGte': '突破上方目标',
     'alerts.condLte': '跌破下方防线',
-    'alerts.title': '🚨 黄金价格预警：{label} 已达到 {price}',
+    'alerts.title': '黄金价格预警：{label} 已达到 {price}',
     'alerts.body': '目标阈值：{target}（{cond}）。当前最新报价为 {current}。',
   },
   en: {
@@ -17,7 +17,7 @@ export default {
     'alerts.intlLabel': 'International XAU/USD',
     'alerts.condGte': 'breaks above the target',
     'alerts.condLte': 'breaks below the floor',
-    'alerts.title': '🚨 Gold price alert: {label} reached {price}',
+    'alerts.title': 'Gold price alert: {label} reached {price}',
     'alerts.body': 'Target: {target} ({cond}). Latest quote: {current}.',
   },
 };

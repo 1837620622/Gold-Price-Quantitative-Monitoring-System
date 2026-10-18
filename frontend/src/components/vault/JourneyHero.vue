@@ -296,6 +296,7 @@ function exitProgress(p) {
 
 function tick(now) {
   rafId = requestAnimationFrame(tick);
+  window.__vaultDbgFrames = (window.__vaultDbgFrames || 0) + 1; // TEMP-DEBUG
   const dt = lastNow ? Math.min(0.05, (now - lastNow) / 1000) : 1 / 60;
   lastNow = now;
   if (!inView || document.hidden) return;
@@ -450,6 +451,7 @@ onMounted(async () => {
     resizeObserver.observe(stageEl.value);
 
     rafId = requestAnimationFrame(tick);
+    window.__vaultDbg = { coins: () => coins, inView: () => inView, frames: () => window.__vaultDbgFrames || 0, pos: () => coins && coins.positions() }; // TEMP-DEBUG
 
     if (!reduced) {
       on(window, 'pointermove', onPointerMove, { passive: true });
