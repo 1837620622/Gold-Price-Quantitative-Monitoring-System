@@ -70,6 +70,15 @@ export function toStooqCsv(bars) {
   return ['Date,Open,High,Low,Close,Volume', ...rows].join('\n');
 }
 
+// 银价日线：由金价按一条缓慢波动的金银比推出（约 54–66），用于金银比序列测试
+export function silverFromGold(intl) {
+  const f = (v, r) => Math.round((v / r) * 1000) / 1000;
+  return intl.map((b, i) => {
+    const r = 60 + 6 * Math.sin(i / 25);
+    return { date: b.date, open: f(b.open, r), high: f(b.high, r), low: f(b.low, r), close: f(b.close, r), volume: 0 };
+  });
+}
+
 export function toYahooChart(bars) {
   const timestamp = bars.map((b) => Date.parse(`${b.date}T00:00:00Z`) / 1000);
   const last = bars[bars.length - 1];
@@ -121,6 +130,7 @@ export function makeUpstream({ intl, domestic, fx, fail = {}, pushOk = true, aiO
       const symbol = new URL(u).searchParams.get('s');
       if (symbol === 'xauusd') return fail.stooq ? text('No data') : text(toStooqCsv(intl));
       if (symbol === 'usdcny') return fail.stooqFx ? text('No data') : text(toStooqCsv(fx));
+      if (symbol === 'xagusd') return fail.stooqSilver ? text('No data') : text(toStooqCsv(silverFromGold(intl)));
       return text('No data');
     }
 

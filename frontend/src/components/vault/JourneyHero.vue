@@ -44,6 +44,13 @@
 
       <canvas ref="coinEl" class="layer layer-coins" aria-hidden="true"></canvas>
 
+      <!-- 无 WebGL：用扁平的静态金条代替三维场景，位置与三维金条一致，不用渐变 -->
+      <svg v-if="noGL" class="nogl-ingot" viewBox="0 0 240 120" aria-hidden="true" focusable="false">
+        <path d="M24 74 L44 46 H196 L216 74 Z" style="fill: var(--gold-3)" />
+        <path d="M24 74 H216 V108 H24 Z" style="fill: var(--gold-2)" />
+        <rect x="92" y="60" width="56" height="10" style="fill: var(--gold-deep)" />
+      </svg>
+
       <div ref="anchorEl" class="pill-anchor">
         <div class="pill-shell">
           <button
@@ -570,6 +577,30 @@ onBeforeUnmount(() => {
 
 .journey.is-nogl .layer {
   display: none;
+}
+
+.nogl-ingot {
+  display: none;
+}
+
+.journey.is-nogl .nogl-ingot {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 72%;
+  width: min(62vw, 300px);
+  height: auto;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .journey.is-nogl .nogl-ingot {
+    left: 66%;
+    top: 44%;
+    width: min(26vw, 380px);
+  }
 }
 
 /* 标题、说明为一列自上而下排布：说明永远在标题下方，不会互相覆盖 */

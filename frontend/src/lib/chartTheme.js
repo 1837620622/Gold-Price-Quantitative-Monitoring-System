@@ -38,7 +38,7 @@ export function chartPalette(theme) {
       kdjD: '#3d7fe0',
       kdjJ: '#c45a7a',
       score: '#f6dea4',
-      ratio: '#3d7fe0',
+      ratio: '#9aa4b2',
       band: 'rgba(232,199,125,0.10)',
       mean: 'rgba(243,239,230,0.45)',
       equity: {
@@ -77,7 +77,7 @@ export function chartPalette(theme) {
     kdjD: '#2563eb',
     kdjJ: '#c2416a',
     score: '#8c6a2b',
-    ratio: '#2563eb',
+    ratio: '#5f6b7a',
     band: 'rgba(156,116,36,0.12)',
     mean: 'rgba(21,19,14,0.45)',
     equity: {

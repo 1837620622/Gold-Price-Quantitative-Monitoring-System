@@ -78,9 +78,9 @@
       <div v-if="ratioData" class="premium-stats">
         <div><span class="stat-label">{{ t('chartWorkspace.ratioNow') }}</span><b class="tone-up">{{ fmt(ratioData.current) }}</b></div>
         <div><span class="stat-label">{{ t('chartWorkspace.ratioMean') }}</span><b>{{ fmt(ratioData.mean) }}</b></div>
-        <div><span class="stat-label">{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ fmt(ratioData.percentile, 0) }}%</b></div>
-        <div><span class="stat-label">{{ t('chartWorkspace.regime') }}</span><b class="stat-text">{{ tLabel(ratioData.label) }}</b></div>
-        <div><span class="stat-label">{{ t('chartWorkspace.pairHint') }}</span><span class="stat-note">{{ ratioData.suggestion }}</span></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ ratioData.percentile == null ? '--' : `${ratioData.percentile}%` }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.regime') }}</span><b class="stat-text">{{ t(`ratio.regime.${ratioData.signal}`) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.pairHint') }}</span><span class="stat-note">{{ t(`ratio.suggestion.${ratioData.signal}`) }}</span></div>
       </div>
       <div v-if="ratioLoading" class="notice">{{ t('chartWorkspace.ratioLoading') }}</div>
       <RatioChart v-else :series="ratioData?.series || []" :stats="ratioData" :theme="theme" />
