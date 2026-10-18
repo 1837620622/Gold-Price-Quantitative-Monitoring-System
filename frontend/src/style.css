@@ -73,6 +73,17 @@
   --dur-fast: 0.18s;
   --dur: 0.36s;
   --dur-slow: 0.8s;
+
+  /* 顶部固定区高度：页头 + 行情条。吸顶元素的 top / 锚点偏移都以此为准 */
+  --nav-h: 56px;
+  --ticker-h: 39px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --nav-h: 52px;
+    --ticker-h: 0px;
+  }
 }
 
 /* ---------- 浅色：纸本金 ---------- */
