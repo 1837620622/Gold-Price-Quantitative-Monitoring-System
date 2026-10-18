@@ -561,7 +561,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-modal);
 }
 
-/* 图标按钮的读屏名称放在 aria-label 上，不再需要隐藏文字 */
+/* Teleport 挂载点：手机端菜单里的行情控件挂在这里，本身不占位 */
 .nav-tools-slot {
   display: contents;
 }
@@ -632,6 +632,7 @@ onUnmounted(() => {
 
   .nav-links .mobile-pill {
     width: 100%;
+    border-radius: 2px;
     min-height: 44px;
     height: auto;
     padding: 0 16px;

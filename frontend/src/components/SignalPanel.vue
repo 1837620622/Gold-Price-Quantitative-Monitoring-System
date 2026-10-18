@@ -100,6 +100,7 @@ function fillStyle(value) {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: none;
 }
 
 .head {
@@ -112,11 +113,18 @@ function fillStyle(value) {
 
 .title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+:lang(zh) .title {
+  letter-spacing: 0;
 }
 
 .sub {
@@ -131,6 +139,7 @@ function fillStyle(value) {
   flex-wrap: wrap;
 }
 
+/* 结论：展示字；涨跌色作用于结论与分数 */
 .verdict {
   display: flex;
   align-items: baseline;
@@ -139,18 +148,25 @@ function fillStyle(value) {
 }
 
 .verdict-label {
-  font-size: 26px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
   letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+:lang(zh) .verdict-label {
+  letter-spacing: 0;
 }
 
 .verdict-score {
-  font-family: var(--font-display), var(--mono);
-  font-stretch: 110%;
+  font-family: var(--font-mono);
   font-size: 21px;
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .verdict-conf {
@@ -159,10 +175,16 @@ function fillStyle(value) {
 }
 
 .verdict.tone-up .verdict-label,
-.verdict.tone-up .verdict-score { color: var(--up); }
-.verdict.tone-down .verdict-label,
-.verdict.tone-down .verdict-score { color: var(--down); }
+.verdict.tone-up .verdict-score {
+  color: var(--up);
+}
 
+.verdict.tone-down .verdict-label,
+.verdict.tone-down .verdict-score {
+  color: var(--down);
+}
+
+/* 评分刻度：中性轨道，中段略亮；金色指针 */
 .meter {
   position: relative;
   padding-bottom: 18px;
@@ -170,30 +192,30 @@ function fillStyle(value) {
 
 .meter-track {
   display: flex;
-  height: 10px;
-  border-radius: 999px;
+  height: 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  background: var(--surface-2);
 }
 
 .meter-zone {
   flex: 1;
 }
 
-.zone-down { background: rgba(16, 185, 129, 0.55); }
-.zone-mid { background: var(--surface-2); flex: 0.8; }
-.zone-up { background: rgba(239, 68, 68, 0.55); }
+.zone-down { background: var(--surface-2); }
+.zone-mid { background: var(--surface-hover); flex: 0.8; }
+.zone-up { background: var(--surface-2); }
 
 .meter-marker {
   position: absolute;
-  top: -5px;
-  width: 4px;
-  height: 20px;
-  margin-left: -2px;
-  border-radius: 2px;
-  background: var(--text);
-  box-shadow: 0 0 0 3px var(--surface);
-  transition: left 0.4s ease;
+  top: -6px;
+  width: 3px;
+  height: 18px;
+  margin-left: -1.5px;
+  border-radius: 1px;
+  background: var(--gold);
+  transition: left 0.4s var(--ease-out);
 }
 
 .meter-scale {
@@ -203,9 +225,10 @@ function fillStyle(value) {
   bottom: 0;
   display: flex;
   justify-content: space-between;
+  font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--text-3);
   font-variant-numeric: tabular-nums;
+  color: var(--text-3);
 }
 
 .components {
@@ -213,33 +236,38 @@ function fillStyle(value) {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .comp-head {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: 8px;
   font-size: 13px;
 }
 
 .comp-name {
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--text);
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
 .comp-meta {
-  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  color: var(--text-2);
   white-space: nowrap;
 }
 
 .comp-bar {
   position: relative;
-  height: 6px;
-  margin: 6px 0 4px;
-  border-radius: 999px;
+  height: 4px;
+  margin: 8px 0 6px;
+  border-radius: 2px;
   background: var(--surface-2);
 }
 
@@ -247,25 +275,25 @@ function fillStyle(value) {
   content: '';
   position: absolute;
   left: 50%;
-  top: -2px;
-  bottom: -2px;
+  top: -3px;
+  bottom: -3px;
   width: 1px;
-  background: var(--border-strong);
+  background: var(--line-strong);
 }
 
+/* 分量条从中线向两侧延伸，方向由位置表达，颜色保持中性 */
 .comp-fill {
   position: absolute;
   top: 0;
   bottom: 0;
-  border-radius: 999px;
+  border-radius: 2px;
+  background: var(--text-2);
 }
-
-.comp-fill.pos { background: var(--up); }
-.comp-fill.neg { background: var(--down); }
 
 .comp-reason {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
 }
 
@@ -273,32 +301,48 @@ function fillStyle(value) {
   margin: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
+  gap: 14px 16px;
   padding-top: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
 }
 
 .levels dt {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-3);
+}
+
+:lang(zh) .levels dt {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .levels dd {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .disclaimer {
-  font-size: 12px;
-  color: var(--text-3);
+  margin: 0;
+  font-size: 13px;
   line-height: 1.6;
+  color: var(--text-2);
 }
 
 @media (max-width: 767px) {
   .signal {
     gap: 14px;
+  }
+
+  .title {
+    font-size: 18px;
   }
 
   .verdict-label {
@@ -313,12 +357,12 @@ function fillStyle(value) {
     gap: 8px;
   }
 
-  /* 因子卡片：标题、权重与理由上下堆叠，内边距收紧 */
+  /* 因子卡片：标题、权重与理由上下堆叠，发丝边收紧 */
   .comp {
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: transparent;
   }
 
   .comp-head {
@@ -328,22 +372,8 @@ function fillStyle(value) {
     font-size: 14px;
   }
 
-  .comp-meta {
-    font-size: 12px;
-  }
-
-  .comp-reason {
-    font-size: 13px;
-    line-height: 1.55;
-    overflow-wrap: break-word;
-  }
-
   .levels {
     gap: 10px 12px;
-  }
-
-  .disclaimer {
-    font-size: 12px;
   }
 }
 </style>
