@@ -1,13 +1,15 @@
 /**
  * ============================================================
  * 金库贴图：所有 Canvas 绘制集中在这里
- * - 金币面标签、金条顶部铭牌、远墙 K 线画布、墙面投影字（Anton）
+ * - 金币面标签（等宽）、金条顶部铭牌（衬线大字 + 等宽小字）、远墙 K 线画布、墙面投影字（衬线）
  * - 画布文字依赖字体，使用前先 await prepareFonts()
  * ============================================================
  */
 
-export const DISPLAY_STACK = "Anton, Impact, 'Arial Narrow Bold', sans-serif";
-export const MONO_STACK = "'JetBrains Mono', 'SF Mono', Consolas, monospace";
+// 展示字（墙面字、金条大字）：与 style.css 的 --font-serif 一致；coins.js 的帽线测量也使用它
+export const DISPLAY_STACK = "'Newsreader', 'Noto Serif SC', Georgia, 'Times New Roman', serif";
+// 数字与元信息（金币标签、行情、时间戳）：与 --font-mono 一致
+export const MONO_STACK = "'IBM Plex Mono', 'SF Mono', Consolas, ui-monospace, monospace";
 export const GOLD = '#e8c77d';
 export const GOLD_HI = '#f6dea4';
 export const GOLD_DEEP = '#8c6a2b';
@@ -19,7 +21,12 @@ const MA_PERIOD = 20;
 export async function prepareFonts() {
   if (typeof document === 'undefined' || !document.fonts) return;
   try {
-    await Promise.all([document.fonts.load('400 120px Anton'), document.fonts.load("500 16px 'JetBrains Mono'")]);
+    // 画布绘制前加载字体；加载失败时 ctx.font 回落到字体栈中的下一项
+    await Promise.all([
+      document.fonts.load("500 64px 'Newsreader'"),
+      document.fonts.load("600 64px 'Newsreader'"),
+      document.fonts.load("500 16px 'IBM Plex Mono'"),
+    ]);
   } catch {
     // 字体加载失败时使用回退字体，不影响主流程
   }
@@ -112,7 +119,7 @@ export function paintCoinFace(label, size = 512, canvas) {
   // 5. 压印文字与阴影（高对比立体雕刻感）
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  fitFont(ctx, label, size * 0.72, size * 0.24, 700);
+  fitFont(ctx, label, size * 0.72, size * 0.24, 500, MONO_STACK);
 
   // 下层浅色高光（雕刻内边缘反光）
   ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
@@ -167,24 +174,24 @@ export function paintIngotLabel(text = 'AU 999.9', width = 1024, height = 512, c
   ctx.textBaseline = 'middle';
 
   // 1. 上标：上海黄金交易所
-  ctx.font = `600 ${Math.round(height * 0.075)}px ${DISPLAY_STACK}`;
+  fitFont(ctx, 'SHANGHAI GOLD EXCHANGE · SGE PHYSICAL ANCHOR', width * 0.78, height * 0.075, 500, MONO_STACK);
   ctx.fillStyle = 'rgba(69, 26, 3, 0.85)';
   ctx.fillText('SHANGHAI GOLD EXCHANGE · SGE PHYSICAL ANCHOR', width / 2, height * 0.23);
 
   // 2. 主标：AU 999.9 纯金粗衬线雕印
-  ctx.font = `900 ${Math.round(height * 0.28)}px ${DISPLAY_STACK}`;
+  fitFont(ctx, text, width * 0.8, height * 0.28, 600, DISPLAY_STACK);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
   ctx.fillText(text, width / 2, height * 0.51);
   ctx.fillStyle = 'rgba(69, 26, 3, 0.95)';
   ctx.fillText(text, width / 2, height * 0.495);
 
   // 3. 中副标：FINE GOLD 1000g
-  ctx.font = `700 ${Math.round(height * 0.085)}px ${MONO_STACK}`;
+  fitFont(ctx, 'FINE GOLD 1000g · NET PURITY 99.99%', width * 0.8, height * 0.085, 500, MONO_STACK);
   ctx.fillStyle = 'rgba(69, 26, 3, 0.85)';
   ctx.fillText('FINE GOLD 1000g · NET PURITY 99.99%', width / 2, height * 0.72);
 
   // 4. 底标：验金师印章与量化序列号
-  ctx.font = `500 ${Math.round(height * 0.055)}px ${MONO_STACK}`;
+  fitFont(ctx, 'MELTER ASSAYER · NO. 2026-QUANT-ALPHA-001', width * 0.8, height * 0.055, 500, MONO_STACK);
   ctx.fillStyle = 'rgba(120, 53, 15, 0.7)';
   ctx.fillText('MELTER ASSAYER · NO. 2026-QUANT-ALPHA-001', width / 2, height * 0.87);
 
@@ -206,7 +213,7 @@ export function paintShadow(size = 128, canvas) {
   return c;
 }
 
-// 墙面投影字：透明底上的 Anton 大写，颜色由昼夜调色板决定（夜间金色，日间深金）
+// 墙面投影字：透明底上的衬线字（Newsreader 500），颜色由昼夜调色板决定（夜间金色，日间深金）
 export function paintLettering(word, width = 1024, height = 256, canvas, color = GOLD) {
   const c = makeCanvas(width, height, canvas);
   const ctx = c.getContext('2d');
@@ -214,7 +221,7 @@ export function paintLettering(word, width = 1024, height = 256, canvas, color =
   ctx.fillStyle = color;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  fitFont(ctx, word, width * 0.92, height * 0.78);
+  fitFont(ctx, word, width * 0.92, height * 0.78, 500, DISPLAY_STACK);
   ctx.fillText(word, width / 2, height / 2 + height * 0.03);
   return c;
 }
@@ -247,7 +254,6 @@ const CHART_PALETTE = {
     title: '#e2e8f0',
     grid: 'rgba(232, 199, 125, 0.09)',
     ma: '#f59e0b',
-    glow: 'rgba(245, 158, 11, 0.5)',
     muted: 'rgba(243, 239, 230, 0.5)',
     up: UP,
     down: DOWN,
@@ -261,14 +267,13 @@ const CHART_PALETTE = {
     title: '#15130e',
     grid: 'rgba(122, 88, 24, 0.12)',
     ma: '#a77a24',
-    glow: null,
     muted: '#6d6758',
     up: '#dc2626',
     down: '#059669',
   },
 };
 
-// 远墙 K 线：指挥中心终端屏，集成标头、实时标识与 60 根日 K 线；mode 为 'dark'（夜间）或 'light'（日间）
+// 远墙 K 线：标题条、实时状态与 60 根日 K 线；mode 为 'dark'（夜间）或 'light'（日间）
 export function paintCandleChart(bars, width = 1024, height = 512, canvas, mode = 'dark') {
   const pal = CHART_PALETTE[mode] ?? CHART_PALETTE.dark;
   const c = makeCanvas(width, height, canvas);
@@ -281,7 +286,7 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas, mode 
   ctx.lineWidth = 3;
   ctx.strokeRect(6, 6, width - 12, height - 12);
 
-  // 顶栏高科技 HUD 标头
+  // 顶栏标题条
   ctx.fillStyle = pal.hud;
   ctx.fillRect(6, 6, width - 12, 38);
   ctx.strokeStyle = pal.hudLine;
@@ -297,15 +302,15 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas, mode 
   ctx.arc(24, 25, 5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.font = `600 14px ${MONO_STACK}`;
+  ctx.font = `500 14px ${MONO_STACK}`;
   ctx.fillStyle = pal.title;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText('LIVE QUANTITATIVE TERMINAL · SGE AU9999 · 60-BAR KLINE', 38, 25);
+  ctx.fillText('SGE AU9999 · DAILY K-LINE · 60 BARS', 38, 25);
 
   ctx.textAlign = 'right';
   ctx.fillStyle = pal.down;
-  ctx.fillText('[REALTIME FEED · CONNECTED]', width - 24, 25);
+  ctx.fillText('REALTIME · CONNECTED', width - 24, 25);
 
   // 网格
   drawGrid(ctx, width, height, pal.grid);
@@ -335,14 +340,10 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas, mode 
   const step = (width - 16) / count;
   const bodyWidth = Math.max(4, step * 0.58);
 
-  // 绘制 MA20 均线（夜间金色发光，日间实线）
+  // 绘制 MA20 均线（实线，不发光）
   const closes = valid.map((b) => b.close);
   ctx.strokeStyle = pal.ma;
   ctx.lineWidth = 3;
-  if (pal.glow) {
-    ctx.shadowColor = pal.glow;
-    ctx.shadowBlur = 8;
-  }
   ctx.beginPath();
   let started = false;
   for (let i = start; i < valid.length; i += 1) {
@@ -356,7 +357,6 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas, mode 
     started = true;
   }
   ctx.stroke();
-  ctx.shadowBlur = 0;
 
   // 绘制 K 线实体与上下影线
   slice.forEach((b, i) => {

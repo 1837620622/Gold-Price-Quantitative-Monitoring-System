@@ -49,7 +49,7 @@ const WEIGHT = { price: 2.4, volume: 1.3, score: 1, macd: 1.1, rsi: 1, kdj: 1.1 
 function yAxisOf(pane, gridIndex, pal) {
   const base = { gridIndex, axisLine: { show: false }, axisTick: { show: false }, splitNumber: 3 };
   const grid = { lineStyle: { color: pal.grid, type: 'dashed' } };
-  const label = (show) => ({ show, color: pal.muted, fontSize: 11 });
+  const label = (show) => ({ show, color: pal.muted, fontSize: 11, fontFamily: pal.mono });
   const configs = {
     price: { scale: true, axisLabel: { ...label(true), formatter: (v) => fmtVal(v, 0) }, splitLine: grid },
     volume: { min: 0, max: (v) => v.max * 3, axisLabel: label(false), splitLine: { show: false } },
@@ -116,7 +116,7 @@ function buildOption() {
       boundaryGap: true,
       axisLine: { lineStyle: { color: pal.axis } },
       axisTick: { show: false },
-      axisLabel: { show: i === panes.length - 1, color: pal.muted, fontSize: 11, hideOverlap: true },
+      axisLabel: { show: i === panes.length - 1, color: pal.muted, fontSize: 11, hideOverlap: true, fontFamily: pal.mono },
       splitLine: { show: false },
     });
     yAxis.push(yAxisOf(pane, i, pal));

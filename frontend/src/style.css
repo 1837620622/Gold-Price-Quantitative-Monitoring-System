@@ -1,9 +1,12 @@
 /* ============================================================
    Gold Monitor · 金融量化黄金终端 · 设计系统（Vault Noir）
-   - 基调：金库暗场。金色只做强调：关键数值、焦点、主按钮
-   - 字体：Anton 大写展示字 · JetBrains Mono 等宽数值 · Inter 正文
-   - 涨跌：中国市场惯例，红涨绿跌（语义色，不做装饰）
-   - 动效：统一缓动与时长；滚动与入场交给 GSAP，CSS 只做微交互
+   - 基调：金库暗场与纸本金。金色只做强调（关键数值、焦点、主按钮），一律使用纯色令牌
+   - 表面：无渐变、无光晕、无装饰底纹。卡片为纯色底加 1px 发丝边，不用阴影；
+     弹层、抽屉、底部面板统一使用 --shadow-modal
+   - 字体：Newsreader 与 Noto Serif SC 作展示字；IBM Plex Sans 与 Noto Sans SC 作界面正文；
+     IBM Plex Mono 作数字与元信息
+   - 涨跌：中国市场惯例，红涨绿跌（语义色，只用于数值与标签文字）
+   - 动效：统一缓动与时长；入场与滚动交给 GSAP，CSS 只做微交互
    ============================================================ */
 
 /* ---------- 深色（默认） ---------- */
@@ -36,11 +39,12 @@
   --gold-2: #c9a14a;
   --gold-3: #f6dea4;
   --gold-deep: #8c6a2b;
-  --gold-btn: linear-gradient(135deg, #f6dea4 0%, #e8c77d 48%, #c9a14a 100%);
-  --gold-btn-hover: linear-gradient(135deg, #fff2cc 0%, #f6dea4 48%, #e8c77d 100%);
+  /* 金色令牌均为纯色。主按钮为纯色金底，悬停只用 color-mix 略提亮 */
+  --gold-btn: var(--gold);
+  --gold-btn-hover: color-mix(in srgb, var(--gold) 88%, #fff);
   --gold-btn-ink: #0a0907;
   --gold-ink: #0a0907;
-  --gold-grad: linear-gradient(90deg, #f6dea4 0%, #e8c77d 45%, #b8892e 100%);
+  --gold-grad: var(--gold);
 
   --up: #ef4444;
   --up-bg: rgba(239, 68, 68, 0.12);
@@ -54,25 +58,31 @@
   --danger: #f87171;
   --danger-bg: rgba(248, 113, 113, 0.12);
 
-  --shadow: 0 30px 70px -44px rgba(0, 0, 0, 0.95);
-  --shadow-hover: 0 36px 80px -44px rgba(0, 0, 0, 0.98);
+  /* 阴影：卡片与小方块不用。旧令牌置为 none；弹层、抽屉、底部面板只用 --shadow-modal */
+  --shadow: none;
+  --shadow-hover: none;
+  --shadow-modal: 0 24px 60px -24px rgba(0, 0, 0, 0.8);
 
-  --radius: 6px;
-  --radius-lg: 10px;
-  --radius-pill: 999px;
+  --radius: 3px;
+  --radius-lg: 4px;
+  --radius-pill: 2px;
 
-  --font-display: 'Anton', 'Impact', 'Arial Narrow Bold', sans-serif;
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Segoe UI', Roboto, sans-serif;
-  --mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', Consolas, ui-monospace, Menlo, monospace;
+  --font-serif: 'Newsreader', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, 'Times New Roman', serif;
+  --font-sans: 'IBM Plex Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', 'Roboto Mono', Consolas, ui-monospace, Menlo, monospace;
+  --font-display: var(--font-serif);
+  --font: var(--font-sans);
+  --mono: var(--font-mono);
 
   --pad: clamp(16px, 3.2vw, 44px);
 
-  /* 动效令牌：全站共用，组件不再各自定义曲线 */
+  /* 动效令牌：全站共用。常规过渡 160–240ms，入场 450ms，GoldRule 描绘 1.1s */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-pill: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --dur-fast: 0.18s;
-  --dur: 0.36s;
-  --dur-slow: 0.8s;
+  --dur-fast: 0.16s;
+  --dur: 0.22s;
+  --dur-slow: 0.45s;
+  --dur-draw: 1.1s;
 
   /* 顶部固定区高度：页头 + 行情条。吸顶元素的 top / 锚点偏移都以此为准 */
   --nav-h: 56px;
@@ -115,11 +125,12 @@
   --gold-2: #8c6a2b;
   --gold-3: #b8892e;
   --gold-deep: #6b4f18;
-  --gold-btn: linear-gradient(135deg, #c9a14a 0%, #a77a24 100%);
-  --gold-btn-hover: linear-gradient(135deg, #d9b35f 0%, #b8892e 100%);
+  /* 纸本金的主按钮用更深的金，白字对比度 ≥ 4.5:1（AA），悬停再加深 */
+  --gold-btn: #94691c;
+  --gold-btn-hover: #7f5a17;
   --gold-btn-ink: #ffffff;
   --gold-ink: #ffffff;
-  --gold-grad: linear-gradient(90deg, #b8892e 0%, #8c6a2b 100%);
+  --gold-grad: var(--gold);
 
   --up: #dc2626;
   --up-bg: rgba(220, 38, 38, 0.09);
@@ -133,8 +144,16 @@
   --danger: #dc2626;
   --danger-bg: rgba(220, 38, 38, 0.09);
 
-  --shadow: 0 30px 60px -44px rgba(60, 40, 10, 0.28);
-  --shadow-hover: 0 36px 70px -44px rgba(60, 40, 10, 0.34);
+  --shadow: none;
+  --shadow-hover: none;
+  --shadow-modal: 0 24px 56px -24px rgba(60, 40, 10, 0.3);
+
+  --font-serif: 'Newsreader', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, 'Times New Roman', serif;
+  --font-sans: 'IBM Plex Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', 'Roboto Mono', Consolas, ui-monospace, Menlo, monospace;
+  --font-display: var(--font-serif);
+  --font: var(--font-sans);
+  --mono: var(--font-mono);
 }
 
 /* ---------- 基础 ---------- */
@@ -150,22 +169,17 @@ html {
   overflow-x: clip;
 }
 
-/* 全站细网格：坐标纸质感，只作底纹，向下逐渐淡出 */
+/* 纯色底，不做网格、光晕或渐变底纹 */
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: clip;
   font-family: var(--font);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
+  font-optical-sizing: auto;
   color: var(--text);
   background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse 80% 55% at 50% 0%, transparent 0%, var(--bg) 100%),
-    linear-gradient(var(--line-faint) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line-faint) 1px, transparent 1px);
-  background-size: auto, 120px 120px, 120px 120px;
-  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -183,6 +197,14 @@ p {
   margin: 0;
 }
 
+/* 表单与按钮沿用正文字体，避免落回系统默认字体 */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 ::selection {
   background: var(--gold);
   color: var(--gold-ink);
@@ -191,7 +213,7 @@ p {
 :where(button, a, [role="tab"]):focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: var(--radius);
 }
 
 .app {
@@ -219,10 +241,10 @@ p {
   top: 8px;
   z-index: 100;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: var(--gold-btn);
-  color: var(--gold-btn-ink);
-  font-weight: 600;
+  color: var(--gold-ink);
+  font-weight: 500;
 }
 
 .skip-link:focus {
@@ -236,13 +258,13 @@ p {
   border-top: 1px solid var(--line);
 }
 
-/* ---------- 排版 ---------- */
+/* ---------- 排版：展示字为 Newsreader（中文为 Noto Serif SC），正文 IBM Plex Sans，数字 IBM Plex Mono ---------- */
 .display {
   font-family: var(--font-display);
-  font-weight: 400;
-  text-transform: uppercase;
-  line-height: 0.9;
-  letter-spacing: 0.005em;
+  font-weight: 500;
+  text-transform: none;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 .label {
@@ -262,61 +284,65 @@ p {
 }
 
 .body-sm {
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
 }
 
+/* 渐变文字已取消：类名保留，改为纯金色文字 */
 .grad-text {
-  background: var(--gold-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: var(--gold);
 }
 
-.tone-up {
-  color: var(--up);
+/* 中文界面（html[lang] 为 zh）：展示标题用衬线，界面文字用无衬线，去掉英文大写与字距 */
+:lang(zh) body {
+  line-height: 1.75;
 }
 
-.tone-down {
-  color: var(--down);
+:lang(zh) .display {
+  font-family: var(--font-serif);
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.tone-flat {
-  color: var(--flat);
+:lang(zh) .label,
+:lang(zh) .chip,
+:lang(zh) .seg button,
+:lang(zh) .btn,
+:lang(zh) .pill {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-/* ---------- 卡片：实体面板 + 指针高光（不位移、不发光） ---------- */
+:lang(zh) .label {
+  font-size: 12px;
+}
+
+:lang(zh) .body-sm,
+:lang(zh) .md {
+  line-height: 1.75;
+}
+
+:lang(zh) .md h1,
+:lang(zh) .md h2 {
+  letter-spacing: 0;
+}
+
+/* ---------- 卡片：纯色底 + 1px 发丝边；无阴影、无光晕、无左侧色条 ---------- */
 .card {
   position: relative;
-  isolation: isolate;
-  --spot-opacity: 0;
   background: var(--surface-card);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
   padding: 20px;
   transition: border-color var(--dur) var(--ease-out);
 }
 
-/* 指针高光层：useSpotlight 写入 --mx / --my；层本身即卡片内框，不会溢出 */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(232, 199, 125, 0.09), transparent 70%);
-  opacity: var(--spot-opacity);
-  transition: opacity var(--dur) var(--ease-out);
-}
-
-/* 悬停高光只在精确指针上启用，触屏点击后不会残留 */
+/* 悬停只加深发丝边；仅精确指针生效，触屏点击后不残留 */
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
-    --spot-opacity: 1;
     border-color: var(--line-strong);
   }
 }
@@ -324,11 +350,10 @@ p {
 @media (max-width: 767px) {
   .card {
     padding: 16px;
-    border-radius: 8px;
   }
 }
 
-/* ---------- 标签 ---------- */
+/* ---------- 标签与芯片：发丝边，透明或极淡底色，不发光 ---------- */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -336,7 +361,7 @@ p {
   height: 22px;
   padding: 0 8px;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-2);
   font-family: var(--mono);
@@ -347,20 +372,21 @@ p {
   white-space: nowrap;
 }
 
+/* 激活态：金色发丝边 + 淡金底 */
 .chip-gold {
-  background: var(--gold);
-  border-color: transparent;
-  color: var(--gold-ink);
-  font-weight: 700;
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  color: var(--gold-2);
+  font-weight: 500;
 }
 
 .chip-warn {
-  border-color: transparent;
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
   background: var(--warn-bg);
   color: var(--warn);
 }
 
-/* 实时状态点：绿色缓慢呼吸，表示数据在更新（循环动画只保留给它与加载态） */
+/* 实时状态点：绿色缓慢呼吸，只做透明度（循环动画只保留给它与加载态） */
 .live-dot {
   width: 6px;
   height: 6px;
@@ -369,19 +395,19 @@ p {
   animation: dot-pulse 3.2s ease-in-out infinite;
 }
 
-/* ---------- 按钮 ---------- */
+/* ---------- 按钮：标签与按钮字重 500；主按钮为纯色金底 ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 40px;
+  height: 44px;
   padding: 0 18px;
   border: 1px solid transparent;
   border-radius: var(--radius);
   font: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.02em;
   text-decoration: none;
   white-space: nowrap;
@@ -403,22 +429,23 @@ p {
   transform: none !important;
 }
 
+/* 小按钮与极小按钮：可点高度仍不低于 36px */
 .btn-sm {
-  height: 32px;
+  height: 36px;
   padding: 0 12px;
-  border-radius: 5px;
+  border-radius: var(--radius);
   font-size: 12px;
 }
 
 .btn-xs {
-  height: 28px;
+  height: 36px;
   padding: 0 10px;
   font-size: 11px;
 }
 
 .btn-primary {
   background: var(--gold-btn);
-  color: var(--gold-btn-ink);
+  color: var(--gold-ink);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -436,23 +463,21 @@ p {
 @media (hover: hover) and (pointer: fine) {
   .btn-ghost:hover:not(:disabled) {
     border-color: var(--gold);
-    color: var(--gold-3);
+    color: var(--gold-2);
   }
 }
 
-/* 胶囊按钮：半透明毛玻璃，悬停时描金边 */
+/* 胶囊按钮：纯色底，悬停时描金边 */
 .pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 40px;
+  height: 44px;
   padding: 0 20px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-card) 72%, transparent);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: var(--surface-card);
   color: var(--text);
   font-family: var(--font);
   font-size: 13px;
@@ -467,24 +492,24 @@ p {
     background var(--dur) var(--ease-out);
 }
 
-/* 胶囊悬停只改描边与颜色，不再上移；仅精确指针生效 */
+/* 胶囊悬停只改描边与颜色，不上移；仅精确指针生效 */
 @media (hover: hover) and (pointer: fine) {
   .pill:hover {
     border-color: var(--gold);
-    color: var(--gold-3);
+    color: var(--gold-2);
   }
 
   .pill-gold:hover {
     background: var(--gold-btn-hover);
-    color: var(--gold-btn-ink);
+    color: var(--gold-ink);
   }
 }
 
 .pill-gold {
   background: var(--gold-btn);
   border-color: transparent;
-  color: var(--gold-btn-ink);
-  font-weight: 600;
+  color: var(--gold-ink);
+  font-weight: 500;
 }
 
 /* 旧类名保留为别名，避免破坏尚未迁移的组件 */
@@ -495,9 +520,9 @@ p {
   color: var(--text);
   font: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 0 18px;
-  height: 40px;
+  height: 44px;
   cursor: pointer;
 }
 
@@ -528,7 +553,7 @@ p {
   transform: translateY(1px);
 }
 
-/* ---------- 分段控件：等宽字体 + 金色下划线指示当前项 ---------- */
+/* ---------- 分段控件：等宽字体，金色下划线指示当前项；可点高度不低于 36px ---------- */
 .seg {
   display: inline-flex;
   gap: 2px;
@@ -539,9 +564,11 @@ p {
 }
 
 .seg button {
+  min-height: 36px;
   padding: 7px 12px;
   border: 0;
-  border-radius: 4px;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-2);
   font-family: var(--mono);
@@ -561,8 +588,8 @@ p {
 .seg button.active,
 .seg button[aria-selected="true"] {
   background: var(--surface-hover);
-  color: var(--gold-3);
-  box-shadow: inset 0 -2px 0 var(--gold);
+  color: var(--text);
+  border-bottom-color: var(--gold);
 }
 
 .seg-sm button {
@@ -571,21 +598,11 @@ p {
 }
 
 /* ---------- 骨架屏、加载与提示 ---------- */
+/* 骨架为纯色占位，不做闪烁循环；加载反馈只保留转圈与点 */
 .skeleton {
   display: inline-block;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-hover) 50%, var(--surface-2) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.8s linear infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  border-radius: var(--radius);
+  background: var(--surface-2);
 }
 
 .spinner {
@@ -603,27 +620,18 @@ p {
   }
 }
 
+/* 实时点：只改透明度，幅度小 */
 @keyframes dot-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
+    opacity: 1;
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+    opacity: 0.35;
   }
 }
 
-/* 实时点的柔和光晕：AppFooter 的 live-pulse-dot 使用（2s 循环），幅度小，颜色与绿色状态点一致 */
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.32);
-  }
-  100% {
-    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
-  }
-}
-
-/* 价格变化闪烁：只改文字颜色，不铺背景 */
+/* 价格变化闪一次：只改文字颜色，不铺背景 */
 @keyframes flash-up {
   0% {
     color: var(--up);
@@ -663,10 +671,10 @@ p {
   color: var(--danger);
 }
 
-/* ---------- AI 研报 Markdown 排版 ---------- */
+/* ---------- AI 研报 Markdown 排版：标题用展示字，强调只加粗，不用金色，无左侧色条 ---------- */
 .md {
   font-size: 15px;
-  line-height: 1.85;
+  line-height: 1.6;
   color: var(--text);
   overflow-wrap: anywhere;
 }
@@ -682,20 +690,19 @@ p {
 .md h1,
 .md h2 {
   margin: 1.4em 0 0.5em;
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .md h3 {
   margin: 1.4em 0 0.45em;
-  padding-left: 10px;
-  border-left: 2px solid var(--gold);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.4;
   color: var(--text);
 }
 
@@ -714,30 +721,32 @@ p {
 }
 
 .md strong {
-  color: var(--gold-3);
-  font-weight: 700;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .md a {
-  color: var(--info);
+  color: var(--text);
   text-decoration: underline;
+  text-decoration-color: var(--gold);
   text-underline-offset: 3px;
 }
 
 .md code {
   padding: 2px 6px;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
   background: var(--surface-2);
   font-family: var(--mono);
   font-size: 0.9em;
-  color: var(--gold);
+  color: var(--text);
 }
 
 .md blockquote {
   margin: 1em 0;
   padding: 0.8em 1.2em;
-  border-left: 2px solid var(--gold);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface-2);
   color: var(--text);
 }
@@ -754,7 +763,7 @@ p {
   overflow-x: auto;
   border-collapse: collapse;
   margin: 1em 0;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .md th,
@@ -766,8 +775,8 @@ p {
 
 .md th {
   background: var(--surface-2);
-  color: var(--gold);
-  font-weight: 700;
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* ---------- 响应式细节（手机，767px 及以下） ---------- */
@@ -776,14 +785,9 @@ p {
     padding: 0 16px;
   }
 
-  /* 触控目标：小按钮与分段控件不低于 36px */
-  .btn-sm,
-  .btn-xs {
-    height: 36px;
-  }
-
-  .seg button {
-    min-height: 36px;
+  .md h1,
+  .md h2 {
+    font-size: 18px;
   }
 
   /* 输入框 16px 起，避免 iOS 聚焦时自动放大 */
@@ -794,7 +798,7 @@ p {
   }
 }
 
-/* ---------- 减少动态效果：过渡与循环动画收束为瞬时状态，不做位移与滚动联动；内容照常显示 ---------- */
+/* ---------- 减少动态效果：过渡与动画收束为终态，不做位移与缩放；内容照常显示 ---------- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -805,8 +809,7 @@ p {
     scroll-behavior: auto !important;
   }
 
-  /* 循环动画直接停用：骨架与加载圈保留可见形态，实时点保持静止 */
-  .skeleton,
+  /* 循环动画直接停用：转圈与实时点保持静止可见 */
   .spinner,
   .live-dot,
   .live-pulse-dot {

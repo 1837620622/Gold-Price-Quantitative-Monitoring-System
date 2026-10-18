@@ -13,7 +13,7 @@
         <p class="label eyebrow">{{ t('vault.hero.eyebrow') }}</p>
         <h1 id="journey-title" class="display title">
           <span class="line">{{ t('vault.hero.title1') }}</span>
-          <span class="line grad-text">{{ t('vault.hero.title2') }}</span>
+          <span class="line">{{ t('vault.hero.title2') }}</span>
         </h1>
         <div class="sub">
           <p>{{ t('vault.hero.sub1') }}</p>
@@ -70,6 +70,7 @@ import { gsap, ScrollTrigger, prefersReducedMotion, hasFinePointer, isPhoneWidth
 import { createVaultScene, webglAvailable } from '../../lib/vault/scene';
 import { createCoinLayer, measureCapTop } from '../../lib/vault/coins';
 import { prepareFonts } from '../../lib/vault/textures';
+import Icon from '../icons/Icon.vue';
 
 const props = defineProps({
   domesticPrice: { type: Number, default: null },
@@ -108,6 +109,17 @@ const sceneReduced = reduced && !mobile;
 
 const { t } = useI18n();
 const { resolved } = useTheme();
+
+// 说明文字：数字与代码（AU9999、XAU/USD）用等宽体，其余为无衬线正文
+const NUM_TOKEN = /([A-Z0-9]*\d[A-Z0-9./]*|[A-Z]{2,}\/[A-Z]{2,})/;
+const subLines = computed(() =>
+  [1, 2, 3, 4].map((n) =>
+    String(t(`vault.hero.sub${n}`))
+      .split(NUM_TOKEN)
+      .map((text, i) => ({ text, num: i % 2 === 1 }))
+      .filter((seg) => seg.text)
+  )
+);
 
 // 昼夜切换：等 data-theme 写入后读取纸本底色（--bg），更新金库调色板，不重载页面
 async function applyTheme() {

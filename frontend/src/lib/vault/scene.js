@@ -178,29 +178,6 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   warmB.position.set(0, 5.6, -40);
   hall.add(ambient, key, key.target, warmA, warmB);
 
-  // 3D 悬浮金尘粒子系统 (160 颗闪耀微粒)
-  const sparkleCount = 160;
-  const sparkleGeom = track(new THREE.BufferGeometry());
-  const sparklePos = new Float32Array(sparkleCount * 3);
-  for (let i = 0; i < sparkleCount * 3; i += 3) {
-    sparklePos[i] = (Math.random() - 0.5) * 11;
-    sparklePos[i + 1] = Math.random() * 6 - 0.5;
-    sparklePos[i + 2] = (Math.random() - 0.5) * 90 - 30;
-  }
-  sparkleGeom.setAttribute('position', new THREE.BufferAttribute(sparklePos, 3));
-  const sparkleMat = track(
-    new THREE.PointsMaterial({
-      size: 0.12,
-      color: 0xfde047,
-      transparent: true,
-      opacity: 0,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    })
-  );
-  const sparkles = track(new THREE.Points(sparkleGeom, sparkleMat));
-  hall.add(sparkles);
-
   // 远墙：K 线画布贴图；夜间为深色监控屏，日间为浅色纸本面板（setTheme 时重绘）
   const chartCanvas = document.createElement('canvas');
   let chartMode = 'dark';
@@ -215,10 +192,10 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
 
   // 墙面投影字：贴在墙内侧 0.02 处，避免与墙面 z-fighting；颜色随昼夜重绘
   const letters = [
-    { word: 'SHANGHAI', x: -5.96, z: -16, ry: Math.PI / 2 },
-    { word: 'LONDON', x: 5.96, z: -30, ry: -Math.PI / 2 },
-    { word: 'BASIS', x: -5.96, z: -44, ry: Math.PI / 2 },
-    { word: 'SIGNAL', x: 5.96, z: -58, ry: -Math.PI / 2 },
+    { word: 'Shanghai', x: -5.96, z: -16, ry: Math.PI / 2 },
+    { word: 'London', x: 5.96, z: -30, ry: -Math.PI / 2 },
+    { word: 'Basis', x: -5.96, z: -44, ry: Math.PI / 2 },
+    { word: 'Signal', x: 5.96, z: -58, ry: -Math.PI / 2 },
   ].map(({ word, x, z, ry }) => {
     const letterCanvas = document.createElement('canvas');
     paintLettering(word, 1024, 256, letterCanvas, NIGHT.letter);
@@ -360,8 +337,6 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     hall.environmentIntensity = 0.9 * a;
     stripMat.color.copy(palette.base).lerp(palette.light, a * 0.5);
     gridMat.opacity = 0.18 * a;
-    sparkles.rotation.y = p * 0.8;
-    sparkleMat.opacity = Math.min(0.85, a * 0.95);
     ambient.intensity = 0.5 * a;
     key.intensity = 1.6 * a;
     // 日间的暖光减弱，避免淡色墙面被染成黄色
