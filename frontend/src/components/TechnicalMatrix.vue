@@ -312,6 +312,7 @@ const bearPct = computed(() => 100 - bullPct.value);
 <style scoped>
 .matrix-card {
   padding: 22px;
+  box-shadow: none;
 }
 
 .matrix-head {
@@ -325,19 +326,27 @@ const bearPct = computed(() => 100 - bullPct.value);
 
 .matrix-title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
+:lang(zh) .matrix-title {
+  letter-spacing: 0;
+}
+
 .matrix-sub {
   margin: 4px 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-2);
 }
 
+/* 多空力量：文字与标签保留涨跌色，条形用中性色 */
 .power-summary {
   display: flex;
   flex-direction: column;
@@ -349,9 +358,9 @@ const bearPct = computed(() => 100 - bullPct.value);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -364,27 +373,29 @@ const bearPct = computed(() => 100 - bullPct.value);
 }
 
 .power-vs {
+  font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   color: var(--text-3);
 }
 
 .power-bar {
   display: flex;
   height: 6px;
-  border-radius: 999px;
+  border-radius: 2px;
   overflow: hidden;
   background: var(--surface-2);
 }
 
 .power-bull-fill {
-  background: var(--up);
-  transition: width 0.4s ease;
+  background: var(--text-2);
+  transition: width 0.4s var(--ease-out);
 }
 
 .power-bear-fill {
-  background: var(--down);
-  transition: width 0.4s ease;
+  background: var(--text-3);
+  transition: width 0.4s var(--ease-out);
 }
 
 .factor-grid {
@@ -405,25 +416,16 @@ const bearPct = computed(() => 100 - bullPct.value);
   }
 }
 
+/* 因子小方块：发丝边，无侧边色条 */
 .factor-item {
-  --tone: var(--text-3);
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  padding: 14px 14px 14px 16px;
-  border-radius: 12px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  box-shadow: inset 3px 0 0 var(--tone);
-}
-
-.factor-item.tone-bull {
-  --tone: var(--up);
-}
-
-.factor-item.tone-bear {
-  --tone: var(--down);
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
 }
 
 .factor-top {
@@ -434,39 +436,37 @@ const bearPct = computed(() => 100 - bullPct.value);
 }
 
 .factor-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
 }
 
+/* 因子标签：发丝边，涨跌色只作用于文字 */
 .factor-badge {
   flex-shrink: 0;
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
   white-space: nowrap;
 }
 
 .factor-badge.bull {
   color: var(--up);
-  background: var(--up-bg);
 }
 
 .factor-badge.bear {
   color: var(--down);
-  background: var(--down-bg);
-}
-
-.factor-badge.flat {
-  color: var(--text-2);
-  background: var(--surface-hover);
 }
 
 .factor-val {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -474,14 +474,18 @@ const bearPct = computed(() => 100 - bullPct.value);
 
 .factor-detail {
   margin: 0;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--text-3);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-2);
 }
 
 @media (max-width: 767px) {
   .matrix-card {
     padding: 16px;
+  }
+
+  .matrix-title {
+    font-size: 18px;
   }
 
   .matrix-sub {
@@ -494,15 +498,7 @@ const bearPct = computed(() => 100 - bullPct.value);
   }
 
   .factor-item {
-    padding: 12px 12px 12px 14px;
-  }
-
-  .factor-name {
-    font-size: 13px;
-  }
-
-  .factor-detail {
-    font-size: 12px;
+    padding: 12px;
   }
 }
 </style>

@@ -9,7 +9,7 @@
             <p class="modal-sub">{{ t('priceAlert.desc') }}</p>
           </div>
         </div>
-        <button type="button" class="icon-btn" @click="$emit('close')">
+        <button type="button" class="icon-btn" :aria-label="t('priceAlert.close')" @click="$emit('close')">
           <Icon name="close" :size="18" />
         </button>
       </header>

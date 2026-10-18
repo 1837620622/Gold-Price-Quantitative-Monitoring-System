@@ -356,7 +356,7 @@ onUnmounted(() => {
 
 .nav-logo-sub {
   margin-top: 5px;
-  font-family: var(--font);
+  font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 500;
   line-height: 1;
@@ -381,7 +381,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
-  font-family: var(--font);
+  font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -432,7 +432,7 @@ onUnmounted(() => {
   border-radius: 2px;
   background: transparent;
   color: var(--text-2);
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -675,7 +675,7 @@ onUnmounted(() => {
 
   .menu-title {
     margin: 0 4px 8px;
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 500;
     color: var(--text-2);
@@ -700,7 +700,7 @@ onUnmounted(() => {
     border-radius: var(--radius);
     background: transparent;
     color: var(--text);
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 500;
     text-align: left;

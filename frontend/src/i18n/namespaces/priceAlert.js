@@ -5,6 +5,7 @@
 
 export default {
   zh: {
+    'priceAlert.close': '关闭',
     'priceAlert.title': '价格目标与突破预警',
     'priceAlert.desc': '到达目标价格时自动触发金融警报音与系统桌面通知',
     'priceAlert.permissionHint': '尚未授权系统桌面通知，仅在网页内播放警报音。',
@@ -35,6 +36,7 @@ export default {
     'priceAlert.remove': '删除',
   },
   en: {
+    'priceAlert.close': 'Close',
     'priceAlert.title': 'Price targets & breakout alerts',
     'priceAlert.desc': 'Plays an alert sound and sends a desktop notification when the target price is reached',
     'priceAlert.permissionHint': 'Desktop notifications are not authorized yet, so alert sounds only play inside the page.',

@@ -23,7 +23,7 @@ export default {
     'sharePoster.disclaimer': '仅供研究参考 · 不构成投资建议',
     'sharePoster.close': '关闭',
     'sharePoster.copied': '快报文本已复制',
-    'sharePoster.copy': '一键复制快报文本',
+    'sharePoster.copy': '复制快报文本',
     'sharePoster.copyHeader': '【Gold Monitor · 黄金量化研判快报】',
     'sharePoster.copyTime': '生成时间：{time}',
     'sharePoster.copyDomestic': '国内 AU9999：¥{price} ({pct}%)',
@@ -36,7 +36,7 @@ export default {
   },
   en: {
     'sharePoster.title': 'Quant report poster card',
-    'sharePoster.desc': 'Copy or share the gold quant flash report in one click',
+    'sharePoster.desc': 'Copy or share the current gold quant flash report',
     'sharePoster.brandTag': 'Professional gold quant terminal · live analysis',
     'sharePoster.domestic': 'Domestic spot AU9999',
     'sharePoster.intl': 'London gold XAU/USD',
