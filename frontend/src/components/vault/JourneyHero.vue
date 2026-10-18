@@ -717,15 +717,18 @@ onBeforeUnmount(() => {
   font-size: 13px;
   letter-spacing: 0.04em;
   opacity: 0;
+  visibility: hidden;
   transform: translateY(6px) scale(0.94);
-  transition: opacity 0.18s linear, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 0.18s linear, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.18s;
   pointer-events: none;
 }
 
 .coin-pill.is-on {
   opacity: 1;
+  visibility: visible;
   transform: none;
   pointer-events: auto;
+  transition-delay: 0s;
 }
 
 /* 手机：一屏静态首屏（无钉住、无滚动驱动）。自上而下：眉题 → 标题 → 实时数值 → 说明 → 金条 → 页脚 */

@@ -219,8 +219,8 @@ export function paintLettering(word, width = 1024, height = 256, canvas, color =
   return c;
 }
 
-function drawGrid(ctx, width, height) {
-  ctx.strokeStyle = 'rgba(232, 199, 125, 0.09)';
+function drawGrid(ctx, width, height, color) {
+  ctx.strokeStyle = color;
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let i = 1; i < 6; i += 1) {
@@ -236,24 +236,55 @@ function drawGrid(ctx, width, height) {
   ctx.stroke();
 }
 
-// 远墙 K 线：高科技指挥中心终端屏，集成标头、实时标识与 60 根日 K 线
-export function paintCandleChart(bars, width = 1024, height = 512, canvas) {
+// 远墙 K 线配色：夜间为深色监控屏；日间为与墙面同色系的浅色纸本面板（红涨绿跌语义不变）
+const CHART_PALETTE = {
+  dark: {
+    panel: '#06070a',
+    frame: 'rgba(56, 189, 248, 0.45)',
+    hud: 'rgba(15, 23, 42, 0.85)',
+    hudLine: 'rgba(56, 189, 248, 0.25)',
+    dot: '#38bdf8',
+    title: '#e2e8f0',
+    grid: 'rgba(232, 199, 125, 0.09)',
+    ma: '#f59e0b',
+    glow: 'rgba(245, 158, 11, 0.5)',
+    muted: 'rgba(243, 239, 230, 0.5)',
+    up: UP,
+    down: DOWN,
+  },
+  light: {
+    panel: '#fbf9f4',
+    frame: 'rgba(122, 88, 24, 0.42)',
+    hud: 'rgba(122, 88, 24, 0.07)',
+    hudLine: 'rgba(122, 88, 24, 0.22)',
+    dot: '#b8892e',
+    title: '#15130e',
+    grid: 'rgba(122, 88, 24, 0.12)',
+    ma: '#a77a24',
+    glow: null,
+    muted: '#6d6758',
+    up: '#dc2626',
+    down: '#059669',
+  },
+};
+
+// 远墙 K 线：指挥中心终端屏，集成标头、实时标识与 60 根日 K 线；mode 为 'dark'（夜间）或 'light'（日间）
+export function paintCandleChart(bars, width = 1024, height = 512, canvas, mode = 'dark') {
+  const pal = CHART_PALETTE[mode] ?? CHART_PALETTE.dark;
   const c = makeCanvas(width, height, canvas);
   const ctx = c.getContext('2d');
 
-  // 深邃科技黑底色
-  ctx.fillStyle = '#06070a';
+  // 面板底色与外边框
+  ctx.fillStyle = pal.panel;
   ctx.fillRect(0, 0, width, height);
-
-  // 屏幕外边框与科幻荧光四角
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+  ctx.strokeStyle = pal.frame;
   ctx.lineWidth = 3;
   ctx.strokeRect(6, 6, width - 12, height - 12);
 
   // 顶栏高科技 HUD 标头
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.fillStyle = pal.hud;
   ctx.fillRect(6, 6, width - 12, 38);
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+  ctx.strokeStyle = pal.hudLine;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(6, 44);
@@ -261,30 +292,31 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas) {
   ctx.stroke();
 
   // 顶栏文字与指示灯
-  ctx.fillStyle = '#38bdf8';
+  ctx.fillStyle = pal.dot;
   ctx.beginPath();
   ctx.arc(24, 25, 5, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.font = `600 14px ${MONO_STACK}`;
-  ctx.fillStyle = '#e2e8f0';
+  ctx.fillStyle = pal.title;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText('LIVE QUANTITATIVE TERMINAL · SGE AU9999 · 60-BAR KLINE', 38, 25);
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#10b981';
+  ctx.fillStyle = pal.down;
   ctx.fillText('[REALTIME FEED · CONNECTED]', width - 24, 25);
 
-  // 绘制图表背景网格
-  drawGrid(ctx, width, height);
+  // 网格
+  drawGrid(ctx, width, height, pal.grid);
 
   const valid = (bars || []).filter((b) => [b.open, b.high, b.low, b.close].every(Number.isFinite));
   if (valid.length < 2) {
-    ctx.fillStyle = 'rgba(243, 239, 230, 0.5)';
-    ctx.font = `500 ${Math.round(height * 0.07)}px ${MONO_STACK}`;
+    // 等待数据：占位文字按宽度收缩，保证不越出画面
+    ctx.fillStyle = pal.muted;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    fitFont(ctx, 'SYNCHRONIZING FEED...', width * 0.8, height * 0.07, 500, MONO_STACK);
     ctx.fillText('SYNCHRONIZING FEED...', width / 2, height / 2);
     return c;
   }
@@ -303,12 +335,14 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas) {
   const step = (width - 16) / count;
   const bodyWidth = Math.max(4, step * 0.58);
 
-  // 绘制 MA20 均线（金色发光）
+  // 绘制 MA20 均线（夜间金色发光，日间实线）
   const closes = valid.map((b) => b.close);
-  ctx.strokeStyle = '#f59e0b';
+  ctx.strokeStyle = pal.ma;
   ctx.lineWidth = 3;
-  ctx.shadowColor = 'rgba(245, 158, 11, 0.5)';
-  ctx.shadowBlur = 8;
+  if (pal.glow) {
+    ctx.shadowColor = pal.glow;
+    ctx.shadowBlur = 8;
+  }
   ctx.beginPath();
   let started = false;
   for (let i = start; i < valid.length; i += 1) {
@@ -328,7 +362,7 @@ export function paintCandleChart(bars, width = 1024, height = 512, canvas) {
   slice.forEach((b, i) => {
     const x = 8 + step * i + step / 2;
     const isUp = b.close >= b.open;
-    const color = isUp ? UP : DOWN;
+    const color = isUp ? pal.up : pal.down;
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.beginPath();

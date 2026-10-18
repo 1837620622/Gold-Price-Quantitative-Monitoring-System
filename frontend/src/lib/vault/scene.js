@@ -2,7 +2,7 @@
  * ============================================================
  * 金库场景（Three.js r186）
  * - 大厅：金库走廊。建筑在 p 0.16→0.45 之间由背景色渐显（与页面背景同色起步）
- * - 远墙：最近 60 根日K 画布贴图，p 0.42→0.66 渐显
+ * - 远墙：最近 60 根日K 画布贴图（夜间深色监控屏，日间浅色纸本面板），p 0.42→0.66 渐显
  * - 墙面投影字：p 0.12 起渐显，深度测试开启
  * - 金条：程序化圆角金条，位于独立的透视通道，p 0.025→0.115 折叠退场
  * - 昼夜：夜间为 #050507 黑色调；日间以纸本背景（--bg）为底、淡色石材
@@ -201,9 +201,11 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   const sparkles = track(new THREE.Points(sparkleGeom, sparkleMat));
   hall.add(sparkles);
 
-  // 远墙：K 线画布贴图（监控屏保持深色，与昼夜无关）
+  // 远墙：K 线画布贴图；夜间为深色监控屏，日间为浅色纸本面板（setTheme 时重绘）
   const chartCanvas = document.createElement('canvas');
-  paintCandleChart(bars, 1024, 512, chartCanvas);
+  let chartMode = 'dark';
+  let chartBars = bars || [];
+  paintCandleChart(chartBars, 1024, 512, chartCanvas, chartMode);
   const chartTex = track(new THREE.CanvasTexture(chartCanvas));
   chartTex.colorSpace = THREE.SRGBColorSpace;
   const farMat = track(new THREE.MeshBasicMaterial({ map: chartTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
@@ -288,10 +290,11 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   function layoutHero() {
     heroPerPx = (2 * Math.tan(THREE.MathUtils.degToRad(HERO_FOV / 2)) * HERO_DIST) / height;
     const cx = mobile ? width * 0.5 : width * 0.66;
-    const cy = mobile ? height * 0.40 : height * 0.44;
+    const cy = mobile ? height * 0.5 : height * 0.44;
     heroBaseX = (cx - width / 2) * heroPerPx;
     heroBaseY = (height / 2 - cy) * heroPerPx;
-    const targetPx = mobile ? Math.min(width * 0.48, height * 0.19) : Math.min(width * 0.34, height * 0.5);
+    // 手机：金条居中于首屏视觉区，宽度约为视觉区的 60%
+    const targetPx = mobile ? Math.min(width * 0.6, height * 0.8) : Math.min(width * 0.34, height * 0.5);
     heroBaseScale = (targetPx * heroPerPx) / 2.2;
   }
 
@@ -308,7 +311,8 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   }
 
   function setBars(next) {
-    paintCandleChart(next || [], 1024, 512, chartCanvas);
+    chartBars = next || [];
+    paintCandleChart(chartBars, 1024, 512, chartCanvas, chartMode);
     chartTex.needsUpdate = true;
   }
 
@@ -320,6 +324,9 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     hall.environment = palette === NIGHT ? null : env;
     renderer.setClearColor(palette.base, 1);
     gridMat.color.copy(palette.line);
+    chartMode = mode === 'light' ? 'light' : 'dark';
+    paintCandleChart(chartBars, 1024, 512, chartCanvas, chartMode);
+    chartTex.needsUpdate = true;
     for (const letter of letters) {
       paintLettering(letter.word, 1024, 256, letter.canvas, palette.letter);
       letter.tex.needsUpdate = true;
@@ -329,11 +336,11 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
   // ---------------- 每帧渲染 ----------------
   const target = new THREE.Vector3();
 
-  // state: { p, reduced, time, look: {x,y}（已乘动效强度）, tunnelLook: {x,y}（-1..1，y 向上为正） }
+  // state: { p, reduced, look: {x,y}（已乘动效强度）, tunnelLook: {x,y}（-1..1，y 向上为正） }
+  // 画面只由进度 p 与指针决定，没有随时间持续变化的动画，因此不需要常驻的帧循环
   function render(state = {}) {
     const p = clamp01(state.p ?? 0);
     const reduced = Boolean(state.reduced);
-    const time = state.time ?? 0;
     const look = state.look ?? { x: 0, y: 0 };
     const tunnelLook = state.tunnelLook ?? { x: 0, y: 0 };
 
@@ -353,7 +360,7 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     hall.environmentIntensity = 0.9 * a;
     stripMat.color.copy(palette.base).lerp(palette.light, a * 0.5);
     gridMat.opacity = 0.18 * a;
-    sparkles.rotation.y = time * 0.05;
+    sparkles.rotation.y = p * 0.8;
     sparkleMat.opacity = Math.min(0.85, a * 0.95);
     ambient.intensity = 0.5 * a;
     key.intensity = 1.6 * a;
@@ -400,7 +407,7 @@ export function createVaultScene(canvas, { mobile = false, bars = [] } = {}) {
     );
     ingotGroup.rotation.set(
       0.10 + look.y * 0.08,
-      0.30 * Math.sin(time * 0.35) + look.x * 0.18 - 1.4 * Math.PI * k,
+      0.20 + look.x * 0.18 - 1.4 * Math.PI * k,
       0.03 - look.x * 0.016
     );
 

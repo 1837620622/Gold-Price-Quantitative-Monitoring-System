@@ -57,7 +57,8 @@
       </div>
 
       <!-- 右侧：控制快捷工具。手机端行情条隐藏，这组控件挂到顶部 ☰ 菜单（AppHeader 的 #nav-tools-slot） -->
-      <Teleport to="#nav-tools-slot" :disabled="!inMenu">
+      <!-- defer：目标元素在首次挂载时还未插入文档，等挂载完成后再解析，避免移动时拿到 null -->
+      <Teleport defer to="#nav-tools-slot" :disabled="!inMenu">
         <div class="ticker-tools" :class="{ 'in-menu': inMenu }">
           <!-- 声音开关 -->
           <button
