@@ -47,8 +47,8 @@ export default {
     'modules.brief.services': '研报情景 · 价格预警 · 微信推送',
     'modules.brief.caption': 'AU9999 收盘 · 近 90 个交易日',
 
-    'contact.setAlert': '设置价格预警 ↗',
-    'contact.subscribe': '订阅微信推送 ↗',
+    'contact.setAlert': '设置价格预警',
+    'contact.subscribe': '订阅微信推送',
 
     'action.poster': '分享研报海报',
     'quant.computing': '量化信号计算中…',
@@ -128,8 +128,8 @@ export default {
     'modules.brief.services': 'SCENARIOS · PRICE ALERTS · WECHAT PUSH',
     'modules.brief.caption': 'AU9999 close · last 90 sessions',
 
-    'contact.setAlert': 'Set price alert ↗',
-    'contact.subscribe': 'Subscribe to WeChat push ↗',
+    'contact.setAlert': 'Set price alert',
+    'contact.subscribe': 'Subscribe to WeChat push',
 
     'action.poster': 'Share brief poster',
     'quant.computing': 'Computing quant signal…',

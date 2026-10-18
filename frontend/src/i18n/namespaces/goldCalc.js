@@ -5,7 +5,7 @@
 
 export default {
   zh: {
-    'goldCalc.title': '黄金量化与投资盈亏精算中心',
+    'goldCalc.title': '黄金持仓盈亏与套利测算',
     'goldCalc.subtitle': '实物持仓变现测算 · 内外盘套利与基差',
     'goldCalc.modeHolding': '实物持仓盈亏',
     'goldCalc.modeArb': '内外盘跨市套利',
@@ -58,11 +58,11 @@ export default {
     'goldCalc.arbNegative': '反向折价套利窗口开启（买内盘现货 / 抛补外盘）',
     'goldCalc.arbNeutral': '内外盘无套利均衡常态区间（适合网格统计对冲）',
     'goldCalc.arbPositiveDesc': '国内价格相对国际平价大幅溢价 +{pct}%，理论套利空间显著。机构可做空国内近月/卖出现货，同时做多伦敦现货并锁汇。',
-    'goldCalc.arbNegativeDesc': '国内现货相对国际平价折价 {pct}%，国内黄金性价比极高，适合低吸实物交割金条并在国际对冲流动性。',
+    'goldCalc.arbNegativeDesc': '国内现货相对国际平价折价 {pct}%。折价时可以买入实物金条，并在国际市场对冲。',
     'goldCalc.arbNeutralDesc': '当前价差处于 {pct}% 常态波动通道内，跨市套利利润无法充分覆盖摩擦成本，建议依托 EMA/布林带进行基差网格交易。',
   },
   en: {
-    'goldCalc.title': 'Gold quant & P&L calculation center',
+    'goldCalc.title': 'Gold holding P&L and arbitrage calculator',
     'goldCalc.subtitle': 'Physical liquidation estimates · cross-market arbitrage and basis',
     'goldCalc.modeHolding': 'Physical P&L',
     'goldCalc.modeArb': 'Cross-market arbitrage',
@@ -115,7 +115,7 @@ export default {
     'goldCalc.arbNegative': 'Discount window open (buy domestic spot, hedge overseas)',
     'goldCalc.arbNeutral': 'Domestic–international spread in its no-arbitrage normal range (suited to grid hedging)',
     'goldCalc.arbPositiveDesc': 'Domestic price is at a sharp +{pct}% premium to international parity, a sizeable theoretical arbitrage gap. Institutions can short the nearby domestic contract or sell spot, while going long London spot and locking in FX.',
-    'goldCalc.arbNegativeDesc': 'Domestic spot is at a {pct}% premium to international parity, i.e. a discount: domestic gold offers strong value, suited to buying delivery bars on dips and hedging liquidity overseas.',
+    'goldCalc.arbNegativeDesc': 'Domestic spot trades at a {pct}% discount to international parity. At a discount, one can buy physical bars and hedge overseas.',
     'goldCalc.arbNeutralDesc': 'The current spread sits at {pct}%, inside the normal fluctuation band. Cross-market arbitrage profit cannot fully cover friction costs, so basis grid trading anchored on EMA and Bollinger bands is suggested.',
   },
 };

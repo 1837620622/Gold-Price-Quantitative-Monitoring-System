@@ -3,11 +3,7 @@
     <header class="range-head">
       <div class="head-left">
         <div class="range-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
-          </svg>
+          <Icon name="chart" :size="20" />
         </div>
         <div>
           <h3 class="range-title">{{ t('historicalRange.title') }}</h3>
@@ -34,12 +30,10 @@
           </div>
         </div>
 
-        <!-- 进度条 -->
+        <!-- 进度条：实心轨道、实心填充、实心指针 -->
         <div class="track-bar">
           <div class="track-fill" :style="{ width: `${percentile52}%` }"></div>
-          <div class="track-pointer" :style="{ left: `${percentile52}%` }" :title="t('historicalRange.percentile', { value: percentile52 })">
-            <span class="pointer-dot"></span>
-          </div>
+          <div class="track-pointer" :style="{ left: `${percentile52}%` }" :title="t('historicalRange.percentile', { value: percentile52 })"></div>
         </div>
 
         <div class="ath-row">
@@ -53,7 +47,11 @@
         <div v-for="p in periods" :key="p.label" class="period-item">
           <span class="period-label">{{ p.label }}</span>
           <span class="period-badge" :class="toneClass(p.rate)">
-            <span class="period-arrow">{{ p.rate > 0 ? '▲' : p.rate < 0 ? '▼' : '■' }}</span>
+            <span class="period-arrow" aria-hidden="true">
+              <Icon v-if="p.rate > 0" name="chevron-up" :size="14" />
+              <Icon v-else-if="p.rate < 0" name="chevron-up" :size="14" class="is-down" />
+              <span v-else class="period-flat"></span>
+            </span>
             <span class="period-num">{{ p.rate > 0 ? '+' : '' }}{{ fmt(p.rate) }}%</span>
           </span>
         </div>
@@ -64,6 +62,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import Icon from './icons/Icon.vue';
 import { fmtNumber } from '../format';
 import { useI18n } from '../i18n';
 
@@ -143,10 +142,7 @@ function toneClass(rate) {
 <style scoped>
 .range-card {
   padding: 24px;
-  background: var(--surface-card);
-  border: 1px solid rgba(232, 199, 125, 0.2);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
+  box-shadow: none;
 }
 
 .range-head {
@@ -160,31 +156,40 @@ function toneClass(rate) {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
+/* 图标方框：发丝边，金色图标 */
 .range-icon {
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: rgba(232, 199, 125, 0.12);
-  color: var(--gold-3);
-  border: 1px solid rgba(232, 199, 125, 0.3);
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--gold);
 }
 
 .range-title {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
+:lang(zh) .range-title {
+  letter-spacing: 0;
+}
+
 .range-sub {
-  margin: 3px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
   color: var(--text-2);
 }
 
@@ -205,102 +210,112 @@ function toneClass(rate) {
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border-radius: 12px;
-  background: var(--surface-2);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .slider-meta {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .meta-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
 }
+
 .meta-item.right {
   align-items: flex-end;
 }
+
 .meta-current {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 
 .meta-label {
   font-size: 11px;
-  color: var(--text-2);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+:lang(zh) .meta-label {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .meta-val {
+  font-family: var(--font-mono);
   font-size: 14px;
-  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--text);
 }
+
 .meta-val.highlight {
-  color: var(--gold-3);
-  font-weight: 800;
-  font-size: 15px;
+  font-size: 16px;
 }
 
+/* 实心轨道、实心填充、实心指针：不使用渐变 */
 .track-bar {
   position: relative;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--surface-hover);
-  margin: 8px 0;
+  height: 6px;
+  margin: 10px 0;
+  border-radius: 2px;
+  background: var(--line-strong);
 }
 
 .track-fill {
   height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #10b981 0%, #e8c77d 60%, #ef4444 100%);
+  border-radius: 2px;
+  background: var(--gold);
 }
 
 .track-pointer {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
-  width: 18px;
+  width: 3px;
   height: 18px;
-  border-radius: 50%;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
-  transition: left 0.3s ease;
-}
-
-.pointer-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gold-2);
+  border-radius: 1px;
+  background: var(--text);
+  transform: translate(-50%, -50%);
+  transition: left 0.3s var(--ease-out);
 }
 
 .ath-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  font-size: 13px;
   color: var(--text-2);
-  margin-top: 4px;
 }
+
 .ath-row b {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
+  font-weight: 500;
   color: var(--down);
 }
 
 .ath-tag {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(232, 199, 125, 0.12);
-  color: var(--gold-3);
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
 }
 
 .period-ladder {
@@ -319,38 +334,64 @@ function toneClass(rate) {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 6px;
   padding: 10px 12px;
-  border-radius: 8px;
-  background: var(--surface-2);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .period-label {
   font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-2);
+}
+
+:lang(zh) .period-label {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .period-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
+
 .period-badge.up {
   color: var(--up);
 }
+
 .period-badge.down {
   color: var(--down);
 }
+
 .period-badge.flat {
   color: var(--text-3);
 }
 
 .period-arrow {
-  font-size: 11px;
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+}
+
+.period-arrow .is-down {
+  transform: rotate(180deg);
+}
+
+.period-flat {
+  display: block;
+  width: 8px;
+  height: 1px;
+  background: currentColor;
 }
 
 @media (max-width: 767px) {
@@ -358,12 +399,12 @@ function toneClass(rate) {
     padding: 16px;
   }
 
-  .range-head {
-    margin-bottom: 16px;
+  .range-title {
+    font-size: 18px;
   }
 
-  .range-sub {
-    font-size: 13px;
+  .range-head {
+    margin-bottom: 16px;
   }
 
   .range-body {
@@ -392,26 +433,17 @@ function toneClass(rate) {
     align-items: flex-end;
   }
 
-  .meta-label {
-    font-size: 12px;
-  }
-
   .meta-val.highlight {
     font-size: 16px;
   }
 
   .ath-row {
-    flex-wrap: wrap;
     gap: 6px;
   }
 
   .period-ladder {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-  }
-
-  .period-label {
-    font-size: 12px;
   }
 
   .period-item {
