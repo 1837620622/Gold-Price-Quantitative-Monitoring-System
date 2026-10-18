@@ -26,7 +26,7 @@
             <span class="row-meta">
               <span class="row-services label">{{ t(item.servicesKey) }}</span>
             </span>
-            <span class="row-arrow" aria-hidden="true">↗</span>
+            <span class="row-arrow" aria-hidden="true"><Icon name="arrow-up-right" :size="16" /></span>
           </button>
         </li>
       </ul>
@@ -42,6 +42,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import SectionHead from './SectionHead.vue';
+import Icon from './icons/Icon.vue';
 import { gsap, prefersReducedMotion } from '../lib/motion';
 import { useI18n } from '../i18n';
 import { useTheme } from '../composables/useTheme';
@@ -154,7 +155,8 @@ function paint() {
   const values = series.value;
   if (values.length < 2) {
     ctx.fillStyle = muted;
-    ctx.font = '11px "JetBrains Mono", monospace';
+    // 占位文案是正文，用无衬线字体；画布不读取 CSS 变量，字体栈写定在此
+    ctx.font = "11px 'IBM Plex Sans', 'Noto Sans SC', sans-serif";
     // 英文文案较长：窄画布下按 maxWidth 压缩，避免被裁切
     ctx.fillText(t('modulesPreview.empty'), 14, 24, width - 28);
     return;
@@ -292,7 +294,7 @@ onBeforeUnmount(() => {
   color: var(--text-3);
   text-align: left;
   cursor: pointer;
-  transition: color var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+  transition: color 0.2s ease;
 }
 
 .row-index {
@@ -300,43 +302,38 @@ onBeforeUnmount(() => {
   grid-row: 1 / span 2;
   align-self: start;
   padding-top: 0.3em;
+  font-family: var(--font-mono);
   font-size: 13px;
-  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 
+/* 模块名：展示字，保留原大小写，不用大写与渐变；中英文共用同一展示字 */
 .row-name {
   grid-column: 2;
   grid-row: 1;
+  font-family: var(--font-display);
   font-size: clamp(24px, 2.6vw, 42px);
+  font-weight: 500;
   line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: none;
   color: inherit;
-  transform-origin: left center;
-  transition: transform var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+  transition: color 0.2s ease;
 }
 
-/* 中文界面：Anton 不含中文字形，模块名改用中文字体（:global(html:lang(zh)) 会丢掉后代选择器，故用 :lang）；桌面字号不变 */
 :lang(zh) .row-name {
-  font-family: var(--font);
-  text-transform: none;
+  letter-spacing: 0;
 }
 
 .row.is-active {
   color: var(--text);
 }
 
+/* 激活行只用纯色金令牌标出，不做位移 */
 .row.is-active .row-name {
   color: var(--gold-3);
-}
-
-/* 激活行名称右移：只在精确指针上做，触屏不产生位移 */
-@media (hover: hover) and (pointer: fine) {
-  .row.is-active .row-name {
-    transform: translateX(10px);
-  }
-}
-
-.row.is-active .row-arrow {
-  color: var(--gold);
 }
 
 .row-meta {
@@ -354,15 +351,26 @@ onBeforeUnmount(() => {
   line-height: 1.6;
 }
 
+:lang(zh) .row-services {
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .row-arrow {
   grid-column: 3;
   grid-row: 1 / span 2;
   align-self: center;
-  font-family: var(--font);
-  font-size: 22px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: transparent;
-  transition: color var(--dur) var(--ease-out);
+  transition: color 0.2s ease;
+}
+
+.row.is-active .row-arrow {
+  color: var(--gold);
 }
 
 .preview {
@@ -386,7 +394,7 @@ onBeforeUnmount(() => {
   display: block;
   width: 100%;
   aspect-ratio: 3 / 2;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
 }
@@ -394,6 +402,13 @@ onBeforeUnmount(() => {
 .preview-caption {
   display: block;
   margin-top: 10px;
+}
+
+:lang(zh) .preview-caption {
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* 手机：模块行压缩到约 70px，名称 28–32px 单行，中文词不在中间断开 */
@@ -430,7 +445,7 @@ onBeforeUnmount(() => {
     display: block;
     font-size: 11px;
     line-height: 1.4;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -438,7 +453,6 @@ onBeforeUnmount(() => {
 
   .row-arrow {
     color: var(--text-3);
-    font-size: 18px;
   }
 
   .row.is-active .row-arrow {

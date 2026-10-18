@@ -1,7 +1,7 @@
 /**
  * 金库开场与金币行文案（JourneyHero、CoinRow）
  * 键名前缀 vault.；英文缺失时回退中文
- * 页脚 "SHANGHAI · LONDON · FX" 与实时数值标签在两种语言中保持一致
+ * 页脚标语与实时数值标签：中文用汉字，英文用英文，两种语言的结构保持一致
  */
 
 export default {
@@ -17,9 +17,9 @@ export default {
     'vault.live.domestic': 'AU9999 · CNY/g',
     'vault.live.intl': 'XAU/USD',
     'vault.live.premium': 'PREMIUM',
-    'vault.footer.desk': 'SHANGHAI · LONDON · FX',
-    'vault.footer.m1': 'SHANGHAI',
-    'vault.footer.m2': 'LONDON',
+    'vault.footer.desk': '上海 · 伦敦 · 外汇',
+    'vault.footer.m1': '上海',
+    'vault.footer.m2': '伦敦',
     'vault.row.aria': '提醒与推送',
   },
   en: {
@@ -34,9 +34,9 @@ export default {
     'vault.live.domestic': 'AU9999 · CNY/g',
     'vault.live.intl': 'XAU/USD',
     'vault.live.premium': 'PREMIUM',
-    'vault.footer.desk': 'SHANGHAI · LONDON · FX',
-    'vault.footer.m1': 'SHANGHAI',
-    'vault.footer.m2': 'LONDON',
+    'vault.footer.desk': 'Shanghai · London · FX',
+    'vault.footer.m1': 'Shanghai',
+    'vault.footer.m2': 'London',
     'vault.row.aria': 'Alerts and push',
   },
 };

@@ -29,7 +29,8 @@
             :tabindex="hovered >= 0 ? 0 : -1"
             @click.stop="emitSelect(pillIndex)"
           >
-            {{ pillText }} ↗
+            {{ pillText }}
+            <Icon name="arrow-up-right" :size="14" class="pill-arrow" />
           </button>
         </div>
       </div>
@@ -43,7 +44,8 @@ import { useI18n } from '../../i18n';
 import { useTheme } from '../../composables/useTheme';
 import { ScrollTrigger, prefersReducedMotion, isPhoneWidth } from '../../lib/motion';
 import { createCoinLayer, measureCapTop } from '../../lib/vault/coins';
-import { prepareFonts } from '../../lib/vault/textures';
+import { prepareFonts, MONO_STACK } from '../../lib/vault/textures';
+import Icon from '../icons/Icon.vue';
 import { webglAvailable } from '../../lib/vault/scene';
 
 const props = defineProps({
@@ -100,7 +102,8 @@ function measureRow() {
   const fontSize = parseFloat(cs.fontSize);
   let lineHeight = parseFloat(cs.lineHeight);
   if (!Number.isFinite(lineHeight)) lineHeight = fontSize * 1.2;
-  capOffset = measureCapTop(fontSize, lineHeight);
+  // 标签为等宽字体，帽线按等宽字体测量，金币才能落在字母的帽线上
+  capOffset = measureCapTop(fontSize, lineHeight, MONO_STACK);
 }
 
 // 地面：标签行的帽线（画布坐标），没有倾斜
@@ -314,10 +317,13 @@ onBeforeUnmount(() => {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-family: var(--font-display);
-  font-size: clamp(26px, 3.1vw, 44px);
-  line-height: 0.9;
-  text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-size: clamp(22px, 2.4vw, 32px);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
   color: var(--text);
   pointer-events: none;
@@ -345,25 +351,36 @@ onBeforeUnmount(() => {
 }
 
 .coin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   height: 44px;
-  padding: 0 20px;
-  color: var(--gold-3);
-  font-family: var(--mono);
+  padding: 0 16px;
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gold) 12%, var(--surface-card));
+  color: var(--text);
+  font-family: var(--font-mono);
   font-size: 13px;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(6px) scale(0.94);
-  transition: opacity 0.18s linear, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.18s;
+  transition: opacity 0.18s linear, visibility 0s linear 0.18s;
   pointer-events: none;
 }
 
 .coin-pill.is-on {
   opacity: 1;
   visibility: visible;
-  transform: none;
   pointer-events: auto;
   transition-delay: 0s;
+}
+
+.pill-arrow {
+  flex-shrink: 0;
 }
 
 /* 无 WebGL：不占用舞台高度，标签按文字流排列 */
@@ -387,7 +404,8 @@ onBeforeUnmount(() => {
 
   .row-labels {
     bottom: 16px;
-    font-size: clamp(20px, 6vw, 26px);
+    gap: 16px;
+    font-size: clamp(18px, 5.6vw, 22px);
   }
 }
 </style>

@@ -60,11 +60,11 @@
     <!-- 溢价 -->
     <template v-else-if="tab === 'premium'">
       <div v-if="premium?.available" class="premium-stats">
-        <div><span>{{ t('chartWorkspace.premiumNow') }}</span><b :class="toneOf(premium.current)">{{ signedPct(premium.current) }}</b></div>
-        <div><span>{{ t('chartWorkspace.premiumMean60') }}</span><b>{{ signedPct(premium.mean60) }}</b></div>
-        <div><span>{{ t('chartWorkspace.premiumZ') }}</span><b>{{ fmt(premium.z) }}</b></div>
-        <div><span>{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ fmt(premium.percentile, 0) }}%</b></div>
-        <div><span>{{ t('chartWorkspace.sampleRange') }}</span><b>{{ t('chartWorkspace.sampleDays', { count: premium.count }) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.premiumNow') }}</span><b :class="toneOf(premium.current)">{{ signedPct(premium.current) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.premiumMean60') }}</span><b>{{ signedPct(premium.mean60) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.premiumZ') }}</span><b>{{ fmt(premium.z) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ fmt(premium.percentile, 0) }}%</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.sampleRange') }}</span><b>{{ t('chartWorkspace.sampleDays', { count: premium.count }) }}</b></div>
       </div>
       <PremiumChart :series="premiumSeries" :stats="premium" :theme="theme" />
       <p class="note">
@@ -76,11 +76,11 @@
     <!-- 金银比率 -->
     <template v-else-if="tab === 'ratio'">
       <div v-if="ratioData" class="premium-stats">
-        <div><span>{{ t('chartWorkspace.ratioNow') }}</span><b class="tone-up">{{ fmt(ratioData.current) }}</b></div>
-        <div><span>{{ t('chartWorkspace.ratioMean') }}</span><b>{{ fmt(ratioData.mean) }}</b></div>
-        <div><span>{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ fmt(ratioData.percentile, 0) }}%</b></div>
-        <div><span>{{ t('chartWorkspace.regime') }}</span><b style="font-size: 14px">{{ tLabel(ratioData.label) }}</b></div>
-        <div><span>{{ t('chartWorkspace.pairHint') }}</span><span style="font-size: 12px; margin-top: 4px; display: block; color: var(--text-2)">{{ ratioData.suggestion }}</span></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.ratioNow') }}</span><b class="tone-up">{{ fmt(ratioData.current) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.ratioMean') }}</span><b>{{ fmt(ratioData.mean) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.premiumPercentile') }}</span><b>{{ fmt(ratioData.percentile, 0) }}%</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.regime') }}</span><b class="stat-text">{{ tLabel(ratioData.label) }}</b></div>
+        <div><span class="stat-label">{{ t('chartWorkspace.pairHint') }}</span><span class="stat-note">{{ ratioData.suggestion }}</span></div>
       </div>
       <div v-if="ratioLoading" class="notice">{{ t('chartWorkspace.ratioLoading') }}</div>
       <RatioChart v-else :series="ratioData?.series || []" :stats="ratioData" :theme="theme" />
@@ -253,27 +253,6 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   gap: 16px;
 }
 
-.tradingview-container {
-  width: 100%;
-  height: 540px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-}
-
-.chart-iframe {
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-@media (max-width: 767px) {
-  .tradingview-container {
-    height: 380px;
-  }
-}
-
 .head {
   display: flex;
   justify-content: space-between;
@@ -282,17 +261,83 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   flex-wrap: wrap;
 }
 
+/* 小标题：展示字 20px（手机 18px），不用大写与字距 */
 .title {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   word-break: keep-all;
+}
+
+:lang(zh) .title {
+  letter-spacing: 0;
 }
 
 .sub {
   margin: 4px 0 0;
   font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
+}
+
+.tradingview-container {
+  width: 100%;
+  height: 520px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface-2);
+  position: relative;
+}
+
+.chart-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* 标签页：发丝分隔线；激活项为 1px 金色下划线，不做填充，不用阴影 */
+.seg-tabs {
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.seg-tabs button {
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.4;
+  box-shadow: none;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .seg-tabs button:hover {
+    color: var(--text);
+  }
+}
+
+.seg-tabs button.active,
+.seg-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--gold);
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
 }
 
 .toolbar {
@@ -303,29 +348,62 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   flex-wrap: wrap;
 }
 
+/* 区间：发丝边芯片，2px 圆角；激活项为金色发丝边加淡金底 */
+.seg-range {
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.seg-range button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.seg-range button.active,
+.seg-range button[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  color: var(--text);
+  box-shadow: none;
+}
+
 .toggles {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
+/* 指标开关：发丝边芯片，2px 圆角；开启项为金色发丝边加淡金底 */
 .toggle {
-  height: 30px;
-  padding: 0 11px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   background: transparent;
   color: var(--text-2);
   font: inherit;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .toggle.on {
-  background: color-mix(in srgb, var(--gold) 16%, transparent);
-  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border-color: var(--gold);
   color: var(--text);
 }
 
@@ -334,7 +412,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   text-align: center;
   color: var(--text-2);
   font-size: 14px;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
@@ -348,20 +426,51 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   padding: 12px;
   border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
 }
 
-.premium-stats span {
+/* 统计标签：英文 11px 大写加字距，中文 12px 不大写不加字距 */
+.stat-label {
   display: block;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-3);
 }
 
+:lang(zh) .stat-label {
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* 读数：等宽数字，不加粗 */
 .premium-stats b {
   display: block;
   margin-top: 4px;
+  font-family: var(--font-mono);
   font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
+}
+
+.premium-stats .stat-text {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.premium-stats .stat-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
 }
 
 .premium-stats .tone-up { color: var(--up); }
@@ -369,27 +478,9 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
 
 .note {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.7;
   color: var(--text-3);
-  line-height: 1.6;
-}
-
-.tradingview-container {
-  height: 520px;
-  width: 100%;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  position: relative;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-}
-
-.chart-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
 }
 
 /* 手机：标签条单行横向滑动（只有它横向滚动），区间与指标按钮不低于 36px */
@@ -400,6 +491,10 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
 
   .head > div:first-child {
     min-width: 0;
+  }
+
+  .title {
+    font-size: 18px;
   }
 
   .seg-tabs {
@@ -450,7 +545,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   }
 
   .toggle {
-    height: 36px;
+    min-height: 36px;
     padding: 0 12px;
   }
 

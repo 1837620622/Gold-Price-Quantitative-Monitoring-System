@@ -3,18 +3,15 @@
     <div class="modal-card">
       <header class="modal-head">
         <div class="head-title-wrap">
-          <div class="alert-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-          </div>
+          <Icon name="bell" :size="20" class="head-icon" />
           <div>
             <h3 class="modal-title">{{ t('priceAlert.title') }}</h3>
             <p class="modal-sub">{{ t('priceAlert.desc') }}</p>
           </div>
         </div>
-        <button type="button" class="close-btn" @click="$emit('close')">✕</button>
+        <button type="button" class="icon-btn" @click="$emit('close')">
+          <Icon name="close" :size="18" />
+        </button>
       </header>
 
       <!-- 权限提醒提示条 -->
@@ -57,6 +54,7 @@
 
         <div class="form-actions">
           <button type="button" class="btn btn-ghost btn-sm" @click="testSound">
+            <Icon name="volume" :size="14" />
             {{ t('priceAlert.testSound') }}
           </button>
           <button type="submit" class="btn btn-primary btn-sm">
@@ -119,6 +117,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { playAlertSound } from '../lib/sound';
 import { useI18n } from '../i18n';
+import Icon from './icons/Icon.vue';
 
 const { t } = useI18n();
 
@@ -186,21 +185,20 @@ function testSound() {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   z-index: 100;
   display: grid;
   place-items: center;
   padding: 16px;
+  background: rgba(0, 0, 0, 0.72);
 }
 
 .modal-card {
   width: 100%;
   max-width: 580px;
   background: var(--surface-card);
-  border: 1px solid rgba(232, 199, 125, 0.3);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
   padding: 24px;
 }
 
@@ -208,6 +206,7 @@ function testSound() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -215,72 +214,73 @@ function testSound() {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
-.alert-icon {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--info);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+.head-icon {
+  flex-shrink: 0;
+  color: var(--gold);
 }
 
 .modal-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
+:lang(zh) .modal-title {
+  letter-spacing: 0;
+}
+
 .modal-sub {
-  margin: 3px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
 }
 
-.close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-3);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-.close-btn:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.1);
+:lang(zh) .modal-sub {
+  line-height: 1.75;
 }
 
+/* 权限提示：发丝边、无底色；启用按钮为纯金 */
 .perm-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--gold-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
   margin-bottom: 18px;
   gap: 10px;
 }
 
 .perm-btn {
-  padding: 4px 10px;
-  background: var(--gold-2);
-  color: var(--gold-ink);
-  border: none;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 11px;
-  cursor: pointer;
   flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: var(--gold-ink);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .perm-btn:hover {
+    background: color-mix(in srgb, var(--gold) 86%, #ffffff);
+  }
 }
 
 .alert-form {
@@ -288,9 +288,9 @@ function testSound() {
   flex-direction: column;
   gap: 14px;
   padding: 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--surface-2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
   margin-bottom: 20px;
 }
 
@@ -312,33 +312,57 @@ function testSound() {
   gap: 6px;
 }
 
+/* 表单标签：英文小字大写加字距；中文 12px 不大写 */
 .field-label {
+  font-family: var(--font);
   font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-2);
-  font-weight: 600;
+}
+
+:lang(zh) .field-label {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .field-select,
 .field-input {
   height: 38px;
   padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: var(--surface-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-card);
   color: var(--text);
   font-size: 13px;
-  font-family: var(--mono);
 }
+
+.field-select {
+  font-family: var(--font);
+}
+
+.field-input {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .field-select:focus,
 .field-input:focus {
   outline: none;
-  border-color: var(--gold-2);
+  border-color: var(--gold);
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.form-actions .btn {
+  height: 36px;
 }
 
 .alerts-list-box {
@@ -351,32 +375,41 @@ function testSound() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .list-title {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-2);
 }
 
 .clear-btn {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
   background: transparent;
-  border: none;
-  color: var(--text-3);
-  font-size: 11px;
+  color: var(--text-2);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
 }
-.clear-btn:hover {
-  color: var(--gold-3);
+
+@media (hover: hover) and (pointer: fine) {
+  .clear-btn:hover {
+    color: var(--gold);
+  }
 }
 
 .empty-state {
   text-align: center;
   padding: 24px 16px;
   color: var(--text-3);
-  font-size: 12px;
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .alerts-items {
@@ -392,14 +425,14 @@ function testSound() {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  font-family: var(--mono);
+  border-radius: var(--radius);
+  background: transparent;
+  border: 1px solid var(--line);
+  font-family: var(--font);
 }
+
 .alert-row.triggered {
   opacity: 0.6;
-  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .row-left {
@@ -409,19 +442,21 @@ function testSound() {
   font-size: 13px;
 }
 
+/* 标的芯片：发丝边框、无底色；国内现货用金色字 */
 .row-badge {
+  padding: 2px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  font-family: var(--mono);
   font-size: 11px;
-  font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  white-space: nowrap;
 }
+
 .row-badge.cn {
-  background: rgba(232, 199, 125, 0.15);
-  color: var(--gold-3);
-}
-.row-badge.intl {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--info);
+  color: var(--gold);
 }
 
 .row-cond {
@@ -430,23 +465,26 @@ function testSound() {
 }
 
 .row-price {
-  font-weight: 700;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--text);
 }
 
+/* 状态标签：文字着色，无底色；已触发为金色 */
 .status-tag {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
 }
-.status-tag.active {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--down);
-}
+
 .status-tag.triggered {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--up);
+  color: var(--gold);
+  border-color: var(--line-strong);
 }
 
 .row-actions {
@@ -455,22 +493,28 @@ function testSound() {
 }
 
 .row-btn {
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
   color: var(--text-2);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
 }
-.row-btn.reset:hover {
-  background: var(--gold-2);
-  color: var(--gold-ink);
-}
-.row-btn.del:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--up);
-  border-color: var(--up);
+
+@media (hover: hover) and (pointer: fine) {
+  .row-btn.reset:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .row-btn.del:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
 }
 
 /* ---------- 手机端：底部弹出的全宽面板；输入 16px 防止 iOS 缩放；按钮 44px ---------- */
@@ -487,20 +531,20 @@ function testSound() {
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 
   .modal-head {
     margin-bottom: 16px;
   }
 
-  .close-btn {
-    display: grid;
-    place-items: center;
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-head .icon-btn {
     width: 44px;
     height: 44px;
-    padding: 0;
-    font-size: 18px;
   }
 
   .modal-sub {
@@ -522,10 +566,6 @@ function testSound() {
   .alert-form {
     padding: 14px;
     gap: 12px;
-  }
-
-  .field-label {
-    font-size: 12px;
   }
 
   .field-select,
@@ -574,29 +614,6 @@ function testSound() {
     min-height: 44px;
     padding: 0 12px;
     font-size: 13px;
-  }
-}
-
-/* 悬停色只给精确指针设备；触屏粘滞悬停时恢复为静止样式 */
-@media (hover: none) {
-  .close-btn:hover {
-    color: var(--text-3);
-    background: transparent;
-  }
-
-  .clear-btn:hover {
-    color: var(--text-3);
-  }
-
-  .row-btn.reset:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-2);
-  }
-
-  .row-btn.del:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-2);
-    border-color: rgba(255, 255, 255, 0.1);
   }
 }
 </style>

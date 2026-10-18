@@ -53,8 +53,13 @@ function buildOption() {
       confine: true,
       backgroundColor: pal.tipBg,
       borderColor: pal.tipBorder,
-      textStyle: { color: pal.text, fontSize: 12 },
-      valueFormatter: (v) => `${fmtVal(v, 3)}%`,
+      borderWidth: 1,
+      shadowBlur: 0,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: 'transparent',
+      textStyle: { color: pal.text, fontSize: 12, fontFamily: pal.font },
+      valueFormatter: (v) => `<span style="font-family:${pal.mono};font-variant-numeric:tabular-nums">${fmtVal(v, 3)}%</span>`,
     },
     xAxis: {
       type: 'category',
@@ -62,13 +67,13 @@ function buildOption() {
       boundaryGap: false,
       axisLine: { lineStyle: { color: pal.axis } },
       axisTick: { show: false },
-      axisLabel: { color: pal.muted, fontSize: 11, hideOverlap: true },
+      axisLabel: { color: pal.muted, fontSize: 11, hideOverlap: true, fontFamily: pal.mono },
     },
     yAxis: {
       type: 'value',
       scale: true,
       splitLine: { lineStyle: { color: pal.grid, type: 'dashed' } },
-      axisLabel: { color: pal.muted, fontSize: 11, formatter: (v) => `${fmtVal(v, 1)}%` },
+      axisLabel: { color: pal.muted, fontSize: 11, fontFamily: pal.mono, formatter: (v) => `${fmtVal(v, 1)}%` },
     },
     series: [
       {

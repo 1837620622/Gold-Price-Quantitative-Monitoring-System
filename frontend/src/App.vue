@@ -60,7 +60,9 @@
             <b class="toast-title">{{ activeNotice.title }}</b>
             <p class="toast-desc">{{ activeNotice.body }}</p>
           </div>
-          <button type="button" class="toast-close" :aria-label="t('app.toastClose')" @click="activeNotice = null">✕</button>
+          <button type="button" class="toast-close" :aria-label="t('app.toastClose')" @click="activeNotice = null">
+            <Icon name="close" :size="14" />
+          </button>
         </div>
       </transition>
 
@@ -291,6 +293,7 @@ import AppFooter from './components/AppFooter.vue';
 import SubscribeModal from './components/SubscribeModal.vue';
 import PriceAlertModal from './components/PriceAlertModal.vue';
 import SharePosterModal from './components/SharePosterModal.vue';
+import Icon from './components/icons/Icon.vue';
 
 import { useMarket } from './composables/useMarket';
 import { useQuant } from './composables/useQuant';
@@ -586,7 +589,7 @@ onUnmounted(() => {
 
 .notice-card {
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
   padding: 36px 20px;
 }
@@ -604,8 +607,8 @@ onUnmounted(() => {
   margin-bottom: 16px;
   padding: 10px 14px;
   border-radius: var(--radius);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.6;
   border: 1px solid transparent;
 }
 
@@ -620,7 +623,7 @@ onUnmounted(() => {
   color: var(--danger);
 }
 
-/* 浮动预警：实体面板 + 红色细边，入场由 transition 完成 */
+/* 浮动预警：纯色面板 + 发丝边；浮层阴影使用弹层令牌；入场由 transition 完成 */
 .toast-alert {
   position: fixed;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
@@ -633,18 +636,18 @@ onUnmounted(() => {
   padding: 14px 16px;
   border-radius: var(--radius-lg);
   background: var(--surface-card);
-  border: 1px solid color-mix(in srgb, var(--up) 40%, transparent);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-modal);
 }
 
-/* 预警标记：静态小点，不做循环动画 */
+/* 预警标记：静态金色小点，不做循环动画 */
 .toast-dot {
   flex-shrink: 0;
   width: 8px;
   height: 8px;
   margin-top: 6px;
   border-radius: 50%;
-  background: var(--up);
+  background: var(--gold);
 }
 
 .toast-content {
@@ -655,28 +658,44 @@ onUnmounted(() => {
 .toast-title {
   display: block;
   font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: var(--text);
   word-break: keep-all;
 }
 
 .toast-desc {
   margin: 4px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
 }
 
+/* 中文界面：标题用界面字体、不加字距；说明行高 1.75 */
+:lang(zh) .toast-title {
+  font-family: var(--font);
+  letter-spacing: 0;
+}
+
+:lang(zh) .toast-desc {
+  line-height: 1.75;
+}
+
+/* 关闭钮：36px 触控区，图标 14px，无底色、无边框 */
 .toast-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin: -8px -8px -8px 0;
+  padding: 0;
+  border: 0;
   background: transparent;
-  border: none;
   color: var(--text-3);
-  font-size: 14px;
   cursor: pointer;
-  padding: 2px 4px;
-  transition: color var(--dur) var(--ease-out);
+  transition: color 0.2s var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -685,10 +704,10 @@ onUnmounted(() => {
   }
 }
 
-/* 预警入场：淡入 + 12px 上移，0.36s，只播放一次 */
+/* 预警入场：淡入 + 12px 上移，240ms，只播放一次 */
 .toast-fade-enter-active,
 .toast-fade-leave-active {
-  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+  transition: opacity 0.24s var(--ease-out), transform 0.24s var(--ease-out);
 }
 
 .toast-fade-enter-from,
@@ -742,23 +761,6 @@ onUnmounted(() => {
     max-width: none;
     bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     padding: 12px 14px;
-  }
-
-  .toast-title {
-    font-size: 13px;
-  }
-
-  .toast-desc {
-    font-size: 14px;
-  }
-
-  .toast-close {
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    margin: -8px -8px -8px 0;
-    padding: 0;
   }
 }
 
