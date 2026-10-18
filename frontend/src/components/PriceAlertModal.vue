@@ -116,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { playAlertSound } from '../lib/sound';
 import { useI18n } from '../i18n';
 
@@ -138,6 +138,15 @@ const notificationPermission = ref(
 );
 
 const hasTriggered = computed(() => props.alerts.some((a) => a.triggered));
+
+// 弹层打开时锁住背后页面滚动（视口由 html 决定，见 SubscribeModal 同名注释）
+function lockScroll(locked) {
+  const value = locked ? 'hidden' : '';
+  document.documentElement.style.overflow = value;
+  document.body.style.overflow = value;
+}
+watch(() => props.open, (isOpen) => lockScroll(isOpen));
+onUnmounted(() => lockScroll(false));
 
 async function requestPerm() {
   if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -224,6 +233,8 @@ function testSound() {
   font-size: 17px;
   font-weight: 700;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .modal-sub {
@@ -399,7 +410,7 @@ function testSound() {
 }
 
 .row-badge {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   padding: 2px 5px;
   border-radius: 4px;
@@ -424,7 +435,7 @@ function testSound() {
 }
 
 .status-tag {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   padding: 1px 4px;
   border-radius: 3px;
@@ -460,5 +471,132 @@ function testSound() {
   background: rgba(239, 68, 68, 0.2);
   color: var(--up);
   border-color: var(--up);
+}
+
+/* ---------- 手机端：底部弹出的全宽面板；输入 16px 防止 iOS 缩放；按钮 44px ---------- */
+@media (max-width: 767px) {
+  .modal-backdrop {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .modal-card {
+    max-width: none;
+    max-height: 88vh;
+    max-height: 88dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+  }
+
+  .modal-head {
+    margin-bottom: 16px;
+  }
+
+  .close-btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 18px;
+  }
+
+  .modal-sub {
+    font-size: 13px;
+  }
+
+  .perm-banner {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .perm-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .alert-form {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .field-label {
+    font-size: 12px;
+  }
+
+  .field-select,
+  .field-input {
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .form-actions .btn {
+    height: 44px;
+  }
+
+  .list-title {
+    font-size: 14px;
+  }
+
+  .clear-btn {
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .alert-row {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 10px 12px;
+  }
+
+  .row-left {
+    flex-wrap: wrap;
+    min-width: 0;
+    gap: 6px 8px;
+    font-size: 14px;
+  }
+
+  .row-cond {
+    font-size: 13px;
+  }
+
+  .row-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .row-btn {
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}
+
+/* 悬停色只给精确指针设备；触屏粘滞悬停时恢复为静止样式 */
+@media (hover: none) {
+  .close-btn:hover {
+    color: var(--text-3);
+    background: transparent;
+  }
+
+  .clear-btn:hover {
+    color: var(--text-3);
+  }
+
+  .row-btn.reset:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-2);
+  }
+
+  .row-btn.del:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-2);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 }
 </style>

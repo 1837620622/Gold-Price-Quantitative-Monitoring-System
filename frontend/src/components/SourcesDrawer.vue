@@ -74,8 +74,11 @@ function onKeydown(event) {
   if (event.key === 'Escape') emit('close');
 }
 
+// 视口由 html 决定滚动（style.css 给 html 设了 overflow-x，body 上的设置不会传到视口），两处都锁
 function lockScroll(locked) {
-  document.body.style.overflow = locked ? 'hidden' : '';
+  const value = locked ? 'hidden' : '';
+  document.documentElement.style.overflow = value;
+  document.body.style.overflow = value;
 }
 
 watch(
@@ -133,6 +136,8 @@ onUnmounted(() => {
 .drawer-head h2 {
   margin: 0;
   font-size: 18px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .block {
@@ -206,7 +211,7 @@ onUnmounted(() => {
   margin: 6px 0 0;
   color: var(--danger);
   font-size: 12px;
-  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .pill {
@@ -254,7 +259,51 @@ onUnmounted(() => {
 }
 
 @keyframes slide-in {
-  from { transform: translateX(24px); opacity: 0; }
+  from { transform: translateX(12px); opacity: 0; }
   to { transform: none; opacity: 1; }
+}
+
+/* ---------- 手机端：底部弹出的全宽面板，内容在面板内滚动 ---------- */
+@media (max-width: 767px) {
+  .drawer-backdrop {
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .drawer {
+    width: 100%;
+    height: auto;
+    max-height: 88vh;
+    max-height: 88dvh;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+    border-left: 0;
+    border-top: 1px solid var(--border-strong);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -30px 60px -30px rgba(0, 0, 0, 0.5);
+    overscroll-behavior: contain;
+    animation: sheet-in 0.25s ease-out;
+  }
+
+  .drawer-head .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .check,
+  .source {
+    padding: 12px;
+  }
+}
+
+@keyframes sheet-in {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-backdrop,
+  .drawer {
+    animation: none;
+  }
 }
 </style>

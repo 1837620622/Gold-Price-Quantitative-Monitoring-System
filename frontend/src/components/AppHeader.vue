@@ -5,20 +5,44 @@
       AURUM <span class="nav-logo-sub">QUANT</span>
     </a>
 
-    <!-- Center: Links -->
-    <ul class="nav-links" :class="{ open: mobileOpen }" ref="navLinksRef">
+    <!-- Center: Links。手机端收进 ☰ 菜单；工具区只在 767px 及以下显示 -->
+    <ul
+      id="nav-links"
+      ref="navLinksRef"
+      class="nav-links"
+      :class="{ open: mobileOpen }"
+      @click="onMenuClick"
+      @focusout="onMenuFocusOut"
+    >
       <li><a href="#journey" :class="{ active: activeId === 'journey' }" @click.prevent="navClick('#journey')">{{ t('appHeader.navOverview') }}</a></li>
       <li><a href="#sec-overview" :class="{ active: activeId === 'sec-overview' }" @click.prevent="navClick('#sec-overview')">{{ t('appHeader.navMarket') }}</a></li>
       <li><a href="#sec-quant" :class="{ active: activeId === 'sec-quant' }" @click.prevent="navClick('#sec-quant')">{{ t('appHeader.navSignals') }}</a></li>
       <li><a href="#sec-charts" :class="{ active: activeId === 'sec-charts' }" @click.prevent="navClick('#sec-charts')">{{ t('appHeader.navCharts') }}</a></li>
       <li><a href="#sec-tools" :class="{ active: activeId === 'sec-tools' }" @click.prevent="navClick('#sec-tools')">{{ t('appHeader.navArbitrage') }}</a></li>
       <li><a href="#sec-ai" :class="{ active: activeId === 'sec-ai' }" @click.prevent="navClick('#sec-ai')">{{ t('appHeader.navAi') }}</a></li>
-      <li class="mobile-only-action"><a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">{{ t('appHeader.navTerminal') }}</a></li>
+
+      <!-- 手机端工具区：计算器 + 行情控件（音效 / 预警 / 刷新频率由 GlobalTickerBar 挂到 #nav-tools-slot） -->
+      <li class="menu-tools">
+        <p class="menu-title">{{ t('chromeMobile.tools') }}</p>
+        <button type="button" class="menu-row" @click="$emit('calc')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="16" y1="14" x2="16" y2="18"></line>
+          </svg>
+          <span>{{ t('appHeader.calc') }}</span>
+        </button>
+        <div id="nav-tools-slot" class="nav-tools-slot"></div>
+      </li>
+
+      <li class="mobile-only-action">
+        <a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">{{ t('appHeader.navTerminal') }}</a>
+      </li>
     </ul>
 
-    <!-- Right: Actions & Pill -->
+    <!-- Right: status & quick actions -->
     <div class="nav-actions">
-      <!-- 紧凑工具药丸（实时源与计算器） -->
+      <!-- 紧凑工具药丸（实时源） -->
       <button
         type="button"
         class="tool-pill"
@@ -29,13 +53,9 @@
         <span class="tool-text">{{ sourcesOk }}/{{ sourcesTotal }}</span>
       </button>
 
-      <button
-        type="button"
-        class="tool-icon-btn"
-        :title="t('appHeader.calc')"
-        @click="$emit('calc')"
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- 计算器：手机端移入 ☰ 菜单 -->
+      <button type="button" class="tool-icon-btn calc-btn" :title="t('appHeader.calc')" @click="$emit('calc')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <rect x="4" y="2" width="16" height="20" rx="2"></rect>
           <line x1="8" y1="6" x2="16" y2="6"></line>
           <line x1="16" y1="14" x2="16" y2="18"></line>
@@ -44,23 +64,19 @@
 
       <button
         type="button"
-        class="tool-icon-btn"
+        class="tool-icon-btn refresh-btn"
         :class="{ spinning: status === 'loading' }"
         :title="t('appHeader.refresh')"
         @click="$emit('refresh')"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M21 12a9 9 0 1 1-2.6-6.4"></path>
           <path d="M21 4v5h-5"></path>
         </svg>
       </button>
 
       <!-- Pill button label “Launch Terminal” -->
-      <a
-        href="#workspace"
-        class="pill nav-pill"
-        @click.prevent="navClick('#workspace')"
-      >
+      <a href="#workspace" class="pill nav-pill" @click.prevent="navClick('#workspace')">
         {{ t('appHeader.navTerminal') }}
       </a>
 
@@ -72,9 +88,9 @@
         :aria-expanded="prefsOpen ? 'true' : 'false'"
         aria-controls="prefs-panel"
         :title="t('appHeader.prefs')"
-        @click.stop="prefsOpen = !prefsOpen"
+        @click.stop="togglePrefs"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="12" cy="12" r="4"></circle>
           <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
         </svg>
@@ -83,25 +99,36 @@
 
       <!-- 44x44 Hamburger (.nav-toggle) -->
       <button
+        ref="navToggleRef"
         class="nav-toggle"
         type="button"
         :aria-expanded="mobileOpen ? 'true' : 'false'"
-        aria-label="Toggle Navigation"
-        @click.stop="mobileOpen = !mobileOpen"
+        aria-controls="nav-links"
+        :aria-label="t('chromeMobile.menu')"
+        @click.stop="toggleNav"
       >
         <span></span>
         <span></span>
         <span></span>
       </button>
     </div>
-    <div v-if="prefsOpen" id="prefs-panel" ref="prefsRef" class="prefs-panel" role="dialog" :aria-label="t('appHeader.prefs')">
+
+    <div
+      v-if="prefsOpen"
+      id="prefs-panel"
+      ref="prefsRef"
+      class="prefs-panel"
+      role="dialog"
+      :aria-label="t('appHeader.prefs')"
+      @focusout="onPrefsFocusOut"
+    >
       <PrefsMenu />
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import PrefsMenu from './PrefsMenu.vue';
 import { useI18n } from '../i18n';
 
@@ -122,14 +149,18 @@ const mobileOpen = ref(false);
 const activeId = ref('hero');
 const isScrolled = ref(false);
 const navLinksRef = ref(null);
+const navToggleRef = ref(null);
 const prefsOpen = ref(false);
 const prefsRef = ref(null);
 const prefsBtnRef = ref(null);
 
 const sourcesHealthy = computed(() => props.sourcesTotal > 0 && props.sourcesOk === props.sourcesTotal);
 
+// 滚动后才显示底栏；带滞后区间，贴近阈值时不会反复切换
 function onScroll() {
-  isScrolled.value = window.scrollY > 24;
+  const y = window.scrollY;
+  if (y > 40) isScrolled.value = true;
+  else if (y < 8) isScrolled.value = false;
 }
 
 function scrollTo(selector) {
@@ -144,6 +175,42 @@ function navClick(selector) {
   scrollTo(selector);
 }
 
+function toggleNav() {
+  prefsOpen.value = false;
+  mobileOpen.value = !mobileOpen.value;
+}
+
+function togglePrefs() {
+  mobileOpen.value = false;
+  prefsOpen.value = !prefsOpen.value;
+}
+
+// 菜单里的按钮（计算器、音效、预警等）点完即收起；下拉框保持打开
+function onMenuClick(e) {
+  if (e.target.closest('button, a')) mobileOpen.value = false;
+}
+
+// 焦点离开菜单 / 面板时收起；指针点击外部由 onClickOutside 处理
+function onMenuFocusOut(e) {
+  const next = e.relatedTarget;
+  if (!next || navLinksRef.value?.contains(next) || navToggleRef.value?.contains(next)) return;
+  mobileOpen.value = false;
+}
+
+function onPrefsFocusOut(e) {
+  const next = e.relatedTarget;
+  if (!next || prefsRef.value?.contains(next) || prefsBtnRef.value?.contains(next)) return;
+  prefsOpen.value = false;
+}
+
+// 打开偏好面板后把焦点交给当前选中的选项，键盘用户可以直接操作
+watch(prefsOpen, (open) => {
+  if (!open) return;
+  nextTick(() => {
+    prefsRef.value?.querySelector('[role="radio"][aria-checked="true"]')?.focus({ preventScroll: true });
+  });
+});
+
 function onClickOutside(e) {
   if (navLinksRef.value && !navLinksRef.value.contains(e.target)) {
     mobileOpen.value = false;
@@ -154,8 +221,19 @@ function onClickOutside(e) {
   }
 }
 
+// Escape 关闭面板；焦点原本在面板内时还给对应的按钮
 function onKeydown(e) {
-  if (e.key === 'Escape') prefsOpen.value = false;
+  if (e.key !== 'Escape') return;
+  if (prefsOpen.value) {
+    const hadFocus = prefsRef.value?.contains(document.activeElement);
+    prefsOpen.value = false;
+    if (hadFocus) prefsBtnRef.value?.focus();
+  }
+  if (mobileOpen.value) {
+    const hadFocus = navLinksRef.value?.contains(document.activeElement);
+    mobileOpen.value = false;
+    if (hadFocus) navToggleRef.value?.focus();
+  }
 }
 
 let sectionObserver = null;
@@ -199,7 +277,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   width: 100%;
-  height: 56px;
+  height: var(--nav-h);
   z-index: 100;
   display: flex;
   justify-content: space-between;
@@ -207,15 +285,26 @@ onUnmounted(() => {
   padding: 0 var(--pad);
   box-sizing: border-box;
   background: transparent;
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.top-nav.scrolled {
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* 滚动后的底栏：伪元素淡入淡出，不切换 backdrop-filter，避免闪烁；模糊保持轻量 */
+.top-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
   border-bottom: 1px solid var(--line);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 18px -14px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.top-nav.scrolled::before {
+  opacity: 1;
 }
 
 .nav-logo {
@@ -228,6 +317,7 @@ onUnmounted(() => {
   text-decoration: none;
   cursor: pointer;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 .nav-logo-sub {
   font-size: 0.52em;
@@ -257,7 +347,6 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.nav-links a:hover,
 .nav-links a.active {
   color: var(--ink);
 }
@@ -281,11 +370,7 @@ onUnmounted(() => {
   font-size: 11px;
   font-family: var(--font-display), var(--mono);
   cursor: pointer;
-  transition: all 0.25s ease;
-}
-.tool-pill:hover {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-  color: var(--ink);
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .tool-dot {
@@ -307,15 +392,12 @@ onUnmounted(() => {
   color: var(--dim);
   display: grid;
   place-items: center;
+  padding: 0;
   cursor: pointer;
-  transition: all 0.25s ease;
-}
-.tool-icon-btn:hover {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-  color: var(--ink);
-  border-color: var(--border-hover);
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
+/* 刷新中的加载指示：仅在数据请求期间旋转 */
 .tool-icon-btn.spinning svg {
   animation: spin 0.8s linear infinite;
 }
@@ -335,10 +417,26 @@ onUnmounted(() => {
   justify-content: center;
   transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 }
-.nav-pill:hover {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+
+/* 悬停效果只给有鼠标的设备 */
+@media (hover: hover) and (pointer: fine) {
+  .nav-links a:hover {
+    color: var(--ink);
+  }
+  .tool-pill:hover {
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+    color: var(--ink);
+  }
+  .tool-icon-btn:hover {
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+    color: var(--ink);
+    border-color: var(--border-hover);
+  }
+  .nav-pill:hover {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
 }
 
 /* 44x44 Hamburger */
@@ -374,77 +472,83 @@ onUnmounted(() => {
   transform: translateY(-5.5px) rotate(-45deg);
 }
 
-/* Mobile Dropdown */
+.mobile-only-action {
+  display: none;
+}
+
+/* 手机工具区：默认隐藏，只在 767px 及以下显示 */
+.menu-tools {
+  display: none;
+}
+
+/* 中等宽度与手机：☰ 菜单接管导航链接 */
 @media (max-width: 900px), (max-height: 540px) {
   .top-nav {
-    height: 56px;
     padding: 0 max(var(--pad), env(safe-area-inset-right)) 0 max(var(--pad), env(safe-area-inset-left));
   }
   .nav-toggle {
     display: flex;
   }
   .tool-pill,
-  .tool-icon-btn,
-  .nav-pill,
-  .nav-toggle {
+  .nav-pill {
     min-height: 44px;
+  }
+  .tool-icon-btn {
+    width: 44px;
+    height: 44px;
   }
   .nav-links {
     display: none;
     position: absolute;
-    top: calc(100% + 10px);
+    top: calc(100% + 8px);
+    left: max(var(--pad), env(safe-area-inset-left));
     right: max(var(--pad), env(safe-area-inset-right));
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    min-width: 180px;
-    padding: 10px 16px;
-    background: color-mix(in srgb, var(--surface-card) 96%, transparent);
-    border: 1px solid var(--line-strong);
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
     margin: 0;
+    padding: 8px;
+    max-height: calc(100vh - var(--nav-h) - 24px);
+    max-height: calc(100dvh - var(--nav-h) - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--surface-card);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
     z-index: 55;
   }
   .nav-links.open {
-    display: flex;
+    display: grid;
   }
-  .nav-links a {
-    font-size: 16px;
-    padding: 10px 4px;
+  .nav-links > li > a:not(.pill) {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    color: var(--text);
+    background: color-mix(in srgb, var(--ink) 3%, transparent);
+  }
+  .nav-links > li > a.active:not(.pill) {
+    color: var(--gold-3);
+    box-shadow: inset 2px 0 0 var(--gold);
   }
   .mobile-only-action {
     display: block;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--line);
+    grid-column: 1 / -1;
+    margin-top: 6px;
+  }
+  .nav-links .mobile-pill {
     width: 100%;
-    text-align: center;
-  }
-  .mobile-pill {
-    width: 100%;
-    font-size: 13px !important;
-    padding: 10px 16px !important;
-  }
-}
-
-.mobile-only-action {
-  display: none;
-}
-
-@media (max-width: 680px) {
-  .nav-pill {
-    display: none;
+    min-height: 44px;
+    height: auto;
+    padding: 0 16px;
+    font-size: 14px;
+    color: var(--text);
   }
 }
 
-@media (max-width: 420px) {
-  .nav-actions {
-    gap: 6px;
-  }
-}
 /* 显示与语言面板：挂在导航栏下方，颜色跟随主题令牌 */
 .prefs-panel {
   position: absolute;
@@ -472,5 +576,77 @@ onUnmounted(() => {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .calc-btn {
+    display: none;
+  }
+  .nav-actions {
+    gap: 6px;
+  }
+  .tool-pill {
+    height: 44px;
+    min-width: 44px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  .menu-tools {
+    display: block;
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .menu-title {
+    margin: 0 4px 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .menu-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--ink) 3%, transparent);
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .menu-row svg {
+    flex: none;
+    color: var(--gold-3);
+  }
+  .prefs-panel {
+    top: calc(100% + 8px);
+    left: max(var(--pad), env(safe-area-inset-left));
+    right: max(var(--pad), env(safe-area-inset-right));
+    width: auto;
+    max-height: calc(100vh - var(--nav-h) - 24px);
+    max-height: calc(100dvh - var(--nav-h) - 24px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .nav-pill {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .nav-actions {
+    gap: 6px;
+  }
 }
 </style>

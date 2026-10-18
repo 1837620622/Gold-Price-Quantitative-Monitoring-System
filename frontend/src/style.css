@@ -313,9 +313,12 @@ p {
   transition: opacity var(--dur) var(--ease-out);
 }
 
-.card:hover {
-  --spot-opacity: 1;
-  border-color: var(--line-strong);
+/* 悬停高光只在精确指针上启用，触屏点击后不会残留 */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    --spot-opacity: 1;
+    border-color: var(--line-strong);
+  }
 }
 
 @media (max-width: 767px) {
@@ -357,13 +360,13 @@ p {
   color: var(--warn);
 }
 
-/* 实时状态点：仅绿色呼吸，表示数据在更新 */
+/* 实时状态点：绿色缓慢呼吸，表示数据在更新（循环动画只保留给它与加载态） */
 .live-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--down);
-  animation: dot-pulse 2.4s var(--ease-out) infinite;
+  animation: dot-pulse 3.2s ease-in-out infinite;
 }
 
 /* ---------- 按钮 ---------- */
@@ -418,8 +421,10 @@ p {
   color: var(--gold-btn-ink);
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--gold-btn-hover);
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gold-btn-hover);
+  }
 }
 
 .btn-ghost {
@@ -428,9 +433,11 @@ p {
   border-color: var(--line-strong);
 }
 
-.btn-ghost:hover:not(:disabled) {
-  border-color: var(--gold);
-  color: var(--gold-3);
+@media (hover: hover) and (pointer: fine) {
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--gold);
+    color: var(--gold-3);
+  }
 }
 
 /* 胶囊按钮：半透明毛玻璃，悬停时描金边 */
@@ -460,10 +467,17 @@ p {
     background var(--dur) var(--ease-out);
 }
 
-.pill:hover {
-  border-color: var(--gold);
-  color: var(--gold-3);
-  transform: translateY(-1px);
+/* 胶囊悬停只改描边与颜色，不再上移；仅精确指针生效 */
+@media (hover: hover) and (pointer: fine) {
+  .pill:hover {
+    border-color: var(--gold);
+    color: var(--gold-3);
+  }
+
+  .pill-gold:hover {
+    background: var(--gold-btn-hover);
+    color: var(--gold-btn-ink);
+  }
 }
 
 .pill-gold {
@@ -471,11 +485,6 @@ p {
   border-color: transparent;
   color: var(--gold-btn-ink);
   font-weight: 600;
-}
-
-.pill-gold:hover {
-  background: var(--gold-btn-hover);
-  color: var(--gold-btn-ink);
 }
 
 /* 旧类名保留为别名，避免破坏尚未迁移的组件 */
@@ -508,9 +517,11 @@ p {
     transform var(--dur-fast) var(--ease-pill);
 }
 
-.icon-btn:hover {
-  color: var(--gold);
-  border-color: var(--gold);
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
 }
 
 .icon-btn:active {
@@ -541,8 +552,10 @@ p {
   transition: color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
 }
 
-.seg button:hover {
-  color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+  .seg button:hover {
+    color: var(--text);
+  }
 }
 
 .seg button.active,
@@ -563,7 +576,7 @@ p {
   border-radius: 4px;
   background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-hover) 50%, var(--surface-2) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
+  animation: shimmer 1.8s linear infinite;
 }
 
 @keyframes shimmer {
@@ -581,7 +594,7 @@ p {
   border-radius: 50%;
   border: 2px solid var(--line-strong);
   border-top-color: currentColor;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.9s linear infinite;
 }
 
 @keyframes spin {
@@ -591,27 +604,22 @@ p {
 }
 
 @keyframes dot-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
-  }
-  70% {
-    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
-  }
+  0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
   }
 }
 
-/* 金色脉冲环：用于告警与提示的呼吸标记 */
+/* 实时点的柔和光晕：AppFooter 的 live-pulse-dot 使用（2s 循环），幅度小，颜色与绿色状态点一致 */
 @keyframes pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 rgba(232, 199, 125, 0.6);
-  }
-  70% {
-    box-shadow: 0 0 0 8px rgba(232, 199, 125, 0);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.32);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(232, 199, 125, 0);
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
   }
 }
 
@@ -762,14 +770,31 @@ p {
   font-weight: 700;
 }
 
-/* ---------- 响应式细节 ---------- */
+/* ---------- 响应式细节（手机，767px 及以下） ---------- */
 @media (max-width: 767px) {
   .container {
     padding: 0 16px;
   }
+
+  /* 触控目标：小按钮与分段控件不低于 36px */
+  .btn-sm,
+  .btn-xs {
+    height: 36px;
+  }
+
+  .seg button {
+    min-height: 36px;
+  }
+
+  /* 输入框 16px 起，避免 iOS 聚焦时自动放大 */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
-/* ---------- 减少动态效果：关闭所有 CSS 动画与过渡，GSAP 侧也会读取同一偏好 ---------- */
+/* ---------- 减少动态效果：过渡与循环动画收束为瞬时状态，不做位移与滚动联动；内容照常显示 ---------- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -778,5 +803,18 @@ p {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* 循环动画直接停用：骨架与加载圈保留可见形态，实时点保持静止 */
+  .skeleton,
+  .spinner,
+  .live-dot,
+  .live-pulse-dot {
+    animation: none !important;
+  }
+
+  .btn:active,
+  .icon-btn:active {
+    transform: none !important;
   }
 }

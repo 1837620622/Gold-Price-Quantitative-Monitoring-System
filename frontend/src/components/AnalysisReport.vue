@@ -120,7 +120,7 @@ function copyReport() {
 
 <style scoped>
 .report {
-  scroll-margin-top: 80px;
+  scroll-margin-top: calc(var(--nav-h) + var(--ticker-h) + 16px);
   background: var(--surface-card);
   border: 1px solid rgba(232, 199, 125, 0.22);
 }
@@ -148,10 +148,12 @@ function copyReport() {
   font-weight: 700;
   color: var(--text);
   letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .report-badge {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 4px;
@@ -300,5 +302,63 @@ function copyReport() {
   overflow: hidden;
   -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
   mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+
+/* ---------- 手机端 ---------- */
+@media (max-width: 767px) {
+  .card-head {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+  }
+
+  .card-sub {
+    font-size: 13px;
+  }
+
+  .head-actions {
+    width: 100%;
+  }
+
+  .copy-pill {
+    height: 44px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .expand-btn {
+    height: 44px;
+  }
+
+  .md {
+    font-size: 14px;
+    line-height: 1.8;
+    overflow-wrap: break-word;
+  }
+
+  .md :deep(h1),
+  .md :deep(h2),
+  .md :deep(h3) {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .md :deep(table) {
+    overscroll-behavior-x: contain;
+  }
+}
+
+/* 触屏点按后不让复制按钮保持上浮 */
+@media (hover: none) {
+  .copy-pill:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-wave span {
+    animation: none;
+    height: 14px;
+    opacity: 0.6;
+  }
 }
 </style>

@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { fmtNumber, fmtSigned } from '../format';
 import { tField, useI18n } from '../i18n';
 
@@ -104,6 +104,15 @@ const props = defineProps({
 defineEmits(['close']);
 
 const copied = ref(false);
+
+// 弹层打开时锁住背后页面滚动（视口由 html 决定，见 SubscribeModal 同名注释）
+function lockScroll(locked) {
+  const value = locked ? 'hidden' : '';
+  document.documentElement.style.overflow = value;
+  document.body.style.overflow = value;
+}
+watch(() => props.open, (isOpen) => lockScroll(isOpen));
+onUnmounted(() => lockScroll(false));
 
 const domestic = computed(() => props.snapshot?.domestic);
 const intl = computed(() => props.snapshot?.international);
@@ -281,7 +290,7 @@ async function copyText() {
 }
 
 .p-sub {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--gold-3);
 }
 
@@ -407,7 +416,7 @@ async function copyText() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-3);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 10px;
@@ -417,5 +426,89 @@ async function copyText() {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* ---------- 手机端：底部弹出的全宽面板；海报两列排列；按钮 44px ---------- */
+@media (max-width: 767px) {
+  .modal-backdrop {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .modal-card {
+    max-width: none;
+    max-height: 88vh;
+    max-height: 88dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 14px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+  }
+
+  .modal-head {
+    margin-bottom: 14px;
+  }
+
+  .close-btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 18px;
+  }
+
+  .poster-preview {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .p-val {
+    font-size: 20px;
+  }
+
+  .poster-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .poster-levels {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+
+  .v-title {
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+
+  .v-reason {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .poster-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    height: 44px;
+  }
+}
+
+@media (hover: none) {
+  .close-btn:hover {
+    color: var(--text-3);
+    background: transparent;
+  }
 }
 </style>

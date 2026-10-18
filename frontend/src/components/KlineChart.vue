@@ -92,6 +92,8 @@ function buildOption() {
   const panes = activePanes();
   const dates = bars.map((b) => b.date);
   const paneIndex = (name) => panes.indexOf(name);
+  // 窄屏：左侧留白更小，图表更宽
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
 
   // 布局：顶部留给图例，底部留给缩放滑块；窗格按权重分配高度
   const TOP = 9;
@@ -105,7 +107,7 @@ function buildOption() {
   let cursor = TOP;
   panes.forEach((pane, i) => {
     const share = (WEIGHT[pane] / weightSum) * available;
-    grid.push({ left: 60, right: 20, top: `${cursor}%`, height: `${share - 1.6}%` });
+    grid.push({ left: narrow ? 44 : 60, right: narrow ? 10 : 20, top: `${cursor}%`, height: `${share - 1.6}%` });
     cursor += share;
     xAxis.push({
       type: 'category',
@@ -255,6 +257,7 @@ function buildOption() {
       backgroundColor: pal.tipBg,
       borderColor: pal.tipBorder,
       textStyle: { color: pal.text, fontSize: 12 },
+      confine: true,
       formatter: (params) => tooltipHtml(params, pal, bars, ind, tg, panes),
     },
     dataZoom: [
@@ -269,7 +272,7 @@ function buildOption() {
         borderColor: 'transparent',
         backgroundColor: pal.sliderBg,
         fillerColor: pal.filler,
-        textStyle: { color: pal.muted, fontSize: 10 },
+        textStyle: { color: pal.muted, fontSize: 11 },
       },
     ],
   };
@@ -332,7 +335,7 @@ onUnmounted(() => {
 
 @media (max-width: 767px) {
   .kline {
-    height: 420px;
+    height: 300px;
   }
 }
 </style>

@@ -178,6 +178,8 @@ function toneClass(rate) {
   font-size: 17px;
   font-weight: 700;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .range-sub {
@@ -293,7 +295,7 @@ function toneClass(rate) {
 }
 
 .ath-tag {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
@@ -348,6 +350,72 @@ function toneClass(rate) {
 }
 
 .period-arrow {
-  font-size: 9px;
+  font-size: 11px;
+}
+
+@media (max-width: 767px) {
+  .range-card {
+    padding: 16px;
+  }
+
+  .range-head {
+    margin-bottom: 16px;
+  }
+
+  .range-sub {
+    font-size: 13px;
+  }
+
+  .range-body {
+    gap: 16px;
+  }
+
+  .range-slider-box {
+    padding: 14px;
+  }
+
+  /* 当前价单独占一行，52 周高低点分列两侧，避免三段文字挤在一起 */
+  .slider-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: end;
+  }
+
+  .meta-current {
+    grid-column: 1 / -1;
+    order: -1;
+    align-items: flex-start;
+  }
+
+  .meta-item.right {
+    align-items: flex-end;
+  }
+
+  .meta-label {
+    font-size: 12px;
+  }
+
+  .meta-val.highlight {
+    font-size: 16px;
+  }
+
+  .ath-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .period-ladder {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .period-label {
+    font-size: 12px;
+  }
+
+  .period-item {
+    padding: 10px;
+  }
 }
 </style>

@@ -51,8 +51,11 @@ function onKeydown(event) {
   if (event.key === 'Escape') emit('close');
 }
 
+// 视口由 html 决定滚动（style.css 给 html 设了 overflow-x，body 上的设置不会传到视口），两处都锁
 function lockScroll(locked) {
-  document.body.style.overflow = locked ? 'hidden' : '';
+  const value = locked ? 'hidden' : '';
+  document.documentElement.style.overflow = value;
+  document.body.style.overflow = value;
 }
 
 watch(
@@ -179,7 +182,48 @@ onUnmounted(() => {
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
+}
+
+/* ---------- 手机端：底部弹出的全宽面板，适配安全区 ---------- */
+@media (max-width: 767px) {
+  .modal-backdrop {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: 88vh;
+    max-height: 88dvh;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+    overscroll-behavior: contain;
+  }
+
+  .modal-close {
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .modal-title {
+    font-size: 19px;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .modal-save {
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal {
+    animation: none;
+  }
 }
 </style>

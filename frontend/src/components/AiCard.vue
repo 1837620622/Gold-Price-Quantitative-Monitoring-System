@@ -260,6 +260,8 @@ function handleRun() {
   font-weight: 800;
   color: var(--text);
   letter-spacing: 0.5px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .ai-subtitle {
@@ -294,7 +296,7 @@ function handleRun() {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: 11px;
   font-family: var(--mono);
   color: var(--gold-3);
   background: rgba(232, 199, 125, 0.1);
@@ -351,12 +353,7 @@ function handleRun() {
   appearance: none;
   -webkit-appearance: none;
   outline: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.custom-select:hover {
-  border-color: var(--gold);
-  background: var(--surface-hover);
+  transition: border-color 0.25s var(--ease-out), background-color 0.25s var(--ease-out);
 }
 
 .custom-select:focus {
@@ -470,5 +467,63 @@ function handleRun() {
 .btn-sparkle {
   font-size: 13px;
   margin-right: 2px;
+}
+
+/* ---------- 手机端 ---------- */
+@media (max-width: 767px) {
+  .ai-card {
+    gap: 12px;
+  }
+
+  .ai-desc {
+    font-size: 14px;
+  }
+
+  .custom-select {
+    height: 44px;
+    padding: 0 36px 0 14px;
+    font-size: 16px;
+  }
+
+  .select-arrow {
+    right: 14px;
+  }
+
+  .model-feature-tag {
+    font-size: 12px;
+  }
+
+  .ai-tags .tag {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .analyzing-text {
+    font-size: 14px;
+  }
+
+  .analyzing-sub {
+    font-size: 12px;
+  }
+
+  .ai-submit-btn {
+    height: 44px;
+  }
+}
+
+/* 悬停样式只给精确指针设备 */
+@media (hover: hover) and (pointer: fine) {
+  .custom-select:hover {
+    border-color: var(--gold);
+    background: var(--surface-hover);
+  }
+}
+
+/* 减少动效：加载圆点保持静止可见（否则全局规则会把它们停在 scale(0)） */
+@media (prefers-reduced-motion: reduce) {
+  .analyzing-dots span {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 </style>

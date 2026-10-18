@@ -201,6 +201,8 @@ const tiles = computed(() => {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .sub {
@@ -286,4 +288,23 @@ const tiles = computed(() => {
 
 .trend-head b.tone-up { color: var(--up); }
 .trend-head b.tone-down { color: var(--down); }
+
+@media (max-width: 767px) {
+  .tiles {
+    gap: 12px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tile {
+    padding: 12px;
+  }
+
+  .value {
+    font-size: 20px;
+  }
+}
 </style>

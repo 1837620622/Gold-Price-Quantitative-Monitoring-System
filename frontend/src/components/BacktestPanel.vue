@@ -126,15 +126,19 @@ function buildOption() {
     });
   }
 
+  // 窄屏：图例改为单行可滚动，曲线区下移，避免与图例重叠
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   return {
     animationDuration: 300,
     grid: [
-      { left: 58, right: 20, top: 40, height: '50%' },
+      { left: 58, right: 20, top: narrow ? 52 : 40, height: '50%' },
       { left: 58, right: 20, top: '72%', height: '16%' },
     ],
     textStyle: { fontFamily: pal.font },
     legend: {
+      type: narrow ? 'scroll' : 'plain',
       top: 0,
+      left: narrow ? 0 : 'auto',
       right: 0,
       itemWidth: 14,
       itemHeight: 3,
@@ -142,6 +146,7 @@ function buildOption() {
     },
     tooltip: {
       trigger: 'axis',
+      confine: true,
       axisPointer: { type: 'line', link: [{ xAxisIndex: 'all' }] },
       backgroundColor: pal.tipBg,
       borderColor: pal.tipBorder,
@@ -202,6 +207,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 
 .meta {
@@ -212,13 +218,18 @@ onUnmounted(() => {
 }
 
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .metrics {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
@@ -274,6 +285,30 @@ onUnmounted(() => {
 @media (max-width: 767px) {
   .echart {
     height: 340px;
+  }
+}
+
+@media (max-width: 767px) {
+  .backtest {
+    gap: 12px;
+  }
+
+  .meta {
+    font-size: 13px;
+  }
+
+  .metrics th,
+  .metrics td {
+    padding: 10px;
+  }
+
+  /* 策略名列固定，横向滚动表格时仍能看清每一行对应的策略 */
+  .metrics tbody th,
+  .metrics thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface-card);
   }
 }
 </style>

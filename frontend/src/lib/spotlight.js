@@ -3,13 +3,14 @@
  * 卡片指针高光
  * 指针经过 .card 时，把指针相对卡片的坐标写入 --mx / --my，
  * 由 style.css 中 .card::before 绘制柔和的金色高光。只改颜色，不做位移。
- * 触屏设备没有悬停，直接跳过。
+ * 只在精确指针（鼠标、触控板）上启用：触屏与平板没有悬停，
+ * 直接返回，不注册任何 pointermove 监听。
  * ============================================================
  */
 
 export function initSpotlight() {
-  if (typeof window === 'undefined') return;
-  if (window.matchMedia('(pointer: coarse)').matches) return;
+  if (typeof window === 'undefined' || !window.matchMedia) return;
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
   let frame = 0;
   let card = null;

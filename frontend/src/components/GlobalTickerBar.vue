@@ -56,95 +56,101 @@
         </div>
       </div>
 
-      <!-- 右侧：控制快捷工具 -->
-      <div class="ticker-tools">
-        <!-- 声音开关 -->
-        <button
-          type="button"
-          class="tool-btn"
-          :class="{ active: soundEnabled }"
-          :title="soundEnabled ? t('globalTicker.soundOn') : t('globalTicker.soundOff')"
-          @click="toggleSound"
-        >
-          <svg v-if="soundEnabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-          </svg>
-          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <line x1="23" y1="9" x2="17" y2="15"></line>
-            <line x1="17" y1="9" x2="23" y2="15"></line>
-          </svg>
-          <span class="tool-label">{{ soundEnabled ? t('globalTicker.soundOnShort') : t('globalTicker.muted') }}</span>
-        </button>
-
-        <!-- 价格预警弹窗按钮 -->
-        <button
-          type="button"
-          class="tool-btn"
-          :class="{ 'has-alerts': alertCount > 0 }"
-          :title="t('globalTicker.alertThreshold')"
-          @click="$emit('open-alert')"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span class="tool-label">{{ t('globalTicker.alerts') }}{{ alertCount > 0 ? ` (${alertCount})` : '' }}</span>
-        </button>
-
-        <!-- 黄金计算器快捷开关 -->
-        <button
-          type="button"
-          class="tool-btn"
-          :title="t('globalTicker.calcHint')"
-          @click="$emit('open-calc')"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
-            <line x1="8" y1="6" x2="16" y2="6"></line>
-            <line x1="16" y1="14" x2="16" y2="18"></line>
-            <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"></path>
-          </svg>
-          <span class="tool-label">{{ t('globalTicker.calc') }}</span>
-        </button>
-
-        <!-- 刷新倒计时与下拉 -->
-        <div class="refresh-control">
-          <div class="countdown-badge" :title="t('globalTicker.nextRefresh', { countdown })">
-            <svg class="ring-svg" width="16" height="16" viewBox="0 0 24 24">
-              <circle class="ring-bg" cx="12" cy="12" r="10" />
-              <circle
-                class="ring-progress"
-                cx="12"
-                cy="12"
-                r="10"
-                :stroke-dasharray="ringCircumference"
-                :stroke-dashoffset="ringOffset"
-              />
-            </svg>
-            <span class="countdown-num">{{ countdownText }}</span>
-          </div>
-
-          <select
-            v-model="currentInterval"
-            class="interval-select"
-            :title="t('globalTicker.intervalHint')"
-            @change="handleIntervalChange"
+      <!-- 右侧：控制快捷工具。手机端行情条隐藏，这组控件挂到顶部 ☰ 菜单（AppHeader 的 #nav-tools-slot） -->
+      <Teleport to="#nav-tools-slot" :disabled="!inMenu">
+        <div class="ticker-tools" :class="{ 'in-menu': inMenu }">
+          <!-- 声音开关 -->
+          <button
+            type="button"
+            class="tool-btn"
+            :class="{ active: soundEnabled }"
+            :title="soundEnabled ? t('globalTicker.soundOn') : t('globalTicker.soundOff')"
+            @click="toggleSound"
           >
-            <option :value="10">{{ t('globalTicker.fast') }}</option>
-            <option :value="30">{{ t('globalTicker.standard') }}</option>
-            <option :value="60">{{ t('globalTicker.saver') }}</option>
-            <option :value="0">{{ t('globalTicker.paused') }}</option>
-          </select>
+            <svg v-if="soundEnabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+            <span class="tool-label">{{ inMenu ? t('chromeMobile.sound') : (soundEnabled ? t('globalTicker.soundOnShort') : t('globalTicker.muted')) }}</span>
+            <span v-if="inMenu" class="tool-state">{{ soundEnabled ? t('chromeMobile.on') : t('chromeMobile.off') }}</span>
+          </button>
+
+          <!-- 价格预警弹窗按钮 -->
+          <button
+            type="button"
+            class="tool-btn"
+            :class="{ 'has-alerts': alertCount > 0 }"
+            :title="t('globalTicker.alertThreshold')"
+            @click="$emit('open-alert')"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="tool-label">{{ t('globalTicker.alerts') }}{{ alertCount > 0 ? ` (${alertCount})` : '' }}</span>
+          </button>
+
+          <!-- 黄金计算器快捷开关（手机端菜单里已有这一项） -->
+          <button
+            v-if="!inMenu"
+            type="button"
+            class="tool-btn"
+            :title="t('globalTicker.calcHint')"
+            @click="$emit('open-calc')"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+              <line x1="8" y1="6" x2="16" y2="6"></line>
+              <line x1="16" y1="14" x2="16" y2="18"></line>
+              <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"></path>
+            </svg>
+            <span class="tool-label">{{ t('globalTicker.calc') }}</span>
+          </button>
+
+          <!-- 刷新倒计时与下拉 -->
+          <div class="refresh-control">
+            <div class="countdown-badge" :title="t('globalTicker.nextRefresh', { countdown })">
+              <svg class="ring-svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="ring-bg" cx="12" cy="12" r="10" />
+                <circle
+                  class="ring-progress"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  :stroke-dasharray="ringCircumference"
+                  :stroke-dashoffset="ringOffset"
+                />
+              </svg>
+              <span class="countdown-num">{{ countdownText }}</span>
+            </div>
+
+            <span v-if="inMenu" class="menu-label">{{ t('chromeMobile.interval') }}</span>
+
+            <select
+              v-model="currentInterval"
+              class="interval-select"
+              :title="t('globalTicker.intervalHint')"
+              :aria-label="t('globalTicker.intervalHint')"
+            >
+              <option :value="10">{{ t('globalTicker.fast') }}</option>
+              <option :value="30">{{ t('globalTicker.standard') }}</option>
+              <option :value="60">{{ t('globalTicker.saver') }}</option>
+              <option :value="0">{{ t('globalTicker.paused') }}</option>
+            </select>
+          </div>
         </div>
-      </div>
+      </Teleport>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { soundEnabled, toggleSound } from '../lib/sound';
 import { fmtNumber } from '../format';
 import { useI18n } from '../i18n';
@@ -160,19 +166,35 @@ const props = defineProps({
 
 const emit = defineEmits(['set-interval', 'open-alert', 'open-calc']);
 
+// 手机端（767px 及以下）行情条隐藏，控件改挂到顶部菜单（AppHeader 提供 #nav-tools-slot）
+const inMenu = ref(false);
+let phoneQuery = null;
+
+function onPhoneQuery(e) {
+  inMenu.value = e.matches;
+}
+
+onMounted(() => {
+  if (!window.matchMedia) return;
+  phoneQuery = window.matchMedia('(max-width: 767px)');
+  inMenu.value = phoneQuery.matches;
+  phoneQuery.addEventListener('change', onPhoneQuery);
+});
+
+onUnmounted(() => {
+  phoneQuery?.removeEventListener('change', onPhoneQuery);
+});
+
 const domestic = computed(() => props.snapshot?.domestic);
 const intl = computed(() => props.snapshot?.international);
 const fx = computed(() => props.snapshot?.fx);
 const premium = computed(() => props.snapshot?.premiumPercent);
 
+// v-model 的 change 事件已经会走这里，不再额外绑定 @change，避免重复发出 set-interval
 const currentInterval = computed({
   get: () => props.pollInterval,
   set: (val) => emit('set-interval', Number(val)),
 });
-
-function handleIntervalChange(e) {
-  emit('set-interval', Number(e.target.value));
-}
 
 function fmt(v, d = 2) {
   return v !== null && v !== undefined ? fmtNumber(v, d) : '--';
@@ -223,8 +245,9 @@ const countdownText = computed(() => {
   -webkit-backdrop-filter: blur(16px);
   font-size: 12px;
   position: sticky;
-  top: 56px;
+  top: var(--nav-h);
   z-index: 90;
+  height: var(--ticker-h);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
@@ -328,10 +351,12 @@ const countdownText = computed(() => {
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.tool-btn:hover {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
-  color: var(--text);
-  border-color: color-mix(in srgb, var(--gold) 30%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .tool-btn:hover {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--gold) 30%, transparent);
+  }
 }
 .tool-btn.active {
   color: var(--gold-3);
@@ -399,5 +424,73 @@ const countdownText = computed(() => {
   .tool-label {
     display: none;
   }
+}
+
+/* 手机端：行情条隐藏（控件在顶部菜单里） */
+@media (max-width: 767px) {
+  .ticker-bar {
+    display: none;
+  }
+}
+
+/* 手机端菜单里的行情控件：按 44px 行排列，触控目标不小于 44px */
+.ticker-tools.in-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+}
+.ticker-tools.in-menu .tool-btn {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  justify-content: flex-start;
+}
+.ticker-tools.in-menu .tool-label {
+  display: inline;
+}
+.ticker-tools.in-menu .tool-state {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.ticker-tools.in-menu .tool-btn.active .tool-state {
+  color: var(--gold-3);
+}
+.ticker-tools.in-menu .refresh-control {
+  width: 100%;
+  min-height: 48px;
+  padding: 2px 6px 2px 12px;
+  gap: 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+.ticker-tools.in-menu .countdown-badge {
+  flex: none;
+  width: auto;
+  height: auto;
+  gap: 6px;
+}
+.ticker-tools.in-menu .countdown-num {
+  position: static;
+  font-size: 12px;
+}
+.ticker-tools.in-menu .menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.ticker-tools.in-menu .interval-select {
+  flex: 0 1 50%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 16px;
 }
 </style>

@@ -187,6 +187,8 @@ watch(
   margin-top: 2px;
   font-size: 12px;
   color: var(--text-2);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .unit-badge {
@@ -201,10 +203,19 @@ watch(
 
 /* 大字现价 */
 .price-main {
+  --price-color: var(--text);
   margin-top: 18px;
   min-height: 48px;
   display: flex;
   align-items: baseline;
+}
+
+.price-main.tone-up {
+  --price-color: var(--up);
+}
+
+.price-main.tone-down {
+  --price-color: var(--down);
 }
 
 .price-value {
@@ -216,7 +227,7 @@ watch(
   letter-spacing: -0.025em;
   line-height: 1.02;
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--price-color);
   transition: color 0.3s ease;
 }
 
@@ -232,13 +243,14 @@ watch(
   color: var(--text-3);
 }
 
+/* 价格变化只闪一次（组件用 key 重建节点）；终点回到当前涨跌色，避免结束时跳色 */
 .flash {
-  animation: price-pulse 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: price-pulse 0.8s var(--ease-out) 1;
 }
 
 @keyframes price-pulse {
   0% { color: var(--gold-3); }
-  100% { color: inherit; }
+  100% { color: var(--price-color); }
 }
 
 /* 涨跌幅 Pill 胶囊 */
@@ -276,7 +288,7 @@ watch(
 }
 
 .change-arrow {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .change-none {
@@ -346,6 +358,27 @@ watch(
 @media (max-width: 600px) {
   .stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- 手机端与动效收敛 ---------- */
+@media (max-width: 767px) {
+  .stat-label {
+    font-size: 12px;
+  }
+}
+
+/* 悬停高光只给精确指针设备；触屏点按后的粘滞悬停不保留高亮 */
+@media (hover: none) {
+  .price-card:hover {
+    --spot-opacity: 0;
+    border-color: var(--line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation: none;
   }
 }
 </style>

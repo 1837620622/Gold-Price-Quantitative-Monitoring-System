@@ -328,6 +328,8 @@ const bearPct = computed(() => 100 - bullPct.value);
   font-size: 16px;
   font-weight: 650;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .matrix-sub {
@@ -362,7 +364,7 @@ const bearPct = computed(() => 100 - bullPct.value);
 }
 
 .power-vs {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--text-3);
 }
@@ -441,7 +443,7 @@ const bearPct = computed(() => 100 - bullPct.value);
   flex-shrink: 0;
   padding: 2px 7px;
   border-radius: 6px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -475,5 +477,32 @@ const bearPct = computed(() => 100 - bullPct.value);
   font-size: 11.5px;
   line-height: 1.5;
   color: var(--text-3);
+}
+
+@media (max-width: 767px) {
+  .matrix-card {
+    padding: 16px;
+  }
+
+  .matrix-sub {
+    font-size: 13px;
+  }
+
+  .power-summary {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .factor-item {
+    padding: 12px 12px 12px 14px;
+  }
+
+  .factor-name {
+    font-size: 13px;
+  }
+
+  .factor-detail {
+    font-size: 12px;
+  }
 }
 </style>

@@ -115,6 +115,8 @@ function fillStyle(value) {
   font-size: 16px;
   font-weight: 650;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .sub {
@@ -223,6 +225,8 @@ function fillStyle(value) {
 
 .comp-name {
   font-weight: 600;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .comp-meta {
@@ -290,5 +294,56 @@ function fillStyle(value) {
   font-size: 12px;
   color: var(--text-3);
   line-height: 1.6;
+}
+
+@media (max-width: 767px) {
+  .signal {
+    gap: 14px;
+  }
+
+  .verdict-label {
+    font-size: 24px;
+  }
+
+  .verdict-score {
+    font-size: 19px;
+  }
+
+  .components {
+    gap: 8px;
+  }
+
+  /* 因子卡片：标题、权重与理由上下堆叠，内边距收紧 */
+  .comp {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+  }
+
+  .comp-head {
+    flex-wrap: wrap;
+    align-items: baseline;
+    row-gap: 2px;
+    font-size: 14px;
+  }
+
+  .comp-meta {
+    font-size: 12px;
+  }
+
+  .comp-reason {
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: break-word;
+  }
+
+  .levels {
+    gap: 10px 12px;
+  }
+
+  .disclaimer {
+    font-size: 12px;
+  }
 }
 </style>

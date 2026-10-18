@@ -96,6 +96,8 @@ const rows = computed(() => {
   font-size: 16px;
   font-weight: 650;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .pivot-sub {
@@ -124,10 +126,6 @@ const rows = computed(() => {
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
-}
-
-.seg-xs button:hover {
-  color: var(--text);
 }
 
 .seg-xs button.active {
@@ -193,5 +191,40 @@ const rows = computed(() => {
 .rung-now .rung-label,
 .rung-now .rung-value {
   color: var(--gold-3);
+}
+
+@media (max-width: 767px) {
+  .pivot-sub {
+    font-size: 13px;
+  }
+
+  .seg-xs {
+    width: 100%;
+  }
+
+  .seg-xs button {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  .rung {
+    padding: 10px 12px;
+  }
+
+  .rung-label {
+    font-size: 13px;
+  }
+
+  .rung-value {
+    font-size: 14px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .seg-xs button:hover {
+    color: var(--text);
+  }
 }
 </style>

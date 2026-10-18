@@ -83,12 +83,14 @@ const nowText = computed(() =>
 }
 
 .pref-label {
+  flex: none;
   color: var(--text-3);
+  white-space: nowrap;
 }
 
 .prefs-now {
   flex-basis: 100%;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--text-3);
 }
@@ -96,6 +98,42 @@ const nowText = computed(() =>
 @media (min-width: 768px) {
   .prefs-now {
     flex-basis: auto;
+  }
+}
+
+/* 手机：标签在上，分段控件铺满面板宽度，每个选项 44px 高，面板不会超出 390px 视口 */
+@media (max-width: 767px) {
+  .prefs {
+    gap: 14px;
+  }
+
+  .pref {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pref-label {
+    font-size: 12px;
+  }
+
+  .pref .seg {
+    display: flex;
+    width: 100%;
+  }
+
+  .pref .seg button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .prefs-now {
+    font-size: 12px;
+    line-height: 1.6;
   }
 }
 </style>

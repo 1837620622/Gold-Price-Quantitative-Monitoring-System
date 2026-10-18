@@ -42,12 +42,15 @@ function buildOption() {
       }
     : undefined;
 
+  // 窄屏：绘图区留白更小
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   return {
     animationDuration: 300,
     textStyle: { fontFamily: pal.font },
-    grid: { left: 58, right: 24, top: 18, bottom: 34 },
+    grid: { left: narrow ? 48 : 58, right: narrow ? 12 : 24, top: 18, bottom: narrow ? 30 : 34 },
     tooltip: {
       trigger: 'axis',
+      confine: true,
       backgroundColor: pal.tipBg,
       borderColor: pal.tipBorder,
       textStyle: { color: pal.text, fontSize: 12 },
@@ -151,7 +154,7 @@ onUnmounted(() => {
 
 @media (max-width: 767px) {
   .premium {
-    height: 320px;
+    height: 280px;
   }
 }
 </style>

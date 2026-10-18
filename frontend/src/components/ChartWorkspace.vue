@@ -5,7 +5,7 @@
         <h2 id="workspace-title" class="title">{{ t('chartWorkspace.title') }}</h2>
         <p class="sub">{{ subtitle }}</p>
       </div>
-      <div class="seg" role="tablist" :aria-label="t('chartWorkspace.typeAria')">
+      <div class="seg seg-tabs" role="tablist" :aria-label="t('chartWorkspace.typeAria')">
         <button
           v-for="tb in tabItems"
           :key="tb.key"
@@ -21,7 +21,7 @@
     <!-- K 线：国内 / 国际 -->
     <template v-if="tab === 'cn' || tab === 'intl'">
       <div class="toolbar">
-        <div class="seg seg-sm" role="group" :aria-label="t('chartWorkspace.periodAria')">
+        <div class="seg seg-sm seg-range" role="group" :aria-label="t('chartWorkspace.periodAria')">
           <button
             v-for="p in periodItems"
             :key="p.key"
@@ -286,6 +286,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   margin: 0;
   font-size: 17px;
   font-weight: 700;
+  word-break: keep-all;
 }
 
 .sub {
@@ -391,9 +392,70 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   display: block;
 }
 
-@media (max-width: 768px) {
+/* 手机：标签条单行横向滑动（只有它横向滚动），区间与指标按钮不低于 36px */
+@media (max-width: 767px) {
+  .head {
+    gap: 12px;
+  }
+
+  .head > div:first-child {
+    min-width: 0;
+  }
+
+  .seg-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .seg-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .seg-tabs button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 13px;
+    white-space: nowrap;
+    word-break: keep-all;
+    scroll-snap-align: start;
+  }
+
+  .seg-range {
+    display: flex;
+    width: 100%;
+  }
+
+  .seg-range button {
+    flex: 1 1 0;
+    min-height: 40px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .toolbar {
+    gap: 10px;
+  }
+
+  .toggles {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .toggle {
+    height: 36px;
+    padding: 0 12px;
+  }
+
   .tradingview-container {
-    height: 420px;
+    height: 380px;
   }
 }
 </style>

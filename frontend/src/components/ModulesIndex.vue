@@ -8,7 +8,7 @@
       :sub="t('modules.sub')"
     />
 
-    <div ref="listRef" class="modules-list" data-reveal-item>
+    <div ref="listRef" class="modules-list">
       <ul class="rows" role="list">
         <li v-for="(item, i) in MODULES" :key="item.key">
           <button
@@ -256,6 +256,7 @@ onBeforeUnmount(() => {
 .modules {
   padding-top: clamp(56px, 8vw, 104px);
   border-top: 1px solid var(--line);
+  scroll-margin-top: calc(var(--nav-h) + var(--ticker-h) + 16px);
 }
 
 .modules-list {
@@ -313,14 +314,10 @@ onBeforeUnmount(() => {
   transition: transform var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
 }
 
-/* 中文界面：Anton 不含中文字形，模块名改用中文字体 */
-:global(html:lang(zh)) .row-name {
+/* 中文界面：Anton 不含中文字形，模块名改用中文字体（:global(html:lang(zh)) 会丢掉后代选择器，故用 :lang）；桌面字号不变 */
+:lang(zh) .row-name {
   font-family: var(--font);
-  font-weight: 700;
-  letter-spacing: -0.01em;
   text-transform: none;
-  font-size: clamp(20px, 2.2vw, 34px);
-  line-height: 1.2;
 }
 
 .row.is-active {
@@ -329,7 +326,13 @@ onBeforeUnmount(() => {
 
 .row.is-active .row-name {
   color: var(--gold-3);
-  transform: translateX(10px);
+}
+
+/* 激活行名称右移：只在精确指针上做，触屏不产生位移 */
+@media (hover: hover) and (pointer: fine) {
+  .row.is-active .row-name {
+    transform: translateX(10px);
+  }
 }
 
 .row.is-active .row-arrow {
@@ -347,7 +350,7 @@ onBeforeUnmount(() => {
 }
 
 .row-services {
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.6;
 }
 
@@ -393,14 +396,53 @@ onBeforeUnmount(() => {
   margin-top: 10px;
 }
 
+/* 手机：模块行压缩到约 70px，名称 28–32px 单行，中文词不在中间断开 */
 @media (max-width: 767px) {
+  .modules {
+    padding-top: 40px;
+  }
+
   .row {
-    grid-template-columns: 32px minmax(0, 1fr) 18px;
-    column-gap: 12px;
+    grid-template-columns: 28px minmax(0, 1fr) 18px;
+    column-gap: 10px;
+    row-gap: 3px;
+    padding: 9px 0;
+  }
+
+  .row-index {
+    align-self: center;
+    padding-top: 0;
+    font-size: 12px;
   }
 
   .row-name {
-    font-size: clamp(34px, 11vw, 56px);
+    font-size: clamp(28px, 8vw, 32px);
+    line-height: 1.1;
+    word-break: keep-all;
+  }
+
+  .row-meta {
+    display: block;
+    min-width: 0;
+  }
+
+  .row-services {
+    display: block;
+    font-size: 11px;
+    line-height: 1.4;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-arrow {
+    color: var(--text-3);
+    font-size: 18px;
+  }
+
+  .row.is-active .row-arrow {
+    color: var(--gold);
   }
 }
 </style>

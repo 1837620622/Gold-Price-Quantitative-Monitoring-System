@@ -243,7 +243,7 @@
         <div class="form-group">
           <div class="label-row">
             <label class="form-label">{{ t('goldCalc.arbWeightLabel') }}</label>
-            <div class="weight-presets">
+            <div class="weight-presets weight-presets-five">
               <button
                 v-for="w in [100, 500, 1000, 5000, 10000]"
                 :key="w"
@@ -553,6 +553,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   font-size: 17px;
   font-weight: 700;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .calc-sub {
@@ -579,7 +581,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 .calc-tab-btn.active {
   background: var(--gold-btn);
@@ -661,11 +663,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   border: 1px solid var(--border);
   color: var(--text);
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-.type-btn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 .type-btn.active {
   background: rgba(232, 199, 125, 0.12);
@@ -678,7 +676,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   font-weight: 600;
 }
 .type-fee {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-3);
   margin-top: 2px;
 }
@@ -841,5 +839,176 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   color: var(--text-3);
   margin: 0;
   line-height: 1.5;
+}
+
+/* ---------- 手机端：持仓类型改为紧凑列表，按钮与输入框达到 44px ---------- */
+@media (max-width: 767px) {
+  .calc-card {
+    padding: 16px;
+  }
+
+  .calc-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .calc-sub {
+    font-size: 13px;
+  }
+
+  .calc-tab-group {
+    width: 100%;
+  }
+
+  .calc-tab-btn {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+
+  .current-price-badge {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+  }
+
+  .current-price-badge span {
+    font-size: 12px;
+  }
+
+  .calc-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .calc-form {
+    gap: 14px;
+  }
+
+  .form-label {
+    font-size: 13px;
+  }
+
+  .label-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .weight-presets {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  .weight-presets.weight-presets-five {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .preset-chip {
+    height: 40px;
+    padding: 0 4px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .type-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .type-btn {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 48px;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  .type-name {
+    font-size: 14px;
+  }
+
+  .type-fee {
+    margin-top: 0;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .form-row-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .calc-input {
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .form-hint {
+    font-size: 12px;
+  }
+
+  .calc-results {
+    gap: 14px;
+  }
+
+  .res-card-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .res-item {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .res-label {
+    font-size: 12px;
+  }
+
+  .res-num {
+    margin: 4px 0 2px;
+    font-size: 18px;
+    overflow-wrap: break-word;
+  }
+
+  .res-sub {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .arb-strategy-guide {
+    padding: 12px 14px;
+  }
+
+  .guide-title {
+    font-size: 14px;
+  }
+
+  .guide-desc {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .calc-tip {
+    font-size: 12px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .type-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-hover);
+  }
 }
 </style>

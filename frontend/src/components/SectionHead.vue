@@ -6,12 +6,10 @@
         <span>/ {{ total }}</span>
         <span class="section-tag">{{ tag }}</span>
       </p>
-      <h2 :id="titleId" class="section-title display">
-        <span class="mask"><span>{{ title }}</span></span>
-      </h2>
+      <h2 :id="titleId" class="section-title display">{{ title }}</h2>
     </div>
-    <p v-if="sub" class="section-sub" data-reveal-item>{{ sub }}</p>
-    <div v-if="$slots.default" class="section-actions" data-reveal-item>
+    <p v-if="sub" class="section-sub">{{ sub }}</p>
+    <div v-if="$slots.default" class="section-actions">
       <slot />
     </div>
   </header>
@@ -55,35 +53,23 @@ defineProps({
 
 .section-tag {
   color: var(--text-2);
+  word-break: keep-all;
 }
 
 .section-title {
   font-size: clamp(34px, 4.6vw, 68px);
   color: var(--text);
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: break-word;
   letter-spacing: 0.01em;
   line-height: 1.05;
 }
 
-/* 中文界面：Anton 不含中文字形，标题改用中文字体 */
-:global(html:lang(zh)) .section-title {
+/* 中文界面：Anton 不含中文字形，标题改用中文字体。
+   注意：:global(html:lang(zh)) .x 会被编译成裸的 html:lang(zh)，丢掉后代选择器，故改用 :lang(zh) .x */
+:lang(zh) .section-title {
   font-family: var(--font);
-  font-size: clamp(28px, 3.8vw, 54px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
   text-transform: none;
-  line-height: 1.2;
-}
-
-/* 遮罩入场：文字只在遮罩内上移，遮罩外不可见 */
-.mask {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 0.04em;
-}
-
-.mask > span {
-  display: block;
 }
 
 .section-sub {
@@ -100,9 +86,22 @@ defineProps({
   justify-self: end;
 }
 
+/* 手机：标题 34–40px，分区节奏收紧，说明文字 14px */
 @media (max-width: 767px) {
   .section-head {
     grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .section-kicker {
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: clamp(34px, 10vw, 40px);
+    font-weight: 500;
+    line-height: 1.12;
   }
 
   .section-actions {
