@@ -81,6 +81,7 @@ const rows = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  box-shadow: none;
 }
 
 .pivot-head {
@@ -93,45 +94,53 @@ const rows = computed(() => {
 
 .pivot-title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+:lang(zh) .pivot-title {
+  letter-spacing: 0;
 }
 
 .pivot-sub {
   margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--text-3);
+  font-size: 13px;
+  color: var(--text-2);
 }
 
+/* 分段切换：发丝边容器；当前项为金色发丝边 + 淡金底 */
 .seg-xs {
   display: inline-flex;
   padding: 2px;
   gap: 2px;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px solid var(--border);
 }
 
 .seg-xs button {
-  padding: 4px 10px;
-  border: 0;
-  border-radius: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 2px;
   background: transparent;
   color: var(--text-2);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.seg-xs button:hover {
-  color: var(--text);
+  transition: color 0.2s var(--ease-out), background-color 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
 }
 
 .seg-xs button.active {
-  background: var(--surface-hover);
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
   color: var(--text);
 }
 
@@ -143,32 +152,33 @@ const rows = computed(() => {
   gap: 6px;
 }
 
+/* 价位行：发丝边方角，无底色 */
 .rung {
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
 }
 
 .rung-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-2);
 }
 
 .rung-line {
   height: 1px;
-  background: var(--border-strong);
+  background: var(--line-strong);
 }
 
 .rung-value {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -185,13 +195,48 @@ const rows = computed(() => {
   color: var(--gold);
 }
 
+/* 现价行：激活态，金色发丝边 + 淡金底 */
 .rung-now {
-  border-color: rgba(232, 199, 125, 0.45);
-  background: rgba(232, 199, 125, 0.08);
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
-.rung-now .rung-label,
-.rung-now .rung-value {
+.rung-now .rung-label {
   color: var(--gold-3);
+}
+
+.rung-now .rung-value {
+  color: var(--text);
+}
+
+@media (max-width: 767px) {
+  .pivot-title {
+    font-size: 18px;
+  }
+
+  .seg-xs {
+    width: 100%;
+  }
+
+  .seg-xs button {
+    flex: 1 1 0;
+    height: 44px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  .rung {
+    padding: 10px 12px;
+  }
+
+  .rung-value {
+    font-size: 14px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .seg-xs button:hover {
+    color: var(--text);
+  }
 }
 </style>

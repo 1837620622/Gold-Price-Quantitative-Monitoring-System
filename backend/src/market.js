@@ -21,6 +21,7 @@ import { fetchAU9999Quote, fetchAU9999Kline } from './providers/eastmoney.js';
 import { fetchSinaDomesticQuote, fetchSinaSpot, fetchSinaSilverSpot, fetchSinaFx, fetchSinaXauDaily } from './providers/sina.js';
 import { fetchSwissquoteSpot } from './providers/swissquote.js';
 import { analyzeMarket, alignPremium, sanitizeBars } from './quant/engine.js';
+import { buildRatioSeries, summarizeRatio } from './quant/ratio.js';
 
 const settle = (result, label, errors) => {
   if (result.status === 'fulfilled') return result.value;
@@ -336,6 +337,13 @@ export async function getGoldSilverRatio(days = 60) {
       suggestion = '金银比处于低位，白银表现显著优于黄金，通常反映强劲的工业需求与通胀预期共振。';
     }
 
+    // 历史序列：金、银日线按日期对齐。任一条获取失败时只返回当前值，不影响主流程
+    const [goldBars, silverBars] = await Promise.all([
+      fetchStooqDaily('xauusd').catch(() => null),
+      fetchStooqDaily('xagusd').catch(() => null),
+    ]);
+    const series = goldBars && silverBars ? buildRatioSeries(goldBars, silverBars, days) : [];
+
     return {
       available: true,
       current: currentRatio,
@@ -344,6 +352,8 @@ export async function getGoldSilverRatio(days = 60) {
       regime,
       signal,
       suggestion,
+      series,
+      ...summarizeRatio(series, currentRatio),
       timestamp: new Date().toISOString(),
     };
   });

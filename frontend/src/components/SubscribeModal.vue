@@ -9,9 +9,7 @@
           :aria-label="t('subscribe.close')"
           @click="$emit('close')"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
+          <Icon name="close" :size="18" />
         </button>
 
         <h2 id="subscribe-title" class="modal-title">{{ t('subscribe.title') }}</h2>
@@ -37,6 +35,7 @@
 <script setup>
 import { ref, watch, nextTick, onUnmounted } from 'vue';
 import { useI18n } from '../i18n';
+import Icon from './icons/Icon.vue';
 
 const { t } = useI18n();
 
@@ -51,8 +50,11 @@ function onKeydown(event) {
   if (event.key === 'Escape') emit('close');
 }
 
+// 视口由 html 决定滚动（style.css 给 html 设了 overflow-x，body 上的设置不会传到视口），两处都锁
 function lockScroll(locked) {
-  document.body.style.overflow = locked ? 'hidden' : '';
+  const value = locked ? 'hidden' : '';
+  document.documentElement.style.overflow = value;
+  document.body.style.overflow = value;
 }
 
 watch(
@@ -85,23 +87,22 @@ onUnmounted(() => {
   place-items: center;
   padding: 16px;
   background: rgba(5, 6, 9, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   animation: fade-in 0.2s ease-out;
 }
 
+/* 弹层：纯色面板、发丝边，阴影使用弹层令牌 */
 .modal {
   position: relative;
   width: min(400px, 100%);
   max-height: calc(100vh - 32px);
   overflow: auto;
   padding: 28px 24px 24px;
-  border-radius: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.55);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-modal);
   text-align: center;
-  animation: rise 0.25s ease-out;
+  animation: rise 0.24s ease-out;
 }
 
 .modal-close {
@@ -112,29 +113,41 @@ onUnmounted(() => {
 
 .modal-title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+:lang(zh) .modal-title {
+  letter-spacing: 0;
 }
 
 .modal-desc {
-  margin: 6px 0 18px;
-  font-size: 14px;
+  margin: 8px 0 20px;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text-2);
+}
+
+:lang(zh) .modal-desc {
+  line-height: 1.75;
 }
 
 .qr-wrap {
   display: inline-block;
   padding: 12px;
-  border-radius: 16px;
+  border-radius: var(--radius);
   background: #ffffff;
 }
 
 .qr {
   display: block;
   width: 200px;
-  height: 200px;
-  max-width: 100%;
   height: auto;
+  max-width: 100%;
 }
 
 .features {
@@ -144,29 +157,35 @@ onUnmounted(() => {
   text-align: left;
   display: grid;
   gap: 10px;
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.5;
   color: var(--text);
 }
 
 .features li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
+/* 列表前的小菱形，与金线分隔的菱形同形 */
 .feature-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gold);
   flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  background: var(--gold);
+  transform: rotate(45deg);
 }
 
 .modal-foot {
   margin: 18px 0 14px;
-  font-size: 12px;
-  color: var(--text-3);
+  font-size: 13px;
   line-height: 1.6;
+  color: var(--text-2);
+}
+
+:lang(zh) .modal-foot {
+  line-height: 1.75;
 }
 
 .modal-save {
@@ -179,7 +198,48 @@ onUnmounted(() => {
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
+}
+
+/* ---------- 手机端：底部弹出的全宽面板，适配安全区 ---------- */
+@media (max-width: 767px) {
+  .modal-backdrop {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: 88vh;
+    max-height: 88dvh;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    overscroll-behavior: contain;
+  }
+
+  .modal-close {
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .modal-save {
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal {
+    animation: none;
+  }
 }
 </style>

@@ -5,7 +5,7 @@
 export default {
   zh: {
     'riskTiles.title': '指标速览',
-    'riskTiles.sub': '最新一根收盘后的指标读数',
+    'riskTiles.sub': '最新收盘后的指标读数',
     'riskTiles.scoreTrend': '量化评分走势（近 60 个交易日）',
     'riskTiles.breakUpper': '突破上轨',
     'riskTiles.breakLower': '跌破下轨',
@@ -27,8 +27,8 @@ export default {
     'riskTiles.macdDetail': 'DIF-DEA {diff}，自 {since} 起',
     'riskTiles.bollPctB': '布林 %B',
     'riskTiles.atrShare': 'ATR 占比',
-    'riskTiles.atrHint': '近14日平均真实波幅 / 收盘价',
-    'riskTiles.vol20': '年化波动（20日）',
+    'riskTiles.atrHint': '近 14 日平均真实波幅 ÷ 收盘价',
+    'riskTiles.vol20': '年化波动（20 日）',
     'riskTiles.volState': '波动状态：{regime}',
     'riskTiles.maxDrawdown': '样本最大回撤',
     'riskTiles.drawdownNow': '当前回撤 {value}%',

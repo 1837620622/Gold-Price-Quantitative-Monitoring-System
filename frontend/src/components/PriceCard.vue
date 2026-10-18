@@ -4,14 +4,7 @@
     <header class="price-head">
       <div class="head-left">
         <div class="market-icon" :class="accent">
-          <svg v-if="code.includes('XAU')" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-          </svg>
-          <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 3h12l3 7-9 11L3 10l3-7z"/>
-            <path d="M12 3v18M3 10h18"/>
-          </svg>
+          <Icon :name="code.includes('XAU') ? 'globe' : 'ingot'" :size="22" />
         </div>
 
         <div class="title-group">
@@ -34,14 +27,18 @@
       </span>
     </div>
 
-    <!-- 涨跌幅 Pill 徽章 -->
+    <!-- 涨跌幅标签：箭头用图标，持平用短横线 -->
     <div class="price-change-row">
       <template v-if="loading">
         <span class="skeleton skeleton-line"></span>
       </template>
       <template v-else-if="hasChange">
         <div class="change-pill" :class="toneClass">
-          <span class="change-arrow">{{ changePercent > 0 ? '▲' : changePercent < 0 ? '▼' : '■' }}</span>
+          <span class="change-arrow" aria-hidden="true">
+            <Icon v-if="changePercent > 0" name="chevron-up" :size="14" />
+            <Icon v-else-if="changePercent < 0" name="chevron-up" :size="14" class="is-down" />
+            <span v-else class="change-flat"></span>
+          </span>
           <span class="change-abs">{{ fmtSigned(change) }}</span>
           <span class="change-pct">({{ fmtPercent(changePercent) }})</span>
         </div>
@@ -72,6 +69,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import SparkLine from './SparkLine.vue';
+import Icon from './icons/Icon.vue';
 import { isNum, fmtNumber, fmtSigned, fmtPercent, toneOf } from '../format';
 import { useI18n } from '../i18n';
 
@@ -111,26 +109,9 @@ watch(
 
 <style scoped>
 .price-card {
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-/* 顶部金属高亮边框 */
-.price-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--gold);
-  opacity: 0.7;
-}
-
-.price-card.accent-blue::before {
-  background: var(--info);
+  box-shadow: none;
 }
 
 .price-head {
@@ -144,79 +125,102 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
+/* 图标方框：发丝边、无底色，图标用金色 */
 .market-icon {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
   display: grid;
   place-items: center;
-  background: rgba(232, 199, 125, 0.1);
-  color: var(--gold);
-  border: 1px solid rgba(232, 199, 125, 0.2);
   flex-shrink: 0;
-}
-
-.market-icon.accent-blue {
-  background: rgba(96, 165, 250, 0.1);
-  color: var(--info);
-  border-color: rgba(96, 165, 250, 0.2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--gold);
 }
 
 .title-group {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .code-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .code {
+  font-family: var(--font-mono);
   font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: var(--text);
-  font-family: var(--mono);
+}
+
+/* 金色标签：激活态的金色发丝边 + 淡金底 */
+.code-row .chip-gold {
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border-color: var(--gold);
+  color: var(--gold-3);
+  font-weight: 500;
+}
+
+.code-row .chip-warn {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--warn);
 }
 
 .name {
-  margin-top: 2px;
-  font-size: 12px;
+  margin: 2px 0 0;
+  font-size: 13px;
   color: var(--text-2);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .unit-badge {
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
   font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: var(--text-3);
-  font-family: var(--mono);
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  white-space: nowrap;
 }
 
-/* 大字现价 */
+/* 大字现价：等宽数字 */
 .price-main {
+  --price-color: var(--text);
   margin-top: 18px;
   min-height: 48px;
   display: flex;
   align-items: baseline;
 }
 
+.price-main.tone-up {
+  --price-color: var(--up);
+}
+
+.price-main.tone-down {
+  --price-color: var(--down);
+}
+
 .price-value {
   display: inline-block;
-  font-family: var(--font-display), var(--mono);
-  font-stretch: 110%;
+  font-family: var(--font-mono);
   font-size: clamp(36px, 4.2vw, 46px);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.02;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--price-color);
   transition: color 0.3s ease;
 }
 
@@ -232,16 +236,17 @@ watch(
   color: var(--text-3);
 }
 
+/* 价格变化只闪一次（组件用 key 重建节点）；终点回到当前涨跌色，避免结束时跳色 */
 .flash {
-  animation: price-pulse 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: price-pulse 0.8s var(--ease-out) 1;
 }
 
 @keyframes price-pulse {
   0% { color: var(--gold-3); }
-  100% { color: inherit; }
+  100% { color: var(--price-color); }
 }
 
-/* 涨跌幅 Pill 胶囊 */
+/* 涨跌幅标签：发丝边方角，涨跌色只作用于文字与箭头 */
 .price-change-row {
   margin-top: 8px;
   min-height: 28px;
@@ -253,34 +258,46 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-mono);
   font-size: 13px;
-  font-weight: 600;
-  font-family: var(--font-display), var(--mono);
-  letter-spacing: -0.01em;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .change-pill.tone-up {
   color: var(--up);
-  background: var(--up-bg);
-  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .change-pill.tone-down {
   color: var(--down);
-  background: var(--down-bg);
-  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .change-arrow {
-  font-size: 10px;
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+}
+
+.change-arrow .is-down {
+  transform: rotate(180deg);
+}
+
+.change-flat {
+  display: block;
+  width: 8px;
+  height: 1px;
+  background: currentColor;
 }
 
 .change-none {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-3);
 }
 
@@ -291,15 +308,15 @@ watch(
 
 .price-note {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-3);
 }
 
-/* 行情指标网格 */
+/* 行情指标网格：发丝分隔线 */
 .stats-grid {
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   gap: 12px 10px;
@@ -308,18 +325,22 @@ watch(
 .stat-item {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .stat-label {
   font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-3);
 }
 
 .stat-value {
   margin-top: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: var(--mono);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--text);
   white-space: nowrap;
@@ -327,6 +348,12 @@ watch(
 
 .stat-value.tone-up { color: var(--up); }
 .stat-value.tone-down { color: var(--down); }
+
+:lang(zh) .stat-label {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
 
 .skeleton-price {
   width: 200px;
@@ -346,6 +373,12 @@ watch(
 @media (max-width: 600px) {
   .stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation: none;
   }
 }
 </style>

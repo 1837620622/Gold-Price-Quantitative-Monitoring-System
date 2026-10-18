@@ -3,13 +3,15 @@
     <div class="modal-card">
       <header class="modal-head">
         <div class="head-title-wrap">
-          <div class="share-icon">✦</div>
+          <Icon name="poster" :size="20" class="head-icon" />
           <div>
             <h3 class="modal-title">{{ t('sharePoster.title') }}</h3>
             <p class="modal-sub">{{ t('sharePoster.desc') }}</p>
           </div>
         </div>
-        <button type="button" class="close-btn" @click="$emit('close')">✕</button>
+        <button type="button" class="icon-btn" :aria-label="t('sharePoster.close')" @click="$emit('close')">
+          <Icon name="close" :size="18" />
+        </button>
       </header>
 
       <!-- 海报预览区域 -->
@@ -81,6 +83,7 @@
           {{ t('sharePoster.close') }}
         </button>
         <button type="button" class="btn btn-primary" @click="copyText">
+          <Icon v-if="copied" name="check" :size="14" />
           {{ copied ? t('sharePoster.copied') : t('sharePoster.copy') }}
         </button>
       </div>
@@ -89,9 +92,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { fmtNumber, fmtSigned } from '../format';
 import { tField, useI18n } from '../i18n';
+import Icon from './icons/Icon.vue';
 
 const { t, tLabel } = useI18n();
 
@@ -104,6 +108,15 @@ const props = defineProps({
 defineEmits(['close']);
 
 const copied = ref(false);
+
+// 弹层打开时锁住背后页面滚动（视口由 html 决定，见 SubscribeModal 同名注释）
+function lockScroll(locked) {
+  const value = locked ? 'hidden' : '';
+  document.documentElement.style.overflow = value;
+  document.body.style.overflow = value;
+}
+watch(() => props.open, (isOpen) => lockScroll(isOpen));
+onUnmounted(() => lockScroll(false));
 
 const domestic = computed(() => props.snapshot?.domestic);
 const intl = computed(() => props.snapshot?.international);
@@ -136,16 +149,17 @@ async function copyText() {
   const s = props.quant?.signal;
   const l = props.quant?.levels;
 
+  // 剪贴板为纯文本，不带表情符号；图标只用于界面
   const text = [
     t('sharePoster.copyHeader'),
-    `⏰ ${t('sharePoster.copyTime', { time: timeText.value })}`,
+    t('sharePoster.copyTime', { time: timeText.value }),
     `--------------------------`,
-    `🇨🇳 ${t('sharePoster.copyDomestic', { price: fmt(dom?.price), pct: `${dom?.changePercent > 0 ? '+' : ''}${fmt(dom?.changePercent)}` })}`,
-    `🌍 ${t('sharePoster.copyIntl', { price: fmt(xau?.price), pct: `${xau?.changePercent > 0 ? '+' : ''}${fmt(xau?.changePercent)}` })}`,
-    `⚖️ ${t('sharePoster.copyRatio', { ratio: fmt(ratio.value), premium: fmtSigned(props.snapshot?.premiumPercent) })}`,
-    s ? `📊 ${t('sharePoster.copyRating', { label: tLabel(s.label), score: s.score, trend: tLabel(s.trend) })}` : '',
-    l ? `🛡️ ${t('sharePoster.copyLevels', { support: l.support?.join('/'), resistance: l.resistance?.join('/') })}` : '',
-    l ? `🎯 ${t('sharePoster.copyRange', { low: fmt(l.refLow), high: fmt(l.refHigh) })}` : '',
+    t('sharePoster.copyDomestic', { price: fmt(dom?.price), pct: `${dom?.changePercent > 0 ? '+' : ''}${fmt(dom?.changePercent)}` }),
+    t('sharePoster.copyIntl', { price: fmt(xau?.price), pct: `${xau?.changePercent > 0 ? '+' : ''}${fmt(xau?.changePercent)}` }),
+    t('sharePoster.copyRatio', { ratio: fmt(ratio.value), premium: fmtSigned(props.snapshot?.premiumPercent) }),
+    s ? t('sharePoster.copyRating', { label: tLabel(s.label), score: s.score, trend: tLabel(s.trend) }) : '',
+    l ? t('sharePoster.copyLevels', { support: l.support?.join('/'), resistance: l.resistance?.join('/') }) : '',
+    l ? t('sharePoster.copyRange', { low: fmt(l.refLow), high: fmt(l.refHigh) }) : '',
     `--------------------------`,
     t('sharePoster.copyTerminal'),
   ].filter(Boolean).join('\n');
@@ -164,21 +178,20 @@ async function copyText() {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   z-index: 100;
   display: grid;
   place-items: center;
   padding: 16px;
+  background: rgba(0, 0, 0, 0.75);
 }
 
 .modal-card {
   width: 100%;
   max-width: 520px;
   background: var(--surface-card);
-  border: 1px solid rgba(232, 199, 125, 0.3);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
   padding: 24px;
 }
 
@@ -186,6 +199,7 @@ async function copyText() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 18px;
 }
 
@@ -193,57 +207,54 @@ async function copyText() {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
-.share-icon {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(232, 199, 125, 0.15);
-  color: var(--gold-3);
-  font-size: 18px;
-  border: 1px solid rgba(232, 199, 125, 0.3);
+.head-icon {
+  flex-shrink: 0;
+  color: var(--gold);
 }
 
 .modal-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
+}
+
+:lang(zh) .modal-title {
+  letter-spacing: 0;
 }
 
 .modal-sub {
-  margin: 3px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
 }
 
-.close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-3);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-.close-btn:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.1);
+:lang(zh) .modal-sub {
+  line-height: 1.75;
 }
 
-/* 海报卡片样式 */
+/* 海报画布：固定深色配色，不随日夜主题变化；无渐变、无阴影 */
 .poster-preview {
+  --p-text: #f3efe6;
+  --p-dim: #a9a399;
+  --p-faint: #8b867b;
+  --p-gold: #e8c77d;
+  --p-ink: #0a0907;
+  --p-up: #ef4444;
+  --p-down: #10b981;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 20px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: #0c0e15;
   border: 1px solid rgba(232, 199, 125, 0.35);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   margin-bottom: 20px;
 }
 
@@ -251,6 +262,7 @@ async function copyText() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 12px;
 }
@@ -259,36 +271,43 @@ async function copyText() {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
+/* 字标 Au：衬线字，纯金实心方块，圆角 3px */
 .p-symbol {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--gold);
-  color: var(--gold-ink);
-  font-weight: 900;
-  font-size: 16px;
   display: grid;
   place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  background: var(--p-gold);
+  color: var(--p-ink);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .p-brand {
-  font-size: 14px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--p-text);
 }
 
 .p-sub {
-  font-size: 10px;
-  color: var(--gold-3);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--p-gold);
 }
 
 .p-time {
-  font-size: 11px;
   font-family: var(--mono);
-  color: var(--text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-faint);
 }
 
 .poster-prices {
@@ -299,34 +318,41 @@ async function copyText() {
 
 .p-price-box {
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .p-label {
-  font-size: 11px;
-  color: var(--text-2);
+  font-size: 12px;
+  color: var(--p-dim);
 }
 
 .p-val {
-  font-size: 22px;
-  font-weight: 800;
-  font-family: var(--mono);
-  color: #ffffff;
   margin: 4px 0 2px;
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-text);
 }
 
+/* 涨跌色只用于数值文字 */
 .p-chg {
-  font-size: 12px;
   font-family: var(--mono);
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-dim);
 }
+
 .p-chg.up {
-  color: var(--up);
+  color: var(--p-up);
 }
+
 .p-chg.down {
-  color: var(--down);
+  color: var(--p-down);
 }
 
 .poster-stats {
@@ -334,55 +360,70 @@ async function copyText() {
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: rgba(0, 0, 0, 0.3);
-  font-size: 11px;
+  font-size: 12px;
 }
+
 .poster-stats div {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-.poster-stats span {
-  color: var(--text-3);
-}
-.poster-stats b {
-  font-family: var(--mono);
-  color: #ffffff;
+  min-width: 0;
 }
 
+.poster-stats span {
+  color: var(--p-faint);
+}
+
+.poster-stats b {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-text);
+  overflow-wrap: anywhere;
+}
+
+/* 定调框保持中性，涨跌色只落在标签文字上 */
 .poster-verdict {
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.poster-verdict.up {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.08);
+
+.poster-verdict.up .v-title b {
+  color: var(--p-up);
 }
-.poster-verdict.down {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.08);
+
+.poster-verdict.down .v-title b {
+  color: var(--p-down);
 }
 
 .v-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--p-text);
 }
+
+.v-title b {
+  font-weight: 500;
+  color: var(--p-text);
+}
+
 .v-trend {
-  font-size: 11px;
-  color: var(--gold-3);
+  font-size: 12px;
+  color: var(--p-gold);
 }
 
 .v-reason {
   margin: 4px 0 0;
-  font-size: 11px;
-  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--p-dim);
 }
 
 .poster-levels {
@@ -390,26 +431,31 @@ async function copyText() {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: rgba(232, 199, 125, 0.06);
   border: 1px solid rgba(232, 199, 125, 0.2);
-  font-size: 11px;
+  font-size: 12px;
 }
+
 .poster-levels span {
-  color: var(--gold-3);
+  color: var(--p-gold);
 }
+
 .poster-levels b {
   font-family: var(--mono);
-  color: #ffffff;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-text);
 }
 
 .poster-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
-  color: var(--text-3);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
+  font-size: 12px;
+  color: var(--p-faint);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 10px;
 }
 
@@ -417,5 +463,82 @@ async function copyText() {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* ---------- 手机端：底部弹出的全宽面板；海报两列排列；按钮 44px ---------- */
+@media (max-width: 767px) {
+  .modal-backdrop {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .modal-card {
+    max-width: none;
+    max-height: 88vh;
+    max-height: 88dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 14px calc(16px + env(safe-area-inset-bottom));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .modal-head {
+    margin-bottom: 14px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-head .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .poster-preview {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .p-val {
+    font-size: 20px;
+  }
+
+  .poster-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .poster-levels {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+
+  .v-title {
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+
+  .v-reason {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .poster-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    height: 44px;
+  }
 }
 </style>

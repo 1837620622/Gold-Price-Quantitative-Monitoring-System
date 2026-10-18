@@ -1,108 +1,152 @@
 <template>
   <header class="top-nav" :class="{ scrolled: isScrolled }">
-    <!-- Left: Wordmark AURUM -->
+    <!-- 左：字标。印章 + AURUM，QUANT 小字在下 -->
     <a href="#journey" class="nav-logo" @click.prevent="scrollTo('#journey')">
-      AURUM <span class="nav-logo-sub">QUANT</span>
+      <GoldSeal :size="26" class="nav-seal" />
+      <span class="nav-wordmark">
+        <span class="nav-name">AURUM</span>
+        <span class="nav-logo-sub">QUANT</span>
+      </span>
     </a>
 
-    <!-- Center: Links -->
-    <ul class="nav-links" :class="{ open: mobileOpen }" ref="navLinksRef">
+    <!-- 中间：页内导航。1120px 及以下与手机端收进顶部菜单 -->
+    <ul
+      id="nav-links"
+      ref="navLinksRef"
+      class="nav-links"
+      :class="{ open: mobileOpen }"
+      @click="onMenuClick"
+      @focusout="onMenuFocusOut"
+    >
       <li><a href="#journey" :class="{ active: activeId === 'journey' }" @click.prevent="navClick('#journey')">{{ t('appHeader.navOverview') }}</a></li>
       <li><a href="#sec-overview" :class="{ active: activeId === 'sec-overview' }" @click.prevent="navClick('#sec-overview')">{{ t('appHeader.navMarket') }}</a></li>
       <li><a href="#sec-quant" :class="{ active: activeId === 'sec-quant' }" @click.prevent="navClick('#sec-quant')">{{ t('appHeader.navSignals') }}</a></li>
       <li><a href="#sec-charts" :class="{ active: activeId === 'sec-charts' }" @click.prevent="navClick('#sec-charts')">{{ t('appHeader.navCharts') }}</a></li>
       <li><a href="#sec-tools" :class="{ active: activeId === 'sec-tools' }" @click.prevent="navClick('#sec-tools')">{{ t('appHeader.navArbitrage') }}</a></li>
       <li><a href="#sec-ai" :class="{ active: activeId === 'sec-ai' }" @click.prevent="navClick('#sec-ai')">{{ t('appHeader.navAi') }}</a></li>
-      <li class="mobile-only-action"><a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">{{ t('appHeader.navTerminal') }}</a></li>
+
+      <!-- 手机端工具区：计算器、数据源、主题；行情控件由 GlobalTickerBar 挂到 #nav-tools-slot -->
+      <li class="menu-tools">
+        <p class="menu-title">{{ t('chromeMobile.tools') }}</p>
+        <button type="button" class="menu-row" @click="$emit('calc')">
+          <Icon name="calculator" :size="16" />
+          <span>{{ t('appHeader.calc') }}</span>
+        </button>
+        <button type="button" class="menu-row" @click="$emit('sources')">
+          <span class="tool-dot" :class="{ ok: sourcesHealthy }" aria-hidden="true"></span>
+          <span>{{ sourcesLabel }}</span>
+        </button>
+        <button
+          type="button"
+          class="menu-row"
+          :aria-expanded="prefsOpen ? 'true' : 'false'"
+          aria-controls="prefs-panel"
+          @click.stop="togglePrefs"
+        >
+          <Icon :name="themeIcon" :size="16" />
+          <span>{{ t('prefs.theme') }}</span>
+        </button>
+        <div id="nav-tools-slot" class="nav-tools-slot"></div>
+      </li>
+
+      <li class="mobile-only-action">
+        <a href="#workspace" class="pill mobile-pill" @click.prevent="navClick('#workspace')">{{ t('appHeader.navTerminal') }}</a>
+      </li>
     </ul>
 
-    <!-- Right: Actions & Pill -->
+    <!-- 右：状态与快捷操作。手机端的数据源与主题收进顶部菜单，语言切换始终在页头 -->
     <div class="nav-actions">
-      <!-- 紧凑工具药丸（实时源与计算器） -->
       <button
         type="button"
-        class="tool-pill"
-        :title="t('appHeader.sourcesHealth', { ok: sourcesOk, total: sourcesTotal })"
+        class="tool-pill bar-tool"
+        :title="sourcesLabel"
+        :aria-label="sourcesLabel"
         @click="$emit('sources')"
       >
-        <span class="tool-dot" :class="{ ok: sourcesHealthy }"></span>
+        <span class="tool-dot" :class="{ ok: sourcesHealthy }" aria-hidden="true"></span>
         <span class="tool-text">{{ sourcesOk }}/{{ sourcesTotal }}</span>
       </button>
 
       <button
         type="button"
-        class="tool-icon-btn"
+        class="tool-icon-btn calc-btn"
         :title="t('appHeader.calc')"
+        :aria-label="t('appHeader.calc')"
         @click="$emit('calc')"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="4" y="2" width="16" height="20" rx="2"></rect>
-          <line x1="8" y1="6" x2="16" y2="6"></line>
-          <line x1="16" y1="14" x2="16" y2="18"></line>
-        </svg>
+        <Icon name="calculator" :size="16" />
       </button>
 
       <button
         type="button"
-        class="tool-icon-btn"
+        class="tool-icon-btn refresh-btn"
         :class="{ spinning: status === 'loading' }"
         :title="t('appHeader.refresh')"
+        :aria-label="t('appHeader.refresh')"
         @click="$emit('refresh')"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12a9 9 0 1 1-2.6-6.4"></path>
-          <path d="M21 4v5h-5"></path>
-        </svg>
+        <Icon name="refresh" :size="16" />
       </button>
 
-      <!-- Pill button label “Launch Terminal” -->
-      <a
-        href="#workspace"
-        class="pill nav-pill"
-        @click.prevent="navClick('#workspace')"
-      >
-        {{ t('appHeader.navTerminal') }}
-      </a>
-
-      <!-- 显示与语言：按钮展开 PrefsMenu 面板，桌面与手机通用 -->
+      <!-- 主题按钮：展开 PrefsMenu 面板；图标随当前主题变化 -->
       <button
         ref="prefsBtnRef"
         type="button"
-        class="tool-icon-btn prefs-toggle"
+        class="tool-icon-btn prefs-toggle bar-tool"
         :aria-expanded="prefsOpen ? 'true' : 'false'"
         aria-controls="prefs-panel"
-        :title="t('appHeader.prefs')"
-        @click.stop="prefsOpen = !prefsOpen"
+        :title="t('prefs.theme')"
+        :aria-label="t('prefs.theme')"
+        @click.stop="togglePrefs"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
-        </svg>
-        <span class="prefs-toggle-text">{{ t('appHeader.prefsShort') }}</span>
+        <Icon :name="themeIcon" :size="16" />
       </button>
 
-      <!-- 44x44 Hamburger (.nav-toggle) -->
+      <LangToggle class="nav-lang" />
+
+      <a href="#workspace" class="pill nav-pill" @click.prevent="navClick('#workspace')">
+        {{ t('appHeader.navTerminal') }}
+      </a>
+
+      <!-- 手机菜单按钮：关闭时三条线，打开时显示 close 图标 -->
       <button
-        class="nav-toggle"
+        ref="navToggleRef"
         type="button"
+        class="nav-toggle"
         :aria-expanded="mobileOpen ? 'true' : 'false'"
-        aria-label="Toggle Navigation"
-        @click.stop="mobileOpen = !mobileOpen"
+        aria-controls="nav-links"
+        :aria-label="t('chromeMobile.menu')"
+        @click.stop="toggleNav"
       >
-        <span></span>
-        <span></span>
-        <span></span>
+        <Icon v-if="mobileOpen" name="close" :size="18" />
+        <template v-else>
+          <span></span>
+          <span></span>
+          <span></span>
+        </template>
       </button>
     </div>
-    <div v-if="prefsOpen" id="prefs-panel" ref="prefsRef" class="prefs-panel" role="dialog" :aria-label="t('appHeader.prefs')">
+
+    <div
+      v-if="prefsOpen"
+      id="prefs-panel"
+      ref="prefsRef"
+      class="prefs-panel"
+      role="dialog"
+      :aria-label="t('prefs.group')"
+      @focusout="onPrefsFocusOut"
+    >
       <PrefsMenu />
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import PrefsMenu from './PrefsMenu.vue';
+import LangToggle from './LangToggle.vue';
+import GoldSeal from './brand/GoldSeal.vue';
+import Icon from './icons/Icon.vue';
 import { useI18n } from '../i18n';
 
 const { t } = useI18n();
@@ -122,14 +166,21 @@ const mobileOpen = ref(false);
 const activeId = ref('hero');
 const isScrolled = ref(false);
 const navLinksRef = ref(null);
+const navToggleRef = ref(null);
 const prefsOpen = ref(false);
 const prefsRef = ref(null);
 const prefsBtnRef = ref(null);
 
 const sourcesHealthy = computed(() => props.sourcesTotal > 0 && props.sourcesOk === props.sourcesTotal);
+const sourcesLabel = computed(() => t('appHeader.sourcesHealth', { ok: props.sourcesOk, total: props.sourcesTotal }));
+// 日间显示太阳，夜间显示月亮（theme 由 App 传入已解析的 light / dark）
+const themeIcon = computed(() => (props.theme === 'light' ? 'sun' : 'moon'));
 
+// 滚动后才显示底栏；带滞后区间，贴近阈值时不会反复切换
 function onScroll() {
-  isScrolled.value = window.scrollY > 24;
+  const y = window.scrollY;
+  if (y > 40) isScrolled.value = true;
+  else if (y < 8) isScrolled.value = false;
 }
 
 function scrollTo(selector) {
@@ -144,6 +195,42 @@ function navClick(selector) {
   scrollTo(selector);
 }
 
+function toggleNav() {
+  prefsOpen.value = false;
+  mobileOpen.value = !mobileOpen.value;
+}
+
+function togglePrefs() {
+  mobileOpen.value = false;
+  prefsOpen.value = !prefsOpen.value;
+}
+
+// 菜单里的按钮（计算器、音效、预警等）点完即收起；下拉框保持打开
+function onMenuClick(e) {
+  if (e.target.closest('button, a')) mobileOpen.value = false;
+}
+
+// 焦点离开菜单 / 面板时收起；指针点击外部由 onClickOutside 处理
+function onMenuFocusOut(e) {
+  const next = e.relatedTarget;
+  if (!next || navLinksRef.value?.contains(next) || navToggleRef.value?.contains(next)) return;
+  mobileOpen.value = false;
+}
+
+function onPrefsFocusOut(e) {
+  const next = e.relatedTarget;
+  if (!next || prefsRef.value?.contains(next) || prefsBtnRef.value?.contains(next)) return;
+  prefsOpen.value = false;
+}
+
+// 打开偏好面板后把焦点交给当前选中的选项，键盘用户可以直接操作
+watch(prefsOpen, (open) => {
+  if (!open) return;
+  nextTick(() => {
+    prefsRef.value?.querySelector('[role="radio"][aria-checked="true"]')?.focus({ preventScroll: true });
+  });
+});
+
 function onClickOutside(e) {
   if (navLinksRef.value && !navLinksRef.value.contains(e.target)) {
     mobileOpen.value = false;
@@ -154,8 +241,19 @@ function onClickOutside(e) {
   }
 }
 
+// Escape 关闭面板；焦点原本在面板内时还给对应的按钮
 function onKeydown(e) {
-  if (e.key === 'Escape') prefsOpen.value = false;
+  if (e.key !== 'Escape') return;
+  if (prefsOpen.value) {
+    const hadFocus = prefsRef.value?.contains(document.activeElement);
+    prefsOpen.value = false;
+    if (hadFocus) prefsBtnRef.value?.focus();
+  }
+  if (mobileOpen.value) {
+    const hadFocus = navLinksRef.value?.contains(document.activeElement);
+    mobileOpen.value = false;
+    if (hadFocus) navToggleRef.value?.focus();
+  }
 }
 
 let sectionObserver = null;
@@ -191,247 +289,439 @@ onUnmounted(() => {
 
 <style scoped>
 /* ============================================================
-   NAV (EXACT PROMPT SPECIFICATION)
+   页头：静止时透明；滚动后一条发丝底边 + 纯色底（轻模糊，无阴影）
    ============================================================ */
 .top-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  width: 100%;
-  height: 56px;
   z-index: 100;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 var(--pad);
   box-sizing: border-box;
+  width: 100%;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 var(--pad);
   background: transparent;
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.top-nav.scrolled {
+.top-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background: color-mix(in srgb, var(--bg) 90%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--line);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
 
+.top-nav.scrolled::before {
+  opacity: 1;
+}
+
+/* ---------- 字标：印章 + AURUM，QUANT 小字在下 ---------- */
 .nav-logo {
-  font-family: 'Inter', sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
   color: var(--ink);
-  font-size: clamp(15px, 1.45vw, 23px);
   text-decoration: none;
   cursor: pointer;
-  flex-shrink: 0;
-}
-.nav-logo-sub {
-  font-size: 0.52em;
-  letter-spacing: 0.18em;
-  color: var(--gold-3);
-  font-weight: 700;
-  margin-left: -2px;
-  vertical-align: super;
 }
 
-.nav-links {
+.nav-wordmark {
   display: flex;
-  gap: 2.1vw;
-  margin-left: auto;
-  margin-right: 2.6vw;
-  list-style: none;
-  padding: 0;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.nav-links a {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(11px, 0.88vw, 14px);
-  color: var(--text-2);
-  text-decoration: none;
-  transition: color 0.3s ease;
+.nav-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.12em;
+  color: var(--ink);
   white-space: nowrap;
 }
 
-.nav-links a:hover,
+.nav-logo-sub {
+  margin-top: 5px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-2);
+  white-space: nowrap;
+}
+
+/* ---------- 页内导航（桌面） ---------- */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2vw, 32px);
+  margin: 0 clamp(16px, 2.6vw, 40px) 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-links a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+/* 当前栏目：文字变亮，下方一条金色发丝线 */
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 7px;
+  height: 1px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur) var(--ease-out);
+}
+
 .nav-links a.active {
   color: var(--ink);
 }
 
+.nav-links a.active::after {
+  transform: scaleX(1);
+}
+
+/* ---------- 右侧工具 ---------- */
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
+/* 数据源健康度：状态点 + 数字 */
 .tool-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  gap: 7px;
+  height: 40px;
+  padding: 0 12px;
   border: 1px solid var(--line-strong);
-  color: var(--dim);
-  font-size: 11px;
-  font-family: var(--font-display), var(--mono);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: all 0.25s ease;
-}
-.tool-pill:hover {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-  color: var(--ink);
+  transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
 .tool-dot {
+  flex: none;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--warn);
 }
+
 .tool-dot.ok {
   background: var(--down);
 }
 
 .tool-icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
-  border: 1px solid var(--line-strong);
-  color: var(--dim);
-  display: grid;
+  display: inline-grid;
   place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-2);
   cursor: pointer;
-  transition: all 0.25s ease;
-}
-.tool-icon-btn:hover {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-  color: var(--ink);
-  border-color: var(--border-hover);
+  transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
-.tool-icon-btn.spinning svg {
+/* 刷新中的加载指示：仅在数据请求期间旋转 */
+.tool-icon-btn.spinning .icon {
   animation: spin 0.8s linear infinite;
 }
 
-.nav-pill {
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  padding: 0.85em 1.55em;
-  font-size: clamp(11px, 0.88vw, 14px);
-  color: var(--ink);
-  white-space: nowrap;
-  text-decoration: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
-}
-.nav-pill:hover {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+/* 语言切换沿用共享组件，这里只把外框放到 40px 以上的触控高度 */
+.top-nav .nav-lang {
+  height: 42px;
+  padding: 0;
 }
 
-/* 44x44 Hamburger */
+/* 主按钮：进入终端（发丝边框，悬停只改描边与颜色） */
+.nav-pill {
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* 悬停只在精确指针上启用，只改描边与颜色 */
+@media (hover: hover) and (pointer: fine) {
+  .nav-links a:hover {
+    color: var(--ink);
+  }
+
+  .tool-pill:hover,
+  .tool-icon-btn:hover {
+    border-color: var(--border-hover);
+    color: var(--ink);
+  }
+
+  .nav-pill:hover {
+    border-color: var(--gold);
+    color: var(--gold-3);
+  }
+}
+
+/* 手机菜单按钮：44px，三条线 */
 .nav-toggle {
   display: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--line-strong);
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
+  flex: none;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
   gap: 4px;
-  z-index: 50;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
 }
+
 .nav-toggle span {
   display: block;
   width: 16px;
   height: 1.5px;
-  background: var(--ink);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-.nav-toggle[aria-expanded="true"] span:nth-child(1) {
-  transform: translateY(5.5px) rotate(45deg);
-}
-.nav-toggle[aria-expanded="true"] span:nth-child(2) {
-  opacity: 0;
-}
-.nav-toggle[aria-expanded="true"] span:nth-child(3) {
-  transform: translateY(-5.5px) rotate(-45deg);
-}
-
-/* Mobile Dropdown */
-@media (max-width: 900px), (max-height: 540px) {
-  .top-nav {
-    height: 56px;
-    padding: 0 max(var(--pad), env(safe-area-inset-right)) 0 max(var(--pad), env(safe-area-inset-left));
-  }
-  .nav-toggle {
-    display: flex;
-  }
-  .tool-pill,
-  .tool-icon-btn,
-  .nav-pill,
-  .nav-toggle {
-    min-height: 44px;
-  }
-  .nav-links {
-    display: none;
-    position: absolute;
-    top: calc(100% + 10px);
-    right: max(var(--pad), env(safe-area-inset-right));
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    min-width: 180px;
-    padding: 10px 16px;
-    background: color-mix(in srgb, var(--surface-card) 96%, transparent);
-    border: 1px solid var(--line-strong);
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    margin: 0;
-    z-index: 55;
-  }
-  .nav-links.open {
-    display: flex;
-  }
-  .nav-links a {
-    font-size: 16px;
-    padding: 10px 4px;
-  }
-  .mobile-only-action {
-    display: block;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--line);
-    width: 100%;
-    text-align: center;
-  }
-  .mobile-pill {
-    width: 100%;
-    font-size: 13px !important;
-    padding: 10px 16px !important;
-  }
+  background: currentColor;
 }
 
 .mobile-only-action {
   display: none;
+}
+
+/* 手机工具区：默认隐藏，只在 767px 及以下显示 */
+.menu-tools {
+  display: none;
+}
+
+/* 显示偏好面板：挂在页头下方，是弹层，保留一层阴影 */
+.prefs-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: var(--pad);
+  z-index: 50;
+  width: min(360px, calc(100vw - 2 * var(--pad)));
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-modal);
+}
+
+/* Teleport 挂载点：手机端菜单里的行情控件挂在这里，本身不占位 */
+.nav-tools-slot {
+  display: contents;
+}
+
+/* 中等宽度与手机：顶部菜单接管导航链接，横屏手机也走这一套 */
+@media (max-width: 1120px), (max-height: 540px) {
+  .top-nav {
+    padding: 0 max(var(--pad), env(safe-area-inset-right)) 0 max(var(--pad), env(safe-area-inset-left));
+  }
+
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: max(var(--pad), env(safe-area-inset-left));
+    right: max(var(--pad), env(safe-area-inset-right));
+    z-index: 55;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0;
+    padding: 8px;
+    max-height: calc(100vh - var(--nav-h) - 24px);
+    max-height: calc(100dvh - var(--nav-h) - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--surface-card);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-modal);
+  }
+
+  .nav-links.open {
+    display: grid;
+  }
+
+  .nav-links a::after {
+    display: none;
+  }
+
+  .nav-links > li > a:not(.pill) {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* 当前栏目：金色发丝边 + 淡金底 */
+  .nav-links > li > a.active:not(.pill) {
+    color: var(--gold-3);
+    border-color: var(--line-strong);
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
+  }
+
+  .mobile-only-action {
+    display: block;
+    grid-column: 1 / -1;
+    margin-top: 6px;
+  }
+
+  .nav-links .mobile-pill {
+    width: 100%;
+    border-radius: 2px;
+    min-height: 44px;
+    height: auto;
+    padding: 0 16px;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text);
+  }
+}
+
+@media (max-width: 767px) {
+  /* 数据源与主题收进菜单，计算器本来就在菜单里 */
+  .bar-tool,
+  .calc-btn {
+    display: none;
+  }
+
+  .nav-actions {
+    gap: 6px;
+  }
+
+  .tool-icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .nav-name {
+    font-size: 18px;
+  }
+
+  .top-nav .nav-lang {
+    height: 44px;
+  }
+
+  .menu-tools {
+    display: block;
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+
+  .menu-title {
+    margin: 0 4px 8px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+
+  /* 英文菜单标题：11px 大写，字距 .14em；中文不大写、不加字距 */
+  :lang(en) .menu-title {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .menu-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .menu-row .icon {
+    flex: none;
+    color: var(--gold);
+  }
+
+  .prefs-panel {
+    top: calc(100% + 8px);
+    left: max(var(--pad), env(safe-area-inset-left));
+    right: max(var(--pad), env(safe-area-inset-right));
+    width: auto;
+    max-height: calc(100vh - var(--nav-h) - 24px);
+    max-height: calc(100dvh - var(--nav-h) - 24px);
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 680px) {
@@ -440,37 +730,29 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 420px) {
-  .nav-actions {
-    gap: 6px;
+/* 极窄屏（320–359px）：压缩字标与语言按钮，保证页头不超出视口 */
+@media (max-width: 359px) {
+  .top-nav {
+    gap: 8px;
   }
-}
-/* 显示与语言面板：挂在导航栏下方，颜色跟随主题令牌 */
-.prefs-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: var(--pad);
-  z-index: 50;
-  width: min(360px, calc(100vw - 2 * var(--pad)));
-  padding: 14px 16px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  box-shadow: var(--shadow);
-}
 
-.prefs-panel :deep(.prefs) {
-  flex-direction: column;
-  align-items: stretch;
-}
+  .nav-name {
+    font-size: 16px;
+  }
 
-/* 图标按钮只保留读屏文本，避免桌面端文字挤出 36px 圆形按钮 */
-.prefs-toggle-text {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+  .nav-actions {
+    gap: 4px;
+  }
+
+  .tool-icon-btn,
+  .nav-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .top-nav .nav-lang :deep(.lang-toggle-btn) {
+    min-width: 42px;
+    padding: 0 8px;
+  }
 }
 </style>

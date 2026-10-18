@@ -16,3 +16,13 @@ export { gsap, ScrollTrigger };
 export function prefersReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+
+// 手机宽度（与样式断点 767px 一致）：不做滚动钉住与滚动驱动
+export function isPhoneWidth() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+}
+
+// 悬停型指针（鼠标、触控板）：只有这类设备才启用悬停视差
+export function hasFinePointer() {
+  return typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+}

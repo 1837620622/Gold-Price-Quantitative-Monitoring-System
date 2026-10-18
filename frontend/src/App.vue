@@ -60,7 +60,9 @@
             <b class="toast-title">{{ activeNotice.title }}</b>
             <p class="toast-desc">{{ activeNotice.body }}</p>
           </div>
-          <button type="button" class="toast-close" :aria-label="t('app.toastClose')" @click="activeNotice = null">✕</button>
+          <button type="button" class="toast-close" :aria-label="t('app.toastClose')" @click="activeNotice = null">
+            <Icon name="close" :size="14" />
+          </button>
         </div>
       </transition>
 
@@ -84,7 +86,6 @@
           <div class="hero-grid">
             <PriceCard
               class="hero-cn"
-              data-reveal-item
               code="AU9999"
               :name="t('quote.domesticName')"
               :tag="domestic?.estimated ? t('quote.estimated') : 'CNY'"
@@ -102,7 +103,6 @@
             />
             <PriceCard
               class="hero-intl"
-              data-reveal-item
               code="XAU/USD"
               :name="t('quote.intlName')"
               tag="SPOT"
@@ -120,7 +120,6 @@
             <AiCard
               id="sec-ai"
               class="hero-ai"
-              data-reveal-item
               :state="analysis.state"
               :timestamp="analysis.timestamp"
               :cached="analysis.cached"
@@ -162,9 +161,9 @@
             :sub="t('section.signalsSub')"
           />
 
-          <TechnicalMatrix :quant="cnQuant" data-reveal-item />
+          <TechnicalMatrix :quant="cnQuant" />
 
-          <div class="analytics-grid" data-reveal-item>
+          <div class="analytics-grid">
             <SignalPanel
               v-if="cnQuant?.available"
               class="an-signal"
@@ -195,7 +194,7 @@
             title-id="title-charts"
             :sub="t('section.chartsSub')"
           />
-          <div data-reveal-item>
+          <div>
             <ChartWorkspace
               :cn="cnQuant"
               :intl="intlQuant"
@@ -218,7 +217,7 @@
             :sub="t('section.toolsSub')"
           />
 
-          <div class="tools-grid" data-reveal-item>
+          <div class="tools-grid">
             <GoldCalculator
               :domestic-price="domestic?.price"
               :intl-price="international?.price"
@@ -238,7 +237,7 @@
             title-id="title-contact"
             :sub="t('section.alertsSub')"
           />
-          <div class="contact-actions" data-reveal-item>
+          <div class="contact-actions">
             <button type="button" class="pill pill-gold" @click="showAlerts = true">{{ t('contact.setAlert') }}</button>
             <button type="button" class="pill" @click="showSubscribe = true">{{ t('contact.subscribe') }}</button>
           </div>
@@ -294,6 +293,7 @@ import AppFooter from './components/AppFooter.vue';
 import SubscribeModal from './components/SubscribeModal.vue';
 import PriceAlertModal from './components/PriceAlertModal.vue';
 import SharePosterModal from './components/SharePosterModal.vue';
+import Icon from './components/icons/Icon.vue';
 
 import { useMarket } from './composables/useMarket';
 import { useQuant } from './composables/useQuant';
@@ -301,7 +301,7 @@ import { useTheme } from './composables/useTheme';
 import { useAlerts } from './composables/useAlerts';
 import { requestAnalysis } from './api';
 import { fmtNumber, fmtInt, fmtPercent, toneOf } from './format';
-import { gsap, prefersReducedMotion } from './lib/motion';
+import { gsap, ScrollTrigger, prefersReducedMotion } from './lib/motion';
 import { useI18n } from './i18n';
 import { loadGeo } from './lib/geo';
 
@@ -441,8 +441,14 @@ async function runAnalysis(requestedModel) {
   }
 }
 
+// 内容区高度变化（行情到达、研报插入、图表加载）后，重新计算各分区的触发位置
+watch(
+  () => [loading.value, loadingCn.value, loadingIntl.value, analysis.value.state],
+  () => nextTick(() => ScrollTrigger.refresh())
+);
+
 // ------------------------------------------------------------
-// 滚动进度条与分区入场动效（GSAP ScrollTrigger，只播放一次）
+// 滚动进度条与分区入场动效（只播放一次，不做滚动联动）
 // ------------------------------------------------------------
 const meterRef = ref(null);
 let meterFrame = 0;
@@ -455,23 +461,27 @@ function updateMeter() {
 }
 
 function onScrollMeter() {
+  // 手机端隐藏进度线，不做随滚动变化的效果
+  if (window.matchMedia('(max-width: 767px)').matches) return;
   if (!meterFrame) meterFrame = requestAnimationFrame(updateMeter);
 }
 
+// 每个分区只淡入一次并上移 12px，不逐项错峰；顶边到达视口 90% 处即播放
 function setupReveals() {
   if (prefersReducedMotion()) return;
   document.querySelectorAll('[data-reveal]').forEach((section) => {
-    const masks = section.querySelectorAll('.mask > span');
-    const items = section.querySelectorAll('[data-reveal-item]');
-    gsap
-      .timeline({ scrollTrigger: { trigger: section, start: 'top 88%', once: true } })
-      .fromTo(masks, { yPercent: 100 }, { yPercent: 0, duration: 0.55, ease: 'power3.out' })
-      .fromTo(
-        items,
-        { autoAlpha: 0, y: 8 },
-        { autoAlpha: 1, y: 0, duration: 0.45, ease: 'power2.out', stagger: 0.04, clearProps: 'all' },
-        '-=0.35'
-      );
+    gsap.fromTo(
+      section,
+      { opacity: 0, y: 12 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.45,
+        ease: 'power2.out',
+        clearProps: 'opacity,transform',
+        scrollTrigger: { trigger: section, start: 'top 90%', once: true },
+      }
+    );
   });
 }
 
@@ -515,17 +525,19 @@ onUnmounted(() => {
   transform: scaleX(0);
 }
 
-.main {
-  padding: 0;
-}
-
+/* 锚点滚动：分区顶边落在固定页头（及桌面行情条）之下 16px */
 .block {
   padding-top: clamp(48px, 6vw, 84px);
-  scroll-margin-top: 104px;
+  scroll-margin-top: calc(var(--nav-h) + var(--ticker-h) + 16px);
 }
 
 .workspace-section {
-  scroll-margin-top: 56px;
+  scroll-margin-top: calc(var(--nav-h) + var(--ticker-h));
+}
+
+#sec-ai,
+#report {
+  scroll-margin-top: calc(var(--nav-h) + var(--ticker-h) + 16px);
 }
 
 .block + .block {
@@ -573,7 +585,7 @@ onUnmounted(() => {
 
 .notice-card {
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
   padding: 36px 20px;
 }
@@ -585,11 +597,14 @@ onUnmounted(() => {
   margin: -4px 0 clamp(24px, 3vw, 40px);
 }
 
+/* 行情异常提示：单行紧凑，普通文档流（不吸顶、不遮挡内容） */
 .alert {
-  margin-bottom: 20px;
-  padding: 12px 16px;
+  position: relative;
+  margin-bottom: 16px;
+  padding: 10px 14px;
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.6;
   border: 1px solid transparent;
 }
 
@@ -604,10 +619,10 @@ onUnmounted(() => {
   color: var(--danger);
 }
 
-/* 浮动预警：实体面板 + 红色细边，入场由 transition 完成 */
+/* 浮动预警：纯色面板 + 发丝边；浮层阴影使用弹层令牌；入场由 transition 完成 */
 .toast-alert {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   right: 20px;
   z-index: 99;
   display: flex;
@@ -617,18 +632,18 @@ onUnmounted(() => {
   padding: 14px 16px;
   border-radius: var(--radius-lg);
   background: var(--surface-card);
-  border: 1px solid color-mix(in srgb, var(--up) 40%, transparent);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-modal);
 }
 
+/* 预警标记：静态金色小点，不做循环动画 */
 .toast-dot {
   flex-shrink: 0;
   width: 8px;
   height: 8px;
   margin-top: 6px;
   border-radius: 50%;
-  background: var(--up);
-  animation: pulse-ring 1.6s var(--ease-out) infinite;
+  background: var(--gold);
 }
 
 .toast-content {
@@ -639,36 +654,56 @@ onUnmounted(() => {
 .toast-title {
   display: block;
   font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: var(--text);
+  word-break: keep-all;
 }
 
 .toast-desc {
   margin: 4px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
 }
 
+/* 中文界面：标题用界面字体、不加字距；说明行高 1.75 */
+:lang(zh) .toast-title {
+  font-family: var(--font);
+  letter-spacing: 0;
+}
+
+:lang(zh) .toast-desc {
+  line-height: 1.75;
+}
+
+/* 关闭钮：36px 触控区，图标 14px，无底色、无边框 */
 .toast-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin: -8px -8px -8px 0;
+  padding: 0;
+  border: 0;
   background: transparent;
-  border: none;
   color: var(--text-3);
-  font-size: 14px;
   cursor: pointer;
-  padding: 2px 4px;
-  transition: color var(--dur) var(--ease-out);
+  transition: color 0.2s var(--ease-out);
 }
 
-.toast-close:hover {
-  color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+  .toast-close:hover {
+    color: var(--text);
+  }
 }
 
+/* 预警入场：淡入 + 12px 上移，240ms，只播放一次 */
 .toast-fade-enter-active,
 .toast-fade-leave-active {
-  transition: opacity var(--dur) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  transition: opacity 0.24s var(--ease-out), transform 0.24s var(--ease-out);
 }
 
 .toast-fade-enter-from,
@@ -697,6 +732,38 @@ onUnmounted(() => {
 
   .an-side {
     grid-column: span 7;
+  }
+}
+
+/* ---------- 手机端（767px 及以下）：节奏收紧，进度线让位，预警浮层避开返回顶部按钮 ---------- */
+@media (max-width: 767px) {
+  .scroll-meter {
+    display: none;
+  }
+
+  .block {
+    padding-top: 40px;
+  }
+
+  .notice-card {
+    padding: 24px 16px;
+  }
+
+  /* 预警浮层：两侧 16px，底边位于返回顶部按钮（底部 20px、高 40px）之上 */
+  .toast-alert {
+    left: 16px;
+    right: auto;
+    width: calc(100vw - 32px);
+    max-width: none;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-fade-enter-from,
+  .toast-fade-leave-to {
+    transform: none;
   }
 }
 </style>

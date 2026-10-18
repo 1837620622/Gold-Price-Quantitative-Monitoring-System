@@ -5,7 +5,7 @@
 export default {
   zh: {
     'pivotLadder.title': '日内枢轴阶梯',
-    'pivotLadder.sub': 'Pivot Points · 以最近一根日K 的高低收推算',
+    'pivotLadder.sub': '枢轴点，依据最近一根日 K 线的高、低、收价推算',
     'pivotLadder.mode': '枢轴算法',
     'pivotLadder.classic': '经典',
     'pivotLadder.fibonacci': '斐波那契',

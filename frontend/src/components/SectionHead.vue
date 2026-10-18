@@ -1,23 +1,24 @@
 <template>
   <header class="section-head">
     <div class="section-head-main">
-      <p class="label section-kicker">
+      <p class="section-kicker">
         <span class="section-index">{{ index }}</span>
-        <span>/ {{ total }}</span>
+        <span class="section-total">/ {{ total }}</span>
         <span class="section-tag">{{ tag }}</span>
       </p>
-      <h2 :id="titleId" class="section-title display">
-        <span class="mask"><span>{{ title }}</span></span>
-      </h2>
+      <h2 :id="titleId" class="section-title display">{{ title }}</h2>
     </div>
-    <p v-if="sub" class="section-sub" data-reveal-item>{{ sub }}</p>
-    <div v-if="$slots.default" class="section-actions" data-reveal-item>
+    <p v-if="sub" class="section-sub">{{ sub }}</p>
+    <div v-if="$slots.default" class="section-actions">
       <slot />
     </div>
+    <GoldRule class="section-rule" />
   </header>
 </template>
 
 <script setup>
+import GoldRule from './brand/GoldRule.vue';
+
 defineProps({
   index: { type: String, required: true },
   total: { type: String, default: '05' },
@@ -42,11 +43,25 @@ defineProps({
   min-width: 0;
 }
 
+/* 标签行：英文小字大写加字距；序号与总数用等宽数字，标签文字用界面字体 */
 .section-kicker {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.section-index,
+.section-total {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .section-index {
@@ -55,40 +70,25 @@ defineProps({
 
 .section-tag {
   color: var(--text-2);
+  word-break: keep-all;
 }
 
+/* 区块标题：衬线展示字，保持原大小写，不用大写与重字距 */
 .section-title {
-  font-size: clamp(34px, 4.6vw, 68px);
-  color: var(--text);
-  overflow-wrap: anywhere;
-  letter-spacing: 0.01em;
-  line-height: 1.05;
-}
-
-/* 中文界面：Anton 不含中文字形，标题改用中文字体 */
-:global(html:lang(zh)) .section-title {
-  font-family: var(--font);
-  font-size: clamp(28px, 3.8vw, 54px);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 4.6vw, 64px);
+  font-weight: 500;
+  line-height: 1.1;
   letter-spacing: -0.01em;
   text-transform: none;
-  line-height: 1.2;
-}
-
-/* 遮罩入场：文字只在遮罩内上移，遮罩外不可见 */
-.mask {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 0.04em;
-}
-
-.mask > span {
-  display: block;
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .section-sub {
   max-width: 46ch;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--text-2);
 }
@@ -100,9 +100,42 @@ defineProps({
   justify-self: end;
 }
 
+/* 标题与内容之间的金线分隔，横跨整行 */
+.section-rule {
+  grid-column: 1 / -1;
+}
+
+/* 中文界面：标签不大写、不加字距；标题行高 1.25，说明行高 1.75 */
+:lang(zh) .section-kicker {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+:lang(zh) .section-title {
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+:lang(zh) .section-sub {
+  line-height: 1.75;
+}
+
+/* 手机：标题 34–40px，分区节奏收紧 */
 @media (max-width: 767px) {
   .section-head {
     grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .section-kicker {
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: clamp(34px, 10vw, 40px);
+    line-height: 1.12;
   }
 
   .section-actions {

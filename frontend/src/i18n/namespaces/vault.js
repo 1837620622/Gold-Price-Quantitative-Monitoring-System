@@ -1,25 +1,25 @@
 /**
  * 金库开场与金币行文案（JourneyHero、CoinRow）
  * 键名前缀 vault.；英文缺失时回退中文
- * 页脚 "SHANGHAI · LONDON · FX" 与实时数值标签在两种语言中保持一致
+ * 页脚标语与实时数值标签：中文用汉字，英文用英文，两种语言的结构保持一致
  */
 
 export default {
   zh: {
-    'vault.hero.eyebrow': 'GOLD QUANT TERMINAL · 黄金量化终端',
-    'vault.hero.title1': 'GOLD',
-    'vault.hero.title2': 'QUANT',
+    'vault.hero.eyebrow': '黄金量化终端 · 沪伦双市',
+    'vault.hero.title1': '黄金',
+    'vault.hero.title2': '量化',
     'vault.hero.sub1': '上海金 AU9999 与伦敦现货 XAU/USD，',
     'vault.hero.sub2': '多因子量化信号与跨市溢价同屏监控。',
-    'vault.hero.sub3': 'SPOT & DOMESTIC GOLD, SCORED LIVE.',
-    'vault.hero.sub4': 'BACKTEST · RISK REGIME · AI BRIEF.',
+    'vault.hero.sub3': '现货与国内金价，实时量化评分。',
+    'vault.hero.sub4': '回测 · 风险状态 · AI 研报。',
     'vault.hero.liveAria': '实时行情',
-    'vault.live.domestic': 'AU9999 · CNY/g',
+    'vault.live.domestic': 'AU9999 · 元/克',
     'vault.live.intl': 'XAU/USD',
-    'vault.live.premium': 'PREMIUM',
-    'vault.footer.desk': 'SHANGHAI · LONDON · FX',
-    'vault.footer.m1': 'SHANGHAI',
-    'vault.footer.m2': 'LONDON',
+    'vault.live.premium': '国内溢价',
+    'vault.footer.desk': '上海 · 伦敦 · 外汇',
+    'vault.footer.m1': '上海',
+    'vault.footer.m2': '伦敦',
     'vault.row.aria': '提醒与推送',
   },
   en: {
@@ -34,9 +34,9 @@ export default {
     'vault.live.domestic': 'AU9999 · CNY/g',
     'vault.live.intl': 'XAU/USD',
     'vault.live.premium': 'PREMIUM',
-    'vault.footer.desk': 'SHANGHAI · LONDON · FX',
-    'vault.footer.m1': 'SHANGHAI',
-    'vault.footer.m2': 'LONDON',
+    'vault.footer.desk': 'Shanghai · London · FX',
+    'vault.footer.m1': 'Shanghai',
+    'vault.footer.m2': 'London',
     'vault.row.aria': 'Alerts and push',
   },
 };

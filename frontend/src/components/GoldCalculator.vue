@@ -3,12 +3,7 @@
     <header class="calc-head">
       <div class="head-left">
         <div class="calc-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
-            <line x1="8" y1="6" x2="16" y2="6"></line>
-            <line x1="16" y1="14" x2="16" y2="18"></line>
-            <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"></path>
-          </svg>
+          <Icon name="calculator" :size="20" />
         </div>
         <div>
           <h3 class="calc-title">{{ t('goldCalc.title') }}</h3>
@@ -32,7 +27,7 @@
           :class="{ active: mode === 'arbitrage' }"
           @click="mode = 'arbitrage'"
         >
-          ⚡ {{ t('goldCalc.modeArb') }}
+          {{ t('goldCalc.modeArb') }}
         </button>
       </div>
 
@@ -243,7 +238,7 @@
         <div class="form-group">
           <div class="label-row">
             <label class="form-label">{{ t('goldCalc.arbWeightLabel') }}</label>
-            <div class="weight-presets">
+            <div class="weight-presets weight-presets-five">
               <button
                 v-for="w in [100, 500, 1000, 5000, 10000]"
                 :key="w"
@@ -329,6 +324,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { fmtNumber } from '../format';
+import Icon from './icons/Icon.vue';
 import { useI18n } from '../i18n';
 
 const { t } = useI18n();
@@ -514,12 +510,13 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 </script>
 
 <style scoped>
+/* 卡片：发丝边、纯色底，不用阴影与渐变 */
 .calc-card {
   padding: 24px;
   background: var(--surface-card);
-  border: 1px solid rgba(232, 199, 125, 0.2);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
+  box-shadow: none;
 }
 
 .calc-head {
@@ -535,74 +532,106 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
+/* 小方块图标：发丝边，不用阴影 */
 .calc-icon {
   display: grid;
   place-items: center;
+  flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: rgba(232, 199, 125, 0.12);
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
   color: var(--gold-3);
-  border: 1px solid rgba(232, 199, 125, 0.3);
 }
 
+/* 小标题：展示字 20px（手机 18px） */
 .calc-title {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+:lang(zh) .calc-title {
+  letter-spacing: 0;
 }
 
 .calc-sub {
-  margin: 3px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
 }
 
+/* 模式切换：发丝边分段条，激活项为金色发丝边加淡金底 */
 .calc-tab-group {
   display: flex;
-  gap: 6px;
-  background: var(--surface-2);
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .calc-tab-btn {
+  min-height: 36px;
   padding: 6px 14px;
-  border-radius: 8px;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
   background: transparent;
   color: var(--text-2);
-  font-size: 12px;
-  font-weight: 600;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.25s ease;
-}
-.calc-tab-btn.active {
-  background: var(--gold-btn);
-  color: var(--gold-ink);
-  font-weight: 700;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
+.calc-tab-btn.active {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  color: var(--text);
+}
+
+/* 当前基准金价：发丝边小标签 */
 .current-price-badge {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  padding: 6px 14px;
-  border-radius: 8px;
-  background: rgba(232, 199, 125, 0.08);
-  border: 1px solid rgba(232, 199, 125, 0.25);
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
 }
+
 .current-price-badge span {
   font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--gold-3);
 }
+
+:lang(zh) .current-price-badge span {
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .current-price-badge b {
+  font-family: var(--font-mono);
   font-size: 16px;
-  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
   color: var(--text);
 }
 
@@ -631,7 +660,8 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 }
 
 .form-label {
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--text-2);
   font-weight: 500;
 }
@@ -650,37 +680,36 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   gap: 8px;
 }
 
+/* 持仓类型：发丝边方块，选中项为金色发丝边加淡金底 */
 .type-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 10px 8px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   color: var(--text);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
-.type-btn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-}
+
 .type-btn.active {
-  background: rgba(232, 199, 125, 0.12);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
   border-color: var(--gold);
-  color: var(--gold-3);
+  color: var(--text);
 }
 
 .type-name {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
 }
+
 .type-fee {
-  font-size: 10px;
-  color: var(--text-3);
   margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-3);
 }
 
 .weight-presets {
@@ -689,21 +718,29 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   flex-wrap: wrap;
 }
 
+/* 克重芯片：发丝边，2px 圆角；选中项为金色发丝边加淡金底 */
 .preset-chip {
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
   color: var(--text-2);
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
-  font-family: var(--mono);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
+
 .preset-chip.active {
-  background: var(--gold);
-  color: var(--gold-ink);
   border-color: var(--gold);
-  font-weight: 700;
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  color: var(--text);
 }
 
 .form-row-2 {
@@ -722,15 +759,18 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   width: 100%;
   height: 40px;
   padding: 0 48px 0 12px;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px solid var(--border);
   color: var(--text);
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   outline: none;
   transition: border-color 0.2s ease;
 }
+
 .calc-input:focus {
   border-color: var(--gold);
 }
@@ -744,9 +784,9 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 }
 
 .form-hint {
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--text-3);
-  line-height: 1.4;
 }
 
 .calc-results {
@@ -766,80 +806,274 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   display: flex;
   flex-direction: column;
   padding: 14px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
 }
+
+/* 重点结果：纯色淡金底与金色发丝边 */
 .res-item.highlight {
-  background: rgba(232, 199, 125, 0.08);
-  border-color: rgba(232, 199, 125, 0.35);
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface-2));
+  border-color: var(--line-strong);
 }
 
 .res-label {
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--text-3);
 }
 
+/* 结果数字：等宽、等宽对齐、500 字重 */
 .res-num {
-  font-size: 20px;
-  font-weight: 700;
-  font-family: var(--mono);
-  color: var(--text);
   margin: 6px 0 2px;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  color: var(--text);
 }
+
 .res-num.gold {
   color: var(--gold-3);
 }
 
 .res-sub {
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--text-3);
 }
 
+.res-sub b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 套利研判：边框与底色保持中性，涨跌色只用于标签文字 */
 .arb-strategy-guide {
   padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
   background: var(--surface-2);
 }
-.arb-strategy-guide.action-positive {
-  border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.08);
+
+.arb-strategy-guide.action-positive .guide-tag {
+  color: var(--up);
 }
-.arb-strategy-guide.action-negative {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.08);
+
+.arb-strategy-guide.action-negative .guide-tag {
+  color: var(--down);
 }
-.arb-strategy-guide.action-neutral {
-  border-color: rgba(96, 165, 250, 0.3);
-  background: rgba(96, 165, 250, 0.06);
+
+.arb-strategy-guide.action-neutral .guide-tag {
+  color: var(--text-2);
 }
 
 .guide-tag {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: var(--gold-3);
 }
 
+:lang(zh) .guide-tag {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .guide-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
   margin: 4px 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text);
 }
 
 .guide-desc {
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.6;
   color: var(--text-2);
-  line-height: 1.5;
 }
 
 .calc-tip {
-  font-size: 11px;
-  color: var(--text-3);
   margin: 0;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* 手机端：持仓类型改为紧凑列表，按钮与输入框达到 44px */
+@media (max-width: 767px) {
+  .calc-card {
+    padding: 16px;
+  }
+
+  .calc-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .calc-title {
+    font-size: 18px;
+  }
+
+  .calc-sub {
+    font-size: 13px;
+  }
+
+  .calc-tab-group {
+    width: 100%;
+  }
+
+  .calc-tab-btn {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+
+  .current-price-badge {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+  }
+
+  .current-price-badge span {
+    font-size: 12px;
+  }
+
+  .calc-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .calc-form {
+    gap: 14px;
+  }
+
+  .form-label {
+    font-size: 13px;
+  }
+
+  .label-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .weight-presets {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  .weight-presets.weight-presets-five {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .preset-chip {
+    height: 40px;
+    padding: 0 4px;
+    font-size: 13px;
+  }
+
+  .type-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .type-btn {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 48px;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  .type-name {
+    font-size: 14px;
+  }
+
+  .type-fee {
+    margin-top: 0;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .form-row-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .calc-input {
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .form-hint {
+    font-size: 12px;
+  }
+
+  .calc-results {
+    gap: 14px;
+  }
+
+  .res-card-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .res-item {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .res-label {
+    font-size: 12px;
+  }
+
+  .res-num {
+    margin: 4px 0 2px;
+    font-size: 18px;
+    overflow-wrap: break-word;
+  }
+
+  .res-sub {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .arb-strategy-guide {
+    padding: 12px 14px;
+  }
+
+  .guide-title {
+    font-size: 14px;
+  }
+
+  .guide-desc {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .calc-tip {
+    font-size: 12px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .type-btn:hover:not(.active) {
+    background: var(--surface-hover);
+    border-color: var(--line-strong);
+  }
 }
 </style>

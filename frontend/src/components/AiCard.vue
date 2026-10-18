@@ -1,12 +1,7 @@
 <template>
   <section class="card ai-card" aria-labelledby="ai-title">
-    <!-- 头部：AI 智能体图标 + 标题 -->
+    <!-- 头部：标题与副标题 -->
     <header class="ai-head">
-      <div class="ai-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2zm-3 9a1 1 0 100 2 1 1 0 000-2zm6 0a1 1 0 100 2 1 1 0 000-2z" fill="currentColor"/>
-        </svg>
-      </div>
       <div class="ai-title-wrap">
         <h2 id="ai-title" class="ai-title">{{ t('aiCard.title') }}</h2>
         <span class="ai-subtitle">{{ t('aiCard.sub') }}</span>
@@ -16,10 +11,7 @@
     <!-- 可选模型下拉选择器（按上游厂商分组与新建栏目） -->
     <div class="model-select-group">
       <div class="select-header">
-        <label class="select-label" for="model-selector">
-          <span class="label-dot"></span>
-          <span>{{ t('aiCard.modelLabel') }}</span>
-        </label>
+        <label class="select-label" for="model-selector">{{ t('aiCard.modelLabel') }}</label>
         <span class="upstream-badge">
           <span class="upstream-dot"></span>
           <span>{{ currentModelUpstream }}</span>
@@ -39,20 +31,16 @@
             </option>
           </optgroup>
         </select>
-        <span class="select-arrow" aria-hidden="true">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </span>
+        <Icon name="chevron-up" :size="14" class="select-arrow" />
       </div>
       <div class="model-feature-tag">
         <span class="tag-desc">{{ currentModelDesc }}</span>
       </div>
     </div>
 
-    <!-- 分析中状态动画 -->
+    <!-- 分析中状态：三个加载点 -->
     <div v-if="state === 'loading'" class="ai-analyzing-box">
-      <div class="analyzing-dots">
+      <div class="analyzing-dots" aria-hidden="true">
         <span></span>
         <span></span>
         <span></span>
@@ -80,7 +68,6 @@
       @click="handleRun"
     >
       <span v-if="state === 'loading'" class="spinner" aria-hidden="true"></span>
-      <span v-else class="btn-sparkle">✦</span>
       <span>{{ buttonText }}</span>
     </button>
   </section>
@@ -88,6 +75,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import Icon from './icons/Icon.vue';
 import { useI18n } from '../i18n';
 
 const { t } = useI18n();
@@ -227,9 +215,7 @@ function handleRun() {
   flex-direction: column;
   justify-content: space-between;
   gap: 14px;
-  background: var(--surface-card);
-  border-color: rgba(232, 199, 125, 0.22);
-  position: relative;
+  box-shadow: none;
 }
 
 .ai-head {
@@ -238,46 +224,44 @@ function handleRun() {
   gap: 12px;
 }
 
-.ai-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: rgba(232, 199, 125, 0.12);
-  color: var(--gold);
-  border: 1px solid rgba(232, 199, 125, 0.35);
-  flex-shrink: 0;
-}
-
 .ai-title-wrap {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .ai-title {
-  font-size: 16px;
-  font-weight: 800;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--text);
-  letter-spacing: 0.5px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+:lang(zh) .ai-title {
+  letter-spacing: 0;
 }
 
 .ai-subtitle {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-3);
 }
 
-/* 模型选择器 (金融暗色下拉控件) */
+/* 模型选择：发丝边容器，控件为方角 */
 .model-select-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s var(--ease-out);
 }
 
 .model-select-group:focus-within {
@@ -286,44 +270,43 @@ function handleRun() {
 
 .select-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 6px 8px;
+}
+
+.select-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+:lang(zh) .select-label {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .upstream-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-family: var(--mono);
-  color: var(--gold-3);
-  background: rgba(232, 199, 125, 0.1);
-  border: 1px solid rgba(232, 199, 125, 0.22);
-  padding: 2px 7px;
-  border-radius: 999px;
-  letter-spacing: 0.02em;
-}
-
-.upstream-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-}
-
-.select-label {
-  display: flex;
-  align-items: center;
   gap: 6px;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   font-size: 11px;
-  font-weight: 700;
-  color: var(--gold);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  white-space: nowrap;
 }
 
-.label-dot {
+/* 上游状态点：静态小圆点，不发光 */
+.upstream-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -339,24 +322,19 @@ function handleRun() {
 .custom-select {
   width: 100%;
   height: 36px;
-  padding: 0 32px 0 14px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-card);
   color: var(--text);
-  font-family: var(--font);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   outline: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.custom-select:hover {
-  border-color: var(--gold);
-  background: var(--surface-hover);
+  transition: border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
 }
 
 .custom-select:focus {
@@ -369,20 +347,21 @@ function handleRun() {
   padding: 8px;
 }
 
+/* 下拉箭头：复用向上的 chevron，旋转后朝下 */
 .select-arrow {
   position: absolute;
-  right: 10px;
+  top: 50%;
+  right: 12px;
+  color: var(--text-2);
   pointer-events: none;
-  color: var(--gold);
-  display: grid;
-  place-items: center;
+  transform: translateY(-50%) rotate(180deg);
 }
 
 .model-feature-tag {
-  font-size: 11px;
-  color: var(--text-2);
-  line-height: 1.4;
   margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
 }
 
 .tag-desc {
@@ -396,9 +375,14 @@ function handleRun() {
 }
 
 .ai-desc {
-  font-size: 12.5px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-2);
-  line-height: 1.55;
+}
+
+:lang(zh) .ai-desc {
+  line-height: 1.75;
 }
 
 .ai-tags {
@@ -408,20 +392,22 @@ function handleRun() {
 }
 
 .ai-tags .tag {
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
   color: var(--text-2);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
+  white-space: nowrap;
 }
 
-/* 分析中动画 */
+/* 分析中：发丝边方框 + 三个加载点 */
 .ai-analyzing-box {
-  padding: 14px;
-  border-radius: 10px;
-  background: rgba(232, 199, 125, 0.05);
-  border: 1px dashed rgba(232, 199, 125, 0.3);
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -436,39 +422,102 @@ function handleRun() {
 }
 
 .analyzing-dots span {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--gold);
-  animation: bounce 1.4s ease-in-out infinite both;
+  animation: dot-fade 1.2s ease-in-out infinite both;
 }
 
-.analyzing-dots span:nth-child(1) { animation-delay: -0.32s; }
-.analyzing-dots span:nth-child(2) { animation-delay: -0.16s; }
+.analyzing-dots span:nth-child(1) { animation-delay: -0.24s; }
+.analyzing-dots span:nth-child(2) { animation-delay: -0.12s; }
 
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
-  40% { transform: scale(1); opacity: 1; }
+@keyframes dot-fade {
+  0%, 80%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
 }
 
 .analyzing-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--gold);
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
 }
 
 .analyzing-sub {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-3);
 }
 
+/* 主按钮：纯色金底，无渐变，无装饰字符 */
 .ai-submit-btn {
   width: 100%;
+  height: 44px;
   margin-top: auto;
+  padding: 0 18px;
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--gold-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-.btn-sparkle {
-  font-size: 13px;
-  margin-right: 2px;
+:lang(zh) .ai-submit-btn {
+  letter-spacing: 0;
+}
+
+.ai-submit-btn .spinner {
+  border-color: color-mix(in srgb, var(--gold-ink) 25%, transparent);
+  border-top-color: var(--gold-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ai-submit-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--gold) 88%, white);
+    border-color: color-mix(in srgb, var(--gold) 88%, white);
+  }
+}
+
+/* ---------- 手机端 ---------- */
+@media (max-width: 767px) {
+  .ai-card {
+    gap: 12px;
+  }
+
+  .ai-title {
+    font-size: 18px;
+  }
+
+  .custom-select {
+    height: 44px;
+    padding: 0 36px 0 14px;
+    font-size: 16px;
+  }
+
+  .select-arrow {
+    right: 14px;
+  }
+
+  .ai-tags .tag {
+    white-space: nowrap;
+  }
+
+  .analyzing-text {
+    font-size: 15px;
+  }
+
+  .ai-submit-btn {
+    height: 44px;
+  }
+}
+
+/* 减少动效：加载点保持静止可见 */
+@media (prefers-reduced-motion: reduce) {
+  .analyzing-dots span {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 </style>

@@ -5,7 +5,13 @@
  *   1 金 · 2 蓝 · 3 玫红 · 4 紫 · 5 青 · 6 铜
  * 两套主题各自经 validate_palette.js 校验（亮度带、色度底线、相邻色 CVD 与常态辨识度、对比度）。
  * 评分线为单序列面板，使用香槟色作为强调；价格相关的涨跌色不参与分类色序列。
+ * 填充一律为纯色加低透明度；提示框与滑块不使用阴影。
  */
+
+// 图表字体：正文用 IBM Plex Sans（中文回退 Noto Sans SC），数字与刻度用 IBM Plex Mono。
+// 画布无法读取 CSS 变量，因此字体栈写定在此，与 style.css 的 --font / --font-mono 保持一致。
+const FONT_SANS = "'IBM Plex Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif";
+const FONT_MONO = "'IBM Plex Mono', 'SF Mono', Consolas, ui-monospace, monospace";
 
 export function chartPalette(theme) {
   if (theme === 'dark') {
@@ -18,7 +24,8 @@ export function chartPalette(theme) {
       muted: '#8b867b',
       text: '#f3efe6',
       tipBg: '#0e1116',
-      font: "'JetBrains Mono', 'SF Mono', Consolas, ui-monospace, monospace",
+      font: FONT_SANS,
+      mono: FONT_MONO,
       volume: 'rgba(139,134,123,0.45)',
       ma5: '#b8892e',
       ma10: '#3d7fe0',
@@ -31,7 +38,7 @@ export function chartPalette(theme) {
       kdjD: '#3d7fe0',
       kdjJ: '#c45a7a',
       score: '#f6dea4',
-      ratio: '#3d7fe0',
+      ratio: '#9aa4b2',
       band: 'rgba(232,199,125,0.10)',
       mean: 'rgba(243,239,230,0.45)',
       equity: {
@@ -56,7 +63,8 @@ export function chartPalette(theme) {
     muted: '#6d6758',
     text: '#15130e',
     tipBg: '#ffffff',
-    font: "'JetBrains Mono', 'SF Mono', Consolas, ui-monospace, monospace",
+    font: FONT_SANS,
+    mono: FONT_MONO,
     volume: 'rgba(143,136,122,0.40)',
     ma5: '#9c7424',
     ma10: '#2563eb',
@@ -69,7 +77,7 @@ export function chartPalette(theme) {
     kdjD: '#2563eb',
     kdjJ: '#c2416a',
     score: '#8c6a2b',
-    ratio: '#2563eb',
+    ratio: '#5f6b7a',
     band: 'rgba(156,116,36,0.12)',
     mean: 'rgba(21,19,14,0.45)',
     equity: {

@@ -126,15 +126,19 @@ function buildOption() {
     });
   }
 
+  // 窄屏：图例改为单行可滚动，曲线区下移，避免与图例重叠
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   return {
     animationDuration: 300,
     grid: [
-      { left: 58, right: 20, top: 40, height: '50%' },
+      { left: 58, right: 20, top: narrow ? 52 : 40, height: '50%' },
       { left: 58, right: 20, top: '72%', height: '16%' },
     ],
     textStyle: { fontFamily: pal.font },
     legend: {
+      type: narrow ? 'scroll' : 'plain',
       top: 0,
+      left: narrow ? 0 : 'auto',
       right: 0,
       itemWidth: 14,
       itemHeight: 3,
@@ -142,22 +146,28 @@ function buildOption() {
     },
     tooltip: {
       trigger: 'axis',
+      confine: true,
       axisPointer: { type: 'line', link: [{ xAxisIndex: 'all' }] },
       backgroundColor: pal.tipBg,
       borderColor: pal.tipBorder,
-      textStyle: { color: pal.text, fontSize: 12 },
-      valueFormatter: (v) => fmtVal(v, 2),
+      borderWidth: 1,
+      shadowBlur: 0,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: 'transparent',
+      textStyle: { color: pal.text, fontSize: 12, fontFamily: pal.font },
+      valueFormatter: (v) => `<span style="font-family:${pal.mono};font-variant-numeric:tabular-nums">${fmtVal(v, 2)}</span>`,
     },
     xAxis: [
       { type: 'category', gridIndex: 0, data: dates, axisLabel: { show: false }, axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false } },
-      { type: 'category', gridIndex: 1, data: dates, axisLabel: { color: pal.muted, fontSize: 11, hideOverlap: true }, axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false } },
+      { type: 'category', gridIndex: 1, data: dates, axisLabel: { color: pal.muted, fontSize: 11, hideOverlap: true, fontFamily: pal.mono }, axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false } },
     ],
     yAxis: [
       {
         gridIndex: 0,
         scale: true,
         splitLine: { lineStyle: { color: pal.grid, type: 'dashed' } },
-        axisLabel: { color: pal.muted, fontSize: 11 },
+        axisLabel: { color: pal.muted, fontSize: 11, fontFamily: pal.mono },
       },
       {
         gridIndex: 1,
@@ -165,7 +175,7 @@ function buildOption() {
         min: (v) => Math.min(v.min, -5),
         splitNumber: 2,
         splitLine: { show: false },
-        axisLabel: { color: pal.muted, fontSize: 11, formatter: (v) => `${v}%` },
+        axisLabel: { color: pal.muted, fontSize: 11, fontFamily: pal.mono, formatter: (v) => `${v}%` },
       },
     ],
     series,
@@ -202,6 +212,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 
 .meta {
@@ -212,13 +223,18 @@ onUnmounted(() => {
 }
 
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .metrics {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
@@ -233,13 +249,13 @@ onUnmounted(() => {
 
 .metrics thead th {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-3);
 }
 
 .metrics tbody th {
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .metrics thead th:first-child {
@@ -250,7 +266,7 @@ onUnmounted(() => {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: 2px;
   margin-right: 8px;
   vertical-align: middle;
 }
@@ -261,6 +277,12 @@ onUnmounted(() => {
   font-size: 11px;
   font-weight: 400;
   color: var(--text-3);
+}
+
+/* 数值列用等宽字体，数字对齐 */
+.metrics td {
+  font-family: var(--font-mono);
+  font-weight: 500;
 }
 
 .metrics .tone-up { color: var(--up); }
@@ -274,6 +296,30 @@ onUnmounted(() => {
 @media (max-width: 767px) {
   .echart {
     height: 340px;
+  }
+}
+
+@media (max-width: 767px) {
+  .backtest {
+    gap: 12px;
+  }
+
+  .meta {
+    font-size: 13px;
+  }
+
+  .metrics th,
+  .metrics td {
+    padding: 10px;
+  }
+
+  /* 策略名列固定，横向滚动表格时仍能看清每一行对应的策略 */
+  .metrics tbody th,
+  .metrics thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface-card);
   }
 }
 </style>

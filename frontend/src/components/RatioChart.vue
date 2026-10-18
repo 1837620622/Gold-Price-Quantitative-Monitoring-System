@@ -42,20 +42,28 @@ function buildOption() {
       }
     : undefined;
 
+  // 窄屏：绘图区留白更小
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   return {
     animationDuration: 300,
     textStyle: { fontFamily: pal.font },
-    grid: { left: 58, right: 24, top: 18, bottom: 34 },
+    grid: { left: narrow ? 48 : 58, right: narrow ? 12 : 24, top: 18, bottom: narrow ? 30 : 34 },
     tooltip: {
       trigger: 'axis',
+      confine: true,
       backgroundColor: pal.tipBg,
       borderColor: pal.tipBorder,
-      textStyle: { color: pal.text, fontSize: 12 },
+      borderWidth: 1,
+      shadowBlur: 0,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: 'transparent',
+      textStyle: { color: pal.text, fontSize: 12, fontFamily: pal.font },
       formatter: (params) => {
         const item = params[0];
         if (!item) return '';
         const v = item.value;
-        return `<div style="font-weight:600;margin-bottom:4px">${item.axisValue}</div>${t('ratioChart.name')}: <b>${fmtVal(v, 2)}</b>`;
+        return `<div style="font-family:${pal.mono};font-weight:500;margin-bottom:4px">${item.axisValue}</div>${t('ratioChart.name')}: <span style="font-family:${pal.mono};font-weight:500;font-variant-numeric:tabular-nums">${fmtVal(v, 2)}</span>`;
       },
     },
     xAxis: {
@@ -64,13 +72,13 @@ function buildOption() {
       boundaryGap: false,
       axisLine: { lineStyle: { color: pal.axis } },
       axisTick: { show: false },
-      axisLabel: { color: pal.muted, fontSize: 11, hideOverlap: true },
+      axisLabel: { color: pal.muted, fontSize: 11, hideOverlap: true, fontFamily: pal.mono },
     },
     yAxis: {
       type: 'value',
       scale: true,
       splitLine: { lineStyle: { color: pal.grid, type: 'dashed' } },
-      axisLabel: { color: pal.muted, fontSize: 11, formatter: (v) => fmtVal(v, 1) },
+      axisLabel: { color: pal.muted, fontSize: 11, fontFamily: pal.mono, formatter: (v) => fmtVal(v, 1) },
     },
     series: [
       {
@@ -156,7 +164,7 @@ onUnmounted(() => {
 
 @media (max-width: 767px) {
   .ratio-chart {
-    height: 320px;
+    height: 280px;
   }
 }
 </style>

@@ -53,27 +53,17 @@ const area = computed(() => {
   overflow: visible;
 }
 
+/* 走势线与面积保持中性色：涨跌色只出现在数值与箭头上 */
 .spark-line {
   fill: none;
-  stroke-width: 1.6;
+  stroke: var(--text-2);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  stroke: var(--text-3);
 }
 
 .spark-area {
-  fill: var(--text-3);
-  opacity: 0.12;
-}
-
-.spark.up .spark-line,
-.spark.up .spark-area {
-  stroke: var(--up);
-  fill: var(--up);
-}
-
-.spark.down .spark-line,
-.spark.down .spark-area {
-  stroke: var(--down);
-  fill: var(--down);
+  fill: var(--text-2);
+  opacity: 0.08;
 }
 </style>

@@ -3,11 +3,11 @@
  * AI 量化分析
  * 原则：模型只负责解释与情景推理，所有数值都由程序严格计算后传入；模型输出经前端消毒后展示
  * 多模型容灾链：
- *   1. ModelScope（魔搭社区，DeepSeek-V3.2 / Qwen2.5-72B）
- *   2. DeepSeek 官方 API（deepseek-chat）
- *   3. OpenRouter 免费/聚合模型（deepseek-r1:free / llama-3.3-70b）
+ *   1. Cloudflare Workers AI 绑定（无需 Key，@cf/deepseek-ai / @cf/qwen）
+ *   2. ModelScope 魔搭社区（DeepSeek-V3.2 / Qwen2.5-72B）
+ *   3. DeepSeek 官方 API（deepseek-chat）
  *   4. 硅基流动 SiliconFlow（DeepSeek-V3 / Qwen2.5-72B）
- *   5. Cloudflare Workers AI 内置免费大模型（@cf/deepseek-ai / @cf/qwen）
+ *   5. OpenRouter 免费/聚合模型（deepseek-r1:free / llama-3.3-70b）
  *   6. 规则引擎（未配置任何 Key 或全部失败时无缝兜底）
  * ============================================================
  */

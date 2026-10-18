@@ -194,13 +194,24 @@ const tiles = computed(() => {
 .tiles {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  box-shadow: none;
 }
 
 .title {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+:lang(zh) .title {
+  letter-spacing: 0;
 }
 
 .sub {
@@ -215,26 +226,39 @@ const tiles = computed(() => {
   gap: 12px;
 }
 
+/* 指标小方块：发丝边、无底色、无阴影 */
 .tile {
   padding: 14px;
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: transparent;
   min-width: 0;
 }
 
 .label {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-3);
 }
 
+:lang(zh) .label {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .value {
-  margin: 6px 0 4px;
+  margin: 8px 0 4px;
+  font-family: var(--font-mono);
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  line-height: 1.15;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .value.tone-up { color: var(--up); }
@@ -243,47 +267,84 @@ const tiles = computed(() => {
 
 .sub-line {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-2);
   line-height: 1.5;
 }
 
+/* 进度条：中性色，方向由数值颜色表达 */
 .gauge {
   margin-top: 10px;
   height: 4px;
-  border-radius: 999px;
-  background: var(--border-strong);
+  border-radius: 2px;
+  background: var(--line-strong);
   overflow: hidden;
 }
 
 .gauge-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--text-2);
 }
 
-.gauge-fill.tone-up { background: var(--up); }
-.gauge-fill.tone-down { background: var(--down); }
-
 .trend {
   padding-top: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
 }
 
 .trend-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 12px;
+  gap: 8px;
   color: var(--text-3);
 }
 
+.trend-head > span {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+:lang(zh) .trend-head > span {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .trend-head b {
+  font-family: var(--font-mono);
   font-size: 15px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .trend-head b.tone-up { color: var(--up); }
 .trend-head b.tone-down { color: var(--down); }
+
+@media (max-width: 767px) {
+  .title {
+    font-size: 18px;
+  }
+
+  .tiles {
+    gap: 12px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tile {
+    padding: 12px;
+  }
+
+  .value {
+    font-size: 20px;
+  }
+}
 </style>

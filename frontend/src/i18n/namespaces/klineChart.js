@@ -5,14 +5,14 @@
 
 export default {
   zh: {
-    'klineChart.empty': '暂无K线数据',
-    'klineChart.candles': 'K线',
-    'klineChart.aria': '{name} 日K线与技术指标图',
+    'klineChart.empty': '暂无 K 线数据',
+    'klineChart.candles': 'K 线',
+    'klineChart.aria': '{name} 日 K 线与技术指标图',
     'klineChart.bollUpper': '布林上轨',
     'klineChart.bollLower': '布林下轨',
     'klineChart.volume': '成交量',
     'klineChart.score': '量化评分',
-    'klineChart.macdBar': 'MACD柱',
+    'klineChart.macdBar': 'MACD 柱',
     'klineTip.open': '开',
     'klineTip.high': '高',
     'klineTip.low': '低',
