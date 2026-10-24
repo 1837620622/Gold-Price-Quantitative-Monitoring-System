@@ -928,5 +928,19 @@ onBeforeUnmount(() => {
   .footer-line .mob {
     display: inline;
   }
+
+  /* 无 WebGL：金条占用 layer-hall 原来的位置（副标题与页脚之间），不再绝对定位覆盖说明与页脚 */
+  .journey.is-nogl .nogl-ingot {
+    order: 5;
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    align-self: center;
+    flex: 1 1 auto;
+    min-height: 160px;
+    width: min(62vw, 300px);
+    z-index: auto;
+  }
 }
 </style>

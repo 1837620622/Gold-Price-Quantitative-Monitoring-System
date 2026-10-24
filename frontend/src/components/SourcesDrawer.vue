@@ -48,6 +48,7 @@
 </template>
 
 <script setup>
+import { createScrollLock } from '../lib/scrollLock';
 import { ref, watch, nextTick, onUnmounted } from 'vue';
 import { fmtDateTime } from '../format';
 import { useI18n } from '../i18n';
@@ -73,12 +74,8 @@ function onKeydown(event) {
   if (event.key === 'Escape') emit('close');
 }
 
-// 视口由 html 决定滚动（style.css 给 html 设了 overflow-x，body 上的设置不会传到视口），两处都锁
-function lockScroll(locked) {
-  const value = locked ? 'hidden' : '';
-  document.documentElement.style.overflow = value;
-  document.body.style.overflow = value;
-}
+// 视口由 html 决定滚动（style.css 给 html 设了 overflow-x，body 上的设置不会传到视口），两处都锁；引用计数见 lib/scrollLock.js
+const lockScroll = createScrollLock();
 
 watch(
   () => props.open,

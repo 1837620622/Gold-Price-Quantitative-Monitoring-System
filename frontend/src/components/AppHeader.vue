@@ -354,6 +354,12 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+@media (max-width: 767px) {
+  .nav-logo {
+    min-height: 44px;
+  }
+}
+
 .nav-logo-sub {
   margin-top: 5px;
   font-family: var(--font-sans);

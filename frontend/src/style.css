@@ -30,7 +30,7 @@
 
   --text: #f3efe6;
   --text-2: #a9a399;
-  --text-3: #6e6a62;
+  --text-3: #918c82;
   --ink: #ffffff;
   --dim: #cfc8b9;
   --dimmer: #8b867b;
@@ -38,6 +38,7 @@
   --gold: #e8c77d;
   --gold-2: #c9a14a;
   --gold-3: #f6dea4;
+  --gold-text: var(--gold-3);
   --gold-deep: #8c6a2b;
   /* 金色令牌均为纯色。主按钮为纯色金底，悬停只用 color-mix 略提亮 */
   --gold-btn: var(--gold);
@@ -115,8 +116,8 @@
   --border-hover: rgba(122, 88, 24, 0.5);
 
   --text: #15130e;
-  --text-2: #5d5749;
-  --text-3: #8f887a;
+  --text-2: #46412f;
+  --text-3: #686257;
   --ink: #15130e;
   --dim: #3f3a2f;
   --dimmer: #6d6758;
@@ -124,6 +125,7 @@
   --gold: #a77a24;
   --gold-2: #8c6a2b;
   --gold-3: #b8892e;
+  --gold-text: #7a5a1f;
   --gold-deep: #6b4f18;
   /* 纸本金的主按钮用更深的金，白字对比度 ≥ 4.5:1（AA），悬停再加深 */
   --gold-btn: #94691c;
@@ -134,7 +136,7 @@
 
   --up: #dc2626;
   --up-bg: rgba(220, 38, 38, 0.09);
-  --down: #059669;
+  --down: #047857;
   --down-bg: rgba(5, 150, 105, 0.09);
   --flat: #5d5749;
   --info: #2563eb;

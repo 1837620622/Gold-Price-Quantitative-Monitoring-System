@@ -546,7 +546,7 @@ const toneOf = (v) => (Number.isFinite(v) ? (v >= 0 ? 'tone-up' : 'tone-down') :
   }
 
   .toggle {
-    min-height: 36px;
+    min-height: 40px;
     padding: 0 12px;
   }
 

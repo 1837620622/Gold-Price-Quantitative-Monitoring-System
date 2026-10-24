@@ -150,7 +150,7 @@
           <div class="res-item">
             <span class="res-label">{{ t('goldCalc.marketValue') }}</span>
             <span class="res-num gold">¥{{ fmt(marketValue, 2) }}</span>
-            <span class="res-sub">{{ t('goldCalc.floatPnl') }}<b :class="profitTone">{{ profit >= 0 ? '+' : '' }}¥{{ fmt(profit, 2) }} ({{ fmt(profitRate, 2) }}%)</b></span>
+            <span class="res-sub">{{ t('goldCalc.floatPnl') }}<b :class="profitTone"><span class="nowrap">{{ profit >= 0 ? '+' : '' }}¥{{ fmt(profit, 2) }}</span> ({{ fmt(profitRate, 2) }}%)</b></span>
           </div>
 
           <div class="res-item highlight">
@@ -835,7 +835,7 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
 }
 
 .res-num.gold {
-  color: var(--gold-3);
+  color: var(--gold-text);
 }
 
 .res-sub {
@@ -848,6 +848,9 @@ watch([weight, buyPrice, feePerGram, productType, recycleDiscount], saveState);
   font-family: var(--font-mono);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+}
+
+.res-sub .nowrap {
   white-space: nowrap;
 }
 

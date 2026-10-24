@@ -114,6 +114,7 @@
 </template>
 
 <script setup>
+import { createScrollLock } from '../lib/scrollLock';
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { playAlertSound } from '../lib/sound';
 import { useI18n } from '../i18n';
@@ -138,12 +139,8 @@ const notificationPermission = ref(
 
 const hasTriggered = computed(() => props.alerts.some((a) => a.triggered));
 
-// 弹层打开时锁住背后页面滚动（视口由 html 决定，见 SubscribeModal 同名注释）
-function lockScroll(locked) {
-  const value = locked ? 'hidden' : '';
-  document.documentElement.style.overflow = value;
-  document.body.style.overflow = value;
-}
+// 弹层打开时锁住背后页面滚动（引用计数，见 lib/scrollLock.js）
+const lockScroll = createScrollLock();
 watch(() => props.open, (isOpen) => lockScroll(isOpen));
 onUnmounted(() => lockScroll(false));
 
@@ -269,7 +266,7 @@ function testSound() {
   padding: 0 12px;
   border: 0;
   border-radius: var(--radius);
-  background: var(--gold);
+  background: var(--gold-btn);
   color: var(--gold-ink);
   font-family: var(--font);
   font-size: 12px;
@@ -279,7 +276,7 @@ function testSound() {
 
 @media (hover: hover) and (pointer: fine) {
   .perm-btn:hover {
-    background: color-mix(in srgb, var(--gold) 86%, #ffffff);
+    background: var(--gold-btn-hover);
   }
 }
 
