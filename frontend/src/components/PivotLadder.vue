@@ -192,7 +192,7 @@ const rows = computed(() => {
 }
 
 .rung-mid .rung-label {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 
 /* 现价行：激活态，金色发丝边 + 淡金底 */
@@ -202,7 +202,7 @@ const rows = computed(() => {
 }
 
 .rung-now .rung-label {
-  color: var(--gold-3);
+  color: var(--gold-text);
 }
 
 .rung-now .rung-value {

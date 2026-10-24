@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
 
 /* 激活行只用纯色金令牌标出，不做位移 */
 .row.is-active .row-name {
-  color: var(--gold-3);
+  color: var(--gold-text);
 }
 
 .row-meta {
@@ -446,9 +446,6 @@ onBeforeUnmount(() => {
     font-size: 11px;
     line-height: 1.4;
     letter-spacing: 0.04em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .row-arrow {

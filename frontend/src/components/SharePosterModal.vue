@@ -92,6 +92,7 @@
 </template>
 
 <script setup>
+import { createScrollLock } from '../lib/scrollLock';
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { fmtNumber, fmtSigned } from '../format';
 import { tField, useI18n } from '../i18n';
@@ -109,12 +110,8 @@ defineEmits(['close']);
 
 const copied = ref(false);
 
-// 弹层打开时锁住背后页面滚动（视口由 html 决定，见 SubscribeModal 同名注释）
-function lockScroll(locked) {
-  const value = locked ? 'hidden' : '';
-  document.documentElement.style.overflow = value;
-  document.body.style.overflow = value;
-}
+// 弹层打开时锁住背后页面滚动（引用计数，见 lib/scrollLock.js）
+const lockScroll = createScrollLock();
 watch(() => props.open, (isOpen) => lockScroll(isOpen));
 onUnmounted(() => lockScroll(false));
 

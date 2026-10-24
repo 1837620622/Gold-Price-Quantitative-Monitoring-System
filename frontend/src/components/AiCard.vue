@@ -455,8 +455,8 @@ function handleRun() {
   height: 44px;
   margin-top: auto;
   padding: 0 18px;
-  border-color: var(--gold);
-  background: var(--gold);
+  border-color: var(--gold-btn);
+  background: var(--gold-btn);
   color: var(--gold-ink);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -475,8 +475,8 @@ function handleRun() {
 
 @media (hover: hover) and (pointer: fine) {
   .ai-submit-btn:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--gold) 88%, white);
-    border-color: color-mix(in srgb, var(--gold) 88%, white);
+    background: var(--gold-btn-hover);
+    border-color: var(--gold-btn-hover);
   }
 }
 
